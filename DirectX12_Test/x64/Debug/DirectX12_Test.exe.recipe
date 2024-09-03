@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ProjectOutputs>
+    <ProjectOutput>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\DirectX12_Test.exe</FullPath>
+    </ProjectOutput>
+  </ProjectOutputs>
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\SimplePS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\SimpleVS.cso</FullPath>
+    </ContentFile>
+  </ContentFiles>
+  <SatelliteDlls />
+  <NonRecipeFileRefs />
+</Project>
