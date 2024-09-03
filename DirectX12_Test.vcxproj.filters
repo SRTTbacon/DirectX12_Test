@@ -1,0 +1,171 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="リソース ファイル">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{e87594e2-c3c4-45a2-9586-f977960dc5fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System">
+      <UniqueIdentifier>{6f82ea33-31a5-497c-93c9-17af56581446}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Main">
+      <UniqueIdentifier>{4796dc1f-5676-488d-b9f0-006c3fcfdd65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine">
+      <UniqueIdentifier>{20ea6c7d-709a-482b-822e-54cb47b36fc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Scene">
+      <UniqueIdentifier>{548342ad-b79c-4d17-821d-863c749645f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Scene\Scene">
+      <UniqueIdentifier>{25a379b4-efca-4973-96e6-193e016fa44b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core">
+      <UniqueIdentifier>{9409088e-2705-4e34-8f4e-f813089b84e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\DescriptorHeap">
+      <UniqueIdentifier>{e425e804-3d48-49ca-94eb-b9f446afdd8e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\ConstantBuffer">
+      <UniqueIdentifier>{24fdc770-daad-42db-8655-8d8a95b2f051}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\IndexBuffer">
+      <UniqueIdentifier>{793340d0-973e-4558-853e-3bf0d7e989c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\FBXLoader">
+      <UniqueIdentifier>{ed14b026-4a47-4ca8-a231-446894e50b3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\Texture2D">
+      <UniqueIdentifier>{6f838cad-3e31-4c99-a8da-5b59e6ba6ece}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\PipelineState">
+      <UniqueIdentifier>{babe43d5-8dea-4781-bebf-23fe518bac65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\RootSignature">
+      <UniqueIdentifier>{873221dd-94a2-43cc-ad21-ababc24a55b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\SharedStruct">
+      <UniqueIdentifier>{a11ca500-13d0-4c66-ba09-685d4888ca99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\VertexBuffer">
+      <UniqueIdentifier>{bba89e76-72a1-4f44-9776-edd24a4009f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Model">
+      <UniqueIdentifier>{6367e740-71c3-4ec9-9a09-f4e7c493866b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Camera">
+      <UniqueIdentifier>{308858fb-c793-48bb-bbe4-363c803cce04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Input">
+      <UniqueIdentifier>{7a1041b1-c7b6-45fa-b54f-1b428f48bee7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\System\Main\Main.cpp">
+      <Filter>Source\System\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Engine.cpp">
+      <Filter>Source\System\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scene\Scene\Scene.cpp">
+      <Filter>Source\Scene\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\VertexBuffer\VertexBuffer.cpp">
+      <Filter>Source\System\Engine\Core\VertexBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\ConstantBuffer\ConstantBuffer.cpp">
+      <Filter>Source\System\Engine\Core\ConstantBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\RootSignature\RootSignature.cpp">
+      <Filter>Source\System\Engine\Core\RootSignature</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\SharedStruct\SharedStruct.cpp">
+      <Filter>Source\System\Engine\Core\SharedStruct</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\PipelineState\PipelineState.cpp">
+      <Filter>Source\System\Engine\Core\PipelineState</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\IndexBuffer\IndexBuffer.cpp">
+      <Filter>Source\System\Engine\Core\IndexBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\FBXLoader\FBXLoader.cpp">
+      <Filter>Source\System\Engine\Core\FBXLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.cpp">
+      <Filter>Source\System\Engine\Core\DescriptorHeap</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\Texture2D\Texture2D.cpp">
+      <Filter>Source\System\Engine\Core\Texture2D</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Model\Model.cpp">
+      <Filter>Source\System\Engine\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Camera\Camera.cpp">
+      <Filter>Source\System\Engine\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Input\Input.cpp">
+      <Filter>Source\System\Engine\Input</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\System\Main\Main.h">
+      <Filter>Source\System\Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\ComPtr.h">
+      <Filter>Source\System</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Engine.h">
+      <Filter>Source\System\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scene\Scene\Scene.h">
+      <Filter>Source\Scene\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\VertexBuffer\VertexBuffer.h">
+      <Filter>Source\System\Engine\Core\VertexBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\ConstantBuffer\ConstantBuffer.h">
+      <Filter>Source\System\Engine\Core\ConstantBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\RootSignature\RootSignature.h">
+      <Filter>Source\System\Engine\Core\RootSignature</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\SharedStruct\SharedStruct.h">
+      <Filter>Source\System\Engine\Core\SharedStruct</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\PipelineState\PipelineState.h">
+      <Filter>Source\System\Engine\Core\PipelineState</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\IndexBuffer\IndexBuffer.h">
+      <Filter>Source\System\Engine\Core\IndexBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\FBXLoader\FBXLoader.h">
+      <Filter>Source\System\Engine\Core\FBXLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.h">
+      <Filter>Source\System\Engine\Core\DescriptorHeap</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\Texture2D\Texture2D.h">
+      <Filter>Source\System\Engine\Core\Texture2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\Model.h">
+      <Filter>Source\System\Engine\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Camera\Camera.h">
+      <Filter>Source\System\Engine\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Input\Input.h">
+      <Filter>Source\System\Engine\Input</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Source\System\Shader\SimplePS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\SimpleVS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+  </ItemGroup>
+</Project>
