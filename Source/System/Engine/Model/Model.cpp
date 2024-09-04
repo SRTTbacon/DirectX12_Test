@@ -14,7 +14,7 @@ static std::wstring ReplaceExtension(const std::wstring& origin, const char* ext
 	return p.replace_extension(ext).c_str();
 }
 
-void Model::Initialize(const wchar_t* fileName, Camera* camera)
+void Model::Initialize(const wchar_t* fileName, Camera* camera, bool bCharacter)
 {
 	m_camera = camera;
 
@@ -23,7 +23,8 @@ void Model::Initialize(const wchar_t* fileName, Camera* camera)
 		fileName,
 		meshes,
 		false,
-		true //テクスチャのUVのVだけ反転してるっぽい？ので読み込み時にUV座標を逆転させる
+		true, //テクスチャのUVのVだけ反転してるっぽい？ので読み込み時にUV座標を逆転させる
+		bCharacter
 	};
 
 	FBXLoader loader;

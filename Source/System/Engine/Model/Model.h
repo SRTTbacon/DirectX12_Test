@@ -15,7 +15,7 @@
 class Model
 {
 public:
-	void Initialize(const wchar_t* fileName, Camera* camera);
+	void Initialize(const wchar_t* fileName, Camera* camera, bool bCharacter);
 
 	void Update();
 	void Draw();

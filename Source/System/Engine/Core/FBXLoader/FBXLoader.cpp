@@ -69,7 +69,8 @@ bool FBXLoader::Load(ImportSettings settings)
         aiMesh* pMesh = scene->mMeshes[i];
         LoadMesh(meshes[i], pMesh, inverseU, inverseV);
         aiMaterial* pMaterial = scene->mMaterials[pMesh->mMaterialIndex];
-        LoadTexture(settings.filename, meshes[i], pMaterial, pMesh->mMaterialIndex);
+        if (settings.includeTexture)
+            LoadTexture(settings.filename, meshes[i], pMaterial, pMesh->mMaterialIndex);
     }
 
     printf("AnimationCount = %d\n", scene->mNumAnimations);

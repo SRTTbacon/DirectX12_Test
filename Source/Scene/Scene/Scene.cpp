@@ -20,8 +20,8 @@ bool Scene::Init()
 {
 	m_camera.SetFov(45.0f);
 
-	m_model1.Initialize(modelFile1, &m_camera);
-	m_model2.Initialize(modelFile2, &m_camera);
+	m_model1.Initialize(modelFile1, &m_camera, true);
+	m_model2.Initialize(modelFile2, &m_camera, true);
 
 	m_model1.SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f));
 	m_model2.SetPosition(XMFLOAT3(-20.0f, 0.0f, 0.0f));
@@ -43,7 +43,7 @@ void Scene::Update()
 		vertexBuffers[i]->Update(size, stride, vertices);
 	}*/
 
-	auto currentIndex = g_Engine->CurrentBackBufferIndex(); // 現在のフレーム番号を取得
+	//auto currentIndex = g_Engine->CurrentBackBufferIndex(); // 現在のフレーム番号を取得
 	//auto currentTransform = m_camera.m_constantBuffer[currentIndex]->GetPtr<Transform>(); // 現在のフレーム番号に対応する定数バッファを取得
 
 	m_camera.Update();
