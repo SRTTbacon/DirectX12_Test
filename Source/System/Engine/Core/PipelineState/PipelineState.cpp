@@ -1,5 +1,9 @@
 #include "PipelineState.h"
+#include "..\\..\\Engine.h"
+#include <d3dx12.h>
 #include <d3dcompiler.h>
+
+#pragma comment(lib, "d3dcompiler.lib")
 
 PipelineState::PipelineState(ID3D12Device* device) {
     m_pDevice = device;
@@ -63,6 +67,8 @@ void PipelineState::CreatePipelineState() {
     hr = m_pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
     if (FAILED(hr)) {
         // エラーハンドリング
+        printf("シェーダーの作成に失敗");
+        return;
     }
 
     // シェーダーを解放
