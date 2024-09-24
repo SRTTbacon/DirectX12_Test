@@ -20,10 +20,16 @@ struct ImportSettings // インポートするときのパラメータ
     bool inverseV = false; // V座標を反転させるか
     bool includeTexture = false;
 };
+struct BoneInfo {
+    DirectX::XMMATRIX offset;
+    DirectX::XMMATRIX finalTransformation;
+};
 
 class FBXLoader
 {
 public:
+    std::vector<BoneInfo> boneInfos;
+
     bool Load(ImportSettings setting); // モデルをロードする
 
     static std::string ToUTF8(const std::wstring& value)

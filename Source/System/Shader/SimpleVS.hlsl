@@ -1,8 +1,11 @@
+#define MAX_BONES 100 // ボーンの最大数を定義
+
 cbuffer Transform : register(b0)
 {
-	float4x4 World;
-	float4x4 View;
-	float4x4 Proj;
+	matrix World;
+	matrix View;
+	matrix Proj;
+	matrix BoneTransforms[MAX_BONES]; // ボーントランスフォーム
 }
 
 struct VSInput
@@ -11,27 +14,41 @@ struct VSInput
 	float3 normal : NORMAL;
 	float2 uv : TEXCOORD;
 	float3 tangent : TANGENT;
-	float4 color : COLOR;
+	//float4 color : COLOR;
+	uint4 boneIndices : BLENDINDICES; // ボーンインデックス
+	float4 weights : BLENDWEIGHT; // ボーンウェイト
 };
 
 struct VSOutput
 {
-	float4 svpos : SV_POSITION;
-	float4 color : COLOR;
-	float2 uv : TEXCOORD; // ピクセルシェーダーにuvを渡す
+	float4 position : SV_POSITION; // 最終クリッピング位置
+	float3 normal : NORMAL;        // 法線
+	float2 uv : TEXCOORD;   // テクスチャ座標
 };
 
 VSOutput vert(VSInput input)
 {
-	VSOutput output = (VSOutput)0;
+    // ボーントランスフォームを計算
+    float4 skinPosition = float4(0.0, 0.0, 0.0, 0.0);
+    float4 inputPos = float4(input.pos, 1.0); // input.posをfloat4に変換
 
-	float4 localPos = float4(input.pos, 1.0f);
-	float4 worldPos = mul(World, localPos);
-	float4 viewPos = mul(View, worldPos);
-	float4 projPos = mul(Proj, viewPos);
+    for (int i = 0; i < 4; i++) { // ボーンインデックスは最大4つのはず
+        int boneIndex = (int)input.boneIndices[i];
+        float weight = input.weights[i];
 
-	output.svpos = projPos;
-	output.color = input.color;
-	output.uv = input.uv; // ここが変更点。入力からuvを渡す
-	return output;
+        if (weight > 0.0) { // ウェイトがゼロより大きい場合
+            skinPosition += mul(BoneTransforms[boneIndex], inputPos) * weight; // 変換を適用
+        }
+    }
+
+    VSOutput output;
+
+    float4 worldPos = mul(skinPosition, World);
+    float4 viewPos = mul(worldPos, View);
+    float4 projPos = mul(viewPos, Proj);
+
+    output.position = projPos;
+    output.normal = input.normal; // ここは必要に応じて処理を加えてください
+    output.uv = input.uv; // テクスチャ座標を出力
+    return output;
 }

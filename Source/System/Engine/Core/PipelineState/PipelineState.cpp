@@ -1,81 +1,73 @@
 #include "PipelineState.h"
-#include "..\\..\\Engine.h"
-#include <d3dx12.h>
 #include <d3dcompiler.h>
 
-#pragma comment(lib, "d3dcompiler.lib")
-
-PipelineState::PipelineState()
-{
-	// パイプラインステートの設定
-	desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT); // ラスタライザーはデフォルト
-	desc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE; // カリングはなし
-	desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // ブレンドステートもデフォルト
-	desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // 深度ステンシルはデフォルトを使う
-	desc.SampleMask = UINT_MAX;
-	desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // 三角形を描画
-	desc.NumRenderTargets = 1; // 描画対象は1
-	desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-	desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-	desc.SampleDesc.Count = 1; // サンプラーは1
-	desc.SampleDesc.Quality = 0;
+PipelineState::PipelineState(ID3D12Device* device) {
+    m_pDevice = device;
+    m_bInited = false;
 }
 
-bool PipelineState::IsValid() const
-{
-	return m_IsValid;
-}
-
-void PipelineState::SetInputLayout(D3D12_INPUT_LAYOUT_DESC layout)
-{
-	desc.InputLayout = layout;
-}
-
-void PipelineState::SetRootSignature(ID3D12RootSignature* rootSignature)
-{
-	desc.pRootSignature = rootSignature;
+PipelineState::~PipelineState() {
+    // 自動的にリソースが解放されます
 }
 
 void PipelineState::SetVS(std::wstring filePath)
 {
-	// 頂点シェーダー読み込み
-	auto hr = D3DReadFileToBlob(filePath.c_str(), m_pVsBlob.GetAddressOf());
-	if (FAILED(hr))
-	{
-		printf("頂点シェーダーの読み込みに失敗\n");
-		return;
-	}
-
-	desc.VS = CD3DX12_SHADER_BYTECODE(m_pVsBlob.Get());
+    vsFilePath = filePath;
 }
 
 void PipelineState::SetPS(std::wstring filePath)
 {
-	// ピクセルシェーダー読み込み
-	auto hr = D3DReadFileToBlob(filePath.c_str(), m_pPSBlob.GetAddressOf());
-	if (FAILED(hr))
-	{
-		printf("ピクセルシェーダーの読み込みに失敗\n");
-		return;
-	}
-
-	desc.PS = CD3DX12_SHADER_BYTECODE(m_pPSBlob.Get());
+    psFilePath = filePath;
 }
 
-void PipelineState::Create()
-{
-	// パイプラインステートを生成
-	auto hr = g_Engine->Device()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(m_pPipelineState.ReleaseAndGetAddressOf()));
-	if (FAILED(hr))
-	{
-		printf("パイプラインステートの生成に失敗\n");
-		return;
-	}
+void PipelineState::CreatePipelineState() {
+    // シェーダーコンパイル
+    ID3DBlob* vertexShader = nullptr;
+    ID3DBlob* pixelShader = nullptr;
 
-	m_IsValid = true;
-}
+    // パイプラインステートの設定
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+    psoDesc.InputLayout = { /* Input Layout を指定 */ };
+    psoDesc.pRootSignature = nullptr; // Root Signatureを指定
+    //psoDesc.VS = { vertexShader->GetBufferPointer(), vertexShader->GetBufferSize() };
+    //psoDesc.PS = { pixelShader->GetBufferPointer(), pixelShader->GetBufferSize() };
+    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.SampleMask = UINT_MAX;
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    psoDesc.NumRenderTargets = 1; // Render Target の数
+    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // Render Target のフォーマット
+    psoDesc.SampleDesc.Count = 1; // MSAA サンプル数
+    psoDesc.SampleDesc.Quality = 0; // MSAA の品質
 
-ID3D12PipelineState* PipelineState::Get()
-{
-	return m_pPipelineState.Get();
+    // 頂点シェーダー読み込み
+    auto hr = D3DReadFileToBlob(vsFilePath.c_str(), &vertexShader);
+    if (FAILED(hr))
+    {
+        printf("頂点シェーダーの読み込みに失敗");
+        return;
+    }
+    // ピクセルシェーダー読み込み
+    hr = D3DReadFileToBlob(psFilePath.c_str(), &pixelShader);
+    if (FAILED(hr))
+    {
+        printf("ピクセルシェーダーの読み込みに失敗");
+        return;
+    }
+
+    psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader);
+    psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader);
+
+    // パイプラインステートオブジェクトを作成
+    hr = m_pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
+    if (FAILED(hr)) {
+        // エラーハンドリング
+    }
+
+    // シェーダーを解放
+    if (vertexShader) vertexShader->Release();
+    if (pixelShader) pixelShader->Release();
+
+    m_bInited = true;
 }

@@ -27,7 +27,6 @@ void Model::Initialize(const wchar_t* fileName, Camera* camera, bool bCharacter)
 		bCharacter
 	};
 
-	FBXLoader loader;
 	if (!loader.Load(importSetting))
 	{
 		printf("FBXのロードに失敗\n");
@@ -88,12 +87,10 @@ void Model::Initialize(const wchar_t* fileName, Camera* camera, bool bCharacter)
 		return;
 	}
 
-	pipelineState = new PipelineState();
-	pipelineState->SetInputLayout(Vertex::InputLayout);
-	pipelineState->SetRootSignature(rootSignature->Get());
+	pipelineState = new PipelineState(g_Engine->Device());
 	pipelineState->SetVS(L"x64/Debug/SimpleVS.cso");
 	pipelineState->SetPS(L"x64/Debug/SimplePS.cso");
-	pipelineState->Create();
+	pipelineState->CreatePipelineState();
 	if (!pipelineState->IsValid())
 	{
 		printf("パイプラインステートの生成に失敗\n");
@@ -102,6 +99,8 @@ void Model::Initialize(const wchar_t* fileName, Camera* camera, bool bCharacter)
 
 	m_pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	m_rot = XMFLOAT3(-90.0f, 0.0f, 0.0f);
+
+	m_animTime = 0.0f;
 }
 
 void Model::Update()
@@ -118,6 +117,22 @@ void Model::Update()
 	ptr2->World = matScale * matRot * matPos;
 	ptr2->View = ptr1->View;
 	ptr2->Proj = ptr1->Proj;
+	for (int i = 0; i < MAX_BONES; i++)
+		ptr2->BoneTransforms[i] = loader.boneInfos[i].finalTransformation;
+
+	m_animTime += 0.016f;
+
+	/*for (size_t i = 0; i < loader.boneInfos.size(); ++i) {
+		// ボーンの位置、回転、スケールを計算
+		DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, 0.0f, 0.0f); // 例として原点
+		DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationY(m_animTime); // Y軸周りに回転
+		DirectX::XMMATRIX scaling = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f); // スケールはそのまま
+
+		// 最終トランスフォームを計算
+		loader.boneInfos[i].finalTransformation = scaling * rotation * translation * loader.boneInfos[i].offset;
+
+		// アニメーションのスピードや時間に応じて変化を加えることができます
+	}*/
 }
 
 void Model::Draw()
@@ -132,11 +147,33 @@ void Model::Draw()
 		auto ibView = indexBuffers[i]->View();
 		commandList->SetGraphicsRootSignature(rootSignature->Get());
 		commandList->SetPipelineState(pipelineState->Get());
-		commandList->SetGraphicsRootConstantBufferView(0, m_constantBuffer[currentBufferIndex]->GetAddress());
 
+		// 頂点バッファの設定
+		D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
+		vertexBufferView.BufferLocation = vbView.BufferLocation; // vertexBufferは事前に作成しておく必要があります
+		vertexBufferView.StrideInBytes = sizeof(Vertex); // Vertex構造体のサイズ
+		vertexBufferView.SizeInBytes = sizeof(Vertex) * meshes[i].Vertices.size(); // 頂点数
+
+		commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+		//commandList->IASetVertexBuffers(0, 1, &vbView);
+
+		// インデックスバッファの設定
+		D3D12_INDEX_BUFFER_VIEW indexBufferView{};
+		indexBufferView.BufferLocation = ibView.BufferLocation; // indexBufferは事前に作成しておく必要があります
+		indexBufferView.Format = DXGI_FORMAT_R16_UINT; // インデックス形式（16ビット）
+		indexBufferView.SizeInBytes = sizeof(uint16_t) * meshes[i].Indices.size(); // インデックス数
+
+		//commandList->SetGraphicsRootConstantBufferView(0, m_constantBuffer[currentBufferIndex]->GetAddress());
+
+		commandList->IASetIndexBuffer(&indexBufferView);
+		//commandList->IASetIndexBuffer(&ibView);
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		commandList->IASetVertexBuffers(0, 1, &vbView);
-		commandList->IASetIndexBuffer(&ibView);
+
+		// ボーンのトランスフォームをシェーダーに送る
+		for (size_t i = 0; i < loader.boneInfos.size(); ++i) {
+			// ボーンの最終トランスフォームを送信（ボーン数が多い場合、バッファを使用することを検討）
+			commandList->SetGraphicsRoot32BitConstants(1, 16, &loader.boneInfos[i].finalTransformation, 0);
+		}
 
 		commandList->SetDescriptorHeaps(1, &materialHeap); // 使用するディスクリプタヒープをセット
 		commandList->SetGraphicsRootDescriptorTable(1, materialHandles[i]->HandleGPU); // そのメッシュに対応するディスクリプタテーブルをセット

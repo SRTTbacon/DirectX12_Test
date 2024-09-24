@@ -43,4 +43,8 @@ private:
 	std::vector<IndexBuffer*> indexBuffers;								//メッシュの数分のインデックスバッファ
 
 	std::vector<Mesh> meshes;											//メッシュ
+
+	FBXLoader loader;
+
+	float m_animTime;
 };

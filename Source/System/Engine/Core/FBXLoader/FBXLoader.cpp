@@ -61,6 +61,19 @@ bool FBXLoader::Load(ImportSettings settings)
         return false;
     }
 
+    // ボーン情報の取得
+    for (unsigned int i = 0; i < scene->mMeshes[0]->mNumBones; i++) {
+        aiBone* bone = scene->mMeshes[0]->mBones[i];
+        BoneInfo boneInfo{};
+        boneInfo.offset = DirectX::XMMATRIX(
+            bone->mOffsetMatrix.a1, bone->mOffsetMatrix.a2, bone->mOffsetMatrix.a3, bone->mOffsetMatrix.a4,
+            bone->mOffsetMatrix.b1, bone->mOffsetMatrix.b2, bone->mOffsetMatrix.b3, bone->mOffsetMatrix.b4,
+            bone->mOffsetMatrix.c1, bone->mOffsetMatrix.c2, bone->mOffsetMatrix.c3, bone->mOffsetMatrix.c4,
+            bone->mOffsetMatrix.d1, bone->mOffsetMatrix.d2, bone->mOffsetMatrix.d3, bone->mOffsetMatrix.d4
+        );
+        boneInfos.push_back(boneInfo);
+    }
+
     // 読み込んだデータを自分で定義したMesh構造体に変換する
     meshes.clear();
     meshes.resize(scene->mNumMeshes);
@@ -81,6 +94,8 @@ bool FBXLoader::Load(ImportSettings settings)
     for (unsigned int i = 0; i < scene->mNumMaterials; i++) {
         printf("%d -> %s\n", i, scene->mMaterials[i]->GetName().C_Str());
     }
+
+    //delete scene;
     scene = nullptr;
 
     return true;
@@ -116,7 +131,28 @@ void FBXLoader::LoadMesh(Mesh& dst, const aiMesh* src, bool inverseU, bool inver
         vertex.Normal = XMFLOAT3(normal->x, normal->y, normal->z);
         vertex.UV = XMFLOAT2(uv->x, uv->y);
         vertex.Tangent = XMFLOAT3(tangent->x, tangent->y, tangent->z);
-        vertex.Color = XMFLOAT4(color->r, color->g, color->b, color->a);
+        //vertex.Color = XMFLOAT4(color->r, color->g, color->b, color->a);
+
+        // ボーン情報の初期化
+        std::fill(std::begin(vertex.boneIndices), std::end(vertex.boneIndices), 0);
+        std::fill(std::begin(vertex.weights), std::end(vertex.weights), 0.0f);
+
+        for (unsigned int j = 0; j < src->mNumBones; j++) {
+            const aiBone* bone = src->mBones[j];
+            for (unsigned int k = 0; k < bone->mNumWeights; k++) {
+                if (bone->mWeights[k].mVertexId == i) {
+                    // ボーンインデックスとウェイトを設定
+                    // 空いているスロットを探して設定
+                    for (int l = 0; l < 4; l++) {
+                        if (vertex.weights[l] == 0.0f) { // 空いているスロットを見つけた
+                            vertex.boneIndices[l] = j; // ボーンインデックス
+                            vertex.weights[l] = bone->mWeights[k].mWeight; // ウェイト
+                            break;
+                        }
+                    }
+                }
+            }
+        }
 
         dst.Vertices[i] = vertex;
     }
