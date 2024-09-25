@@ -60,7 +60,7 @@ bool FBXLoader::Load(ImportSettings settings)
         printf("\n");
         return false;
     }
-
+    /*
     // ボーン情報の取得
     for (unsigned int i = 0; i < scene->mMeshes[0]->mNumBones; i++) {
         aiBone* bone = scene->mMeshes[0]->mBones[i];
@@ -72,7 +72,7 @@ bool FBXLoader::Load(ImportSettings settings)
             bone->mOffsetMatrix.d1, bone->mOffsetMatrix.d2, bone->mOffsetMatrix.d3, bone->mOffsetMatrix.d4
         );
         boneInfos.push_back(boneInfo);
-    }
+    }*/
 
     // 読み込んだデータを自分で定義したMesh構造体に変換する
     meshes.clear();
@@ -114,7 +114,7 @@ void FBXLoader::LoadMesh(Mesh& dst, const aiMesh* src, bool inverseU, bool inver
         auto normal = &(src->mNormals[i]);
         auto uv = (src->HasTextureCoords(0)) ? &(src->mTextureCoords[0][i]) : &zero3D;
         auto tangent = (src->HasTangentsAndBitangents()) ? &(src->mTangents[i]) : &zero3D;
-        auto color = (src->HasVertexColors(0)) ? &(src->mColors[0][i]) : &zeroColor;
+        //auto color = (src->HasVertexColors(0)) ? &(src->mColors[0][i]) : &zeroColor;
 
         // 反転オプションがあったらUVを反転させる
         if (inverseU)
@@ -132,7 +132,7 @@ void FBXLoader::LoadMesh(Mesh& dst, const aiMesh* src, bool inverseU, bool inver
         vertex.UV = XMFLOAT2(uv->x, uv->y);
         vertex.Tangent = XMFLOAT3(tangent->x, tangent->y, tangent->z);
         //vertex.Color = XMFLOAT4(color->r, color->g, color->b, color->a);
-
+        /*
         // ボーン情報の初期化
         std::fill(std::begin(vertex.boneIndices), std::end(vertex.boneIndices), 0);
         std::fill(std::begin(vertex.weights), std::end(vertex.weights), 0.0f);
@@ -153,7 +153,7 @@ void FBXLoader::LoadMesh(Mesh& dst, const aiMesh* src, bool inverseU, bool inver
                 }
             }
         }
-
+        */
         dst.Vertices[i] = vertex;
     }
 

@@ -1,7 +1,8 @@
 #pragma once
-#include "..\\..\\..\\ComPtr.h"
 #include <d3dx12.h>
 #include <string>
+#include "..\\RootSignature\\RootSignature.h"
+#include "..\\SharedStruct\\SharedStruct.h"
 
 class PipelineState
 {
@@ -11,7 +12,7 @@ public:
 
 	void SetVS(std::wstring filePath); // 頂点シェーダーを設定
 	void SetPS(std::wstring filePath); // ピクセルシェーダーを設定
-	void CreatePipelineState();
+	void CreatePipelineState(RootSignature* pRootSignature);
 
 	ID3D12PipelineState* Get() const { return m_pipelineState.Get(); }
 	bool IsValid() const { return m_bInited; };

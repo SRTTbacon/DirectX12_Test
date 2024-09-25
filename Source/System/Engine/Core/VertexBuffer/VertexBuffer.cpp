@@ -19,7 +19,7 @@ VertexBuffer::VertexBuffer(size_t size, size_t stride, void* pInitData)
 
 	if (FAILED(hr))
 	{
-		printf("頂点バッファリソースの生成に失敗");
+		printf("頂点バッファリソースの生成に失敗\n");
 		return;
 	}
 
@@ -35,7 +35,7 @@ VertexBuffer::VertexBuffer(size_t size, size_t stride, void* pInitData)
 		hr = m_pBuffer->Map(0, nullptr, &ptr);
 		if (FAILED(hr))
 		{
-			printf("頂点バッファマッピングに失敗");
+			printf("頂点バッファマッピングに失敗\n");
 			return;
 		}
 
@@ -68,7 +68,7 @@ void VertexBuffer::Update(size_t size, size_t stride, void* pInitData)
 		auto hr = m_pBuffer->Map(0, nullptr, &ptr);
 		if (FAILED(hr))
 		{
-			printf("頂点バッファマッピングに失敗");
+			printf("頂点バッファマッピングに失敗\n");
 			return;
 		}
 

@@ -120,9 +120,6 @@
     <ClInclude Include="Source\System\Engine\Engine.h">
       <Filter>Source\System\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Scene\Scene\Scene.h">
-      <Filter>Source\Scene\Scene</Filter>
-    </ClInclude>
     <ClInclude Include="Source\System\Engine\Core\VertexBuffer\VertexBuffer.h">
       <Filter>Source\System\Engine\Core\VertexBuffer</Filter>
     </ClInclude>
@@ -158,6 +155,9 @@
     </ClInclude>
     <ClInclude Include="Source\System\Engine\Input\Input.h">
       <Filter>Source\System\Engine\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scene\Scene\Scene.h">
+      <Filter>Source\System</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

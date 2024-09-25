@@ -3,7 +3,7 @@
 #include <DirectXMath.h>
 #include "..\..\\..\\ComPtr.h"
 
-constexpr int MAX_BONES = 100;
+constexpr int MAX_BONES = 4;
 
 struct Vertex
 {
@@ -19,7 +19,7 @@ struct Vertex
     static const D3D12_INPUT_LAYOUT_DESC InputLayout;
 
 private:
-    static const int InputElementCount = 5;
+    static const int InputElementCount = 6;
     static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
 };
 

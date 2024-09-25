@@ -1,4 +1,4 @@
-#define MAX_BONES 100 // ボーンの最大数を定義
+#define MAX_BONES 4 // ボーンの最大数を定義
 
 cbuffer Transform : register(b0)
 {
@@ -14,7 +14,6 @@ struct VSInput
 	float3 normal : NORMAL;
 	float2 uv : TEXCOORD;
 	float3 tangent : TANGENT;
-	//float4 color : COLOR;
 	uint4 boneIndices : BLENDINDICES; // ボーンインデックス
 	float4 weights : BLENDWEIGHT; // ボーンウェイト
 };
@@ -32,7 +31,7 @@ VSOutput vert(VSInput input)
     float4 skinPosition = float4(0.0, 0.0, 0.0, 0.0);
     float4 inputPos = float4(input.pos, 1.0); // input.posをfloat4に変換
 
-    for (int i = 0; i < 4; i++) { // ボーンインデックスは最大4つのはず
+    for (int i = 0; i < 4; i++) { // ボーンインデックスは最大4つ
         int boneIndex = (int)input.boneIndices[i];
         float weight = input.weights[i];
 

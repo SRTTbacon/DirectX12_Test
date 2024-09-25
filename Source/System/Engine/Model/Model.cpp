@@ -33,6 +33,8 @@ void Model::Initialize(const wchar_t* fileName, Camera* camera, bool bCharacter)
 		return;
 	}
 
+	printf("FBXをロードしました。\n");
+
 	//メッシュの数だけ頂点バッファを用意する
 	vertexBuffers.reserve(meshes.size());
 	for (size_t i = 0; i < meshes.size(); i++)
@@ -80,17 +82,17 @@ void Model::Initialize(const wchar_t* fileName, Camera* camera, bool bCharacter)
 		materialHandles.push_back(handle);
 	}
 
-	rootSignature = new RootSignature();
-	if (!rootSignature->IsValid())
+	rootSignature = new RootSignature(g_Engine->Device());
+	/*if (!rootSignature->IsValid())
 	{
 		printf("ルートシグネチャの生成に失敗\n");
 		return;
-	}
+	}*/
 
 	pipelineState = new PipelineState(g_Engine->Device());
 	pipelineState->SetVS(L"x64/Debug/SimpleVS.cso");
 	pipelineState->SetPS(L"x64/Debug/SimplePS.cso");
-	pipelineState->CreatePipelineState();
+	pipelineState->CreatePipelineState(rootSignature);
 	if (!pipelineState->IsValid())
 	{
 		printf("パイプラインステートの生成に失敗\n");
@@ -152,7 +154,7 @@ void Model::Draw()
 		D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
 		vertexBufferView.BufferLocation = vbView.BufferLocation; // vertexBufferは事前に作成しておく必要があります
 		vertexBufferView.StrideInBytes = sizeof(Vertex); // Vertex構造体のサイズ
-		vertexBufferView.SizeInBytes = sizeof(Vertex) * meshes[i].Vertices.size(); // 頂点数
+		vertexBufferView.SizeInBytes = sizeof(Vertex) * (UINT)meshes[i].Vertices.size(); // 頂点数
 
 		commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
 		//commandList->IASetVertexBuffers(0, 1, &vbView);
@@ -161,7 +163,7 @@ void Model::Draw()
 		D3D12_INDEX_BUFFER_VIEW indexBufferView{};
 		indexBufferView.BufferLocation = ibView.BufferLocation; // indexBufferは事前に作成しておく必要があります
 		indexBufferView.Format = DXGI_FORMAT_R16_UINT; // インデックス形式（16ビット）
-		indexBufferView.SizeInBytes = sizeof(uint16_t) * meshes[i].Indices.size(); // インデックス数
+		indexBufferView.SizeInBytes = sizeof(uint16_t) * (UINT)meshes[i].Indices.size(); // インデックス数
 
 		//commandList->SetGraphicsRootConstantBufferView(0, m_constantBuffer[currentBufferIndex]->GetAddress());
 

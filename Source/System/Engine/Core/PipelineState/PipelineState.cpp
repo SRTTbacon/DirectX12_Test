@@ -24,15 +24,15 @@ void PipelineState::SetPS(std::wstring filePath)
     psFilePath = filePath;
 }
 
-void PipelineState::CreatePipelineState() {
+void PipelineState::CreatePipelineState(RootSignature* pRootSignature) {
     // シェーダーコンパイル
     ID3DBlob* vertexShader = nullptr;
     ID3DBlob* pixelShader = nullptr;
 
     // パイプラインステートの設定
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.InputLayout = { /* Input Layout を指定 */ };
-    psoDesc.pRootSignature = nullptr; // Root Signatureを指定
+    psoDesc.InputLayout = Vertex::InputLayout;
+    psoDesc.pRootSignature = pRootSignature->Get(); // Root Signatureを指定
     //psoDesc.VS = { vertexShader->GetBufferPointer(), vertexShader->GetBufferSize() };
     //psoDesc.PS = { pixelShader->GetBufferPointer(), pixelShader->GetBufferSize() };
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
@@ -49,14 +49,14 @@ void PipelineState::CreatePipelineState() {
     auto hr = D3DReadFileToBlob(vsFilePath.c_str(), &vertexShader);
     if (FAILED(hr))
     {
-        printf("頂点シェーダーの読み込みに失敗");
+        printf("頂点シェーダーの読み込みに失敗\n");
         return;
     }
     // ピクセルシェーダー読み込み
     hr = D3DReadFileToBlob(psFilePath.c_str(), &pixelShader);
     if (FAILED(hr))
     {
-        printf("ピクセルシェーダーの読み込みに失敗");
+        printf("ピクセルシェーダーの読み込みに失敗\n");
         return;
     }
 
@@ -67,7 +67,7 @@ void PipelineState::CreatePipelineState() {
     hr = m_pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
     if (FAILED(hr)) {
         // エラーハンドリング
-        printf("シェーダーの作成に失敗");
+        printf("シェーダーの作成に失敗%d\n", hr);
         return;
     }
 
