@@ -15,7 +15,6 @@ public:
 
 private:
 	Model m_model1;
-	Model m_model2;
 	Camera m_camera;
 };
 

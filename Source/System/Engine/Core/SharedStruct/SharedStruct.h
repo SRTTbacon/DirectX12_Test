@@ -19,7 +19,7 @@ struct Vertex
     static const D3D12_INPUT_LAYOUT_DESC InputLayout;
 
 private:
-    static const int InputElementCount = 6;
+    static const int InputElementCount = 5;
     static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
 };
 

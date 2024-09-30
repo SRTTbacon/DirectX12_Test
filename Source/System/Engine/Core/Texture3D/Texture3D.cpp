@@ -1,4 +1,4 @@
-#include "Texture2D.h"
+#include "Texture3D.h"
 #include "..\\..\\Engine.h"
 #include <DirectXTex.h>
 
@@ -27,29 +27,29 @@ static std::wstring FileExtension(const std::wstring& path)
 	return path.substr(idx + 1, path.length() - idx - 1);
 }
 
-Texture2D::Texture2D(std::string path)
+Texture3D::Texture3D(std::string path)
 {
 	m_IsValid = Load(path);
 }
 
-Texture2D::Texture2D(std::wstring path)
+Texture3D::Texture3D(std::wstring path)
 {
 	m_IsValid = Load(path);
 }
 
-Texture2D::Texture2D(ID3D12Resource* buffer)
+Texture3D::Texture3D(ID3D12Resource* buffer)
 {
 	m_pResource = buffer;
 	m_IsValid = m_pResource != nullptr;
 }
 
-bool Texture2D::Load(std::string& path)
+bool Texture3D::Load(std::string& path)
 {
 	auto wpath = GetWideString(path);
 	return Load(wpath);
 }
 
-bool Texture2D::Load(std::wstring& path)
+bool Texture3D::Load(std::wstring& path)
 {
 	//WICテクスチャのロード
 	TexMetadata meta = {};
@@ -108,15 +108,15 @@ bool Texture2D::Load(std::wstring& path)
 	return true;
 }
 
-Texture2D* Texture2D::Get(std::string path)
+Texture3D* Texture3D::Get(std::string path)
 {
 	auto wpath = GetWideString(path);
 	return Get(wpath);
 }
 
-Texture2D* Texture2D::Get(std::wstring path)
+Texture3D* Texture3D::Get(std::wstring path)
 {
-	auto tex = new Texture2D(path);
+	auto tex = new Texture3D(path);
 	if (!tex->IsValid())
 	{
 		return GetWhite(); // 読み込みに失敗した時は白単色テクスチャを返す
@@ -124,7 +124,7 @@ Texture2D* Texture2D::Get(std::wstring path)
 	return tex;
 }
 
-Texture2D* Texture2D::GetWhite()
+Texture3D* Texture3D::GetWhite()
 {
 	ID3D12Resource* buff = GetDefaultResource(4, 4);
 
@@ -137,10 +137,10 @@ Texture2D* Texture2D::GetWhite()
 		return nullptr;
 	}
 
-	return new Texture2D(buff);;
+	return new Texture3D(buff);;
 }
 
-ID3D12Resource* Texture2D::GetDefaultResource(size_t width, size_t height)
+ID3D12Resource* Texture3D::GetDefaultResource(size_t width, size_t height)
 {
 	auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, (UINT)width, (UINT)height);
 	auto texHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
@@ -161,17 +161,17 @@ ID3D12Resource* Texture2D::GetDefaultResource(size_t width, size_t height)
 	return buff;
 }
 
-bool Texture2D::IsValid() const
+bool Texture3D::IsValid() const
 {
 	return m_IsValid;
 }
 
-ID3D12Resource* Texture2D::Resource()
+ID3D12Resource* Texture3D::Resource()
 {
 	return m_pResource.Get();
 }
 
-D3D12_SHADER_RESOURCE_VIEW_DESC Texture2D::ViewDesc()
+D3D12_SHADER_RESOURCE_VIEW_DESC Texture3D::ViewDesc()
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
 	desc.Format = m_pResource->GetDesc().Format;

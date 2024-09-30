@@ -13,7 +13,6 @@ struct VSInput
 	float3 pos : POSITION;
 	float3 normal : NORMAL;
 	float2 uv : TEXCOORD;
-	float3 tangent : TANGENT;
 	uint4 boneIndices : BLENDINDICES; // ボーンインデックス
 	float4 weights : BLENDWEIGHT; // ボーンウェイト
 };

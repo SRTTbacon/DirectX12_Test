@@ -1,5 +1,5 @@
 #include "DescriptorHeap.h"
-#include "..\\Texture2D\\\Texture2D.h"
+#include "..\\Texture3D\\\Texture3D.h"
 #include <d3dx12.h>
 #include "..\\..\\Engine.h"
 
@@ -56,6 +56,7 @@ DescriptorHandle* DescriptorHeap::Register(Texture2D* texture)
 
 	pHandle->HandleCPU = handleCPU;
 	pHandle->HandleGPU = handleGPU;
+	pHandle->UsedCount++;
 
 	auto device = g_Engine->Device();
 	auto resource = texture->Resource();

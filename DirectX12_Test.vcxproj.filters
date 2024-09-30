@@ -38,9 +38,6 @@
     <Filter Include="Source\System\Engine\Core\FBXLoader">
       <UniqueIdentifier>{ed14b026-4a47-4ca8-a231-446894e50b3b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\System\Engine\Core\Texture2D">
-      <UniqueIdentifier>{6f838cad-3e31-4c99-a8da-5b59e6ba6ece}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\System\Engine\Core\PipelineState">
       <UniqueIdentifier>{babe43d5-8dea-4781-bebf-23fe518bac65}</UniqueIdentifier>
     </Filter>
@@ -61,6 +58,12 @@
     </Filter>
     <Filter Include="Source\System\Engine\Input">
       <UniqueIdentifier>{7a1041b1-c7b6-45fa-b54f-1b428f48bee7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Texture2D">
+      <UniqueIdentifier>{5da70006-5b0a-4d1e-b683-c7dfaa3aa1f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\Texture3D">
+      <UniqueIdentifier>{6f838cad-3e31-4c99-a8da-5b59e6ba6ece}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -97,8 +100,8 @@
     <ClCompile Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.cpp">
       <Filter>Source\System\Engine\Core\DescriptorHeap</Filter>
     </ClCompile>
-    <ClCompile Include="Source\System\Engine\Core\Texture2D\Texture2D.cpp">
-      <Filter>Source\System\Engine\Core\Texture2D</Filter>
+    <ClCompile Include="Source\System\Engine\Core\Texture2D\Texture3D.cpp">
+      <Filter>Source\System\Engine\Core\Texture3D</Filter>
     </ClCompile>
     <ClCompile Include="Source\System\Engine\Model\Model.cpp">
       <Filter>Source\System\Engine\Model</Filter>
@@ -108,6 +111,9 @@
     </ClCompile>
     <ClCompile Include="Source\System\Engine\Input\Input.cpp">
       <Filter>Source\System\Engine\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="System\Engine\Texture2D\Texture2D.cpp">
+      <Filter>Source\System\Engine\Texture2D</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -144,8 +150,8 @@
     <ClInclude Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.h">
       <Filter>Source\System\Engine\Core\DescriptorHeap</Filter>
     </ClInclude>
-    <ClInclude Include="Source\System\Engine\Core\Texture2D\Texture2D.h">
-      <Filter>Source\System\Engine\Core\Texture2D</Filter>
+    <ClInclude Include="Source\System\Engine\Core\Texture2D\Texture3D.h">
+      <Filter>Source\System\Engine\Core\Texture3D</Filter>
     </ClInclude>
     <ClInclude Include="Source\System\Engine\Model\Model.h">
       <Filter>Source\System\Engine\Model</Filter>
@@ -157,7 +163,10 @@
       <Filter>Source\System\Engine\Input</Filter>
     </ClInclude>
     <ClInclude Include="Source\Scene\Scene\Scene.h">
-      <Filter>Source\System</Filter>
+      <Filter>Source\Scene\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="System\Engine\Texture2D\Texture2D.h">
+      <Filter>Source\System\Engine\Texture2D</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

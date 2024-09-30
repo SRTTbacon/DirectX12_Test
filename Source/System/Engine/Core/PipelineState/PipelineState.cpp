@@ -33,8 +33,6 @@ void PipelineState::CreatePipelineState(RootSignature* pRootSignature) {
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = Vertex::InputLayout;
     psoDesc.pRootSignature = pRootSignature->Get(); // Root Signature‚ðŽw’è
-    //psoDesc.VS = { vertexShader->GetBufferPointer(), vertexShader->GetBufferSize() };
-    //psoDesc.PS = { pixelShader->GetBufferPointer(), pixelShader->GetBufferSize() };
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);

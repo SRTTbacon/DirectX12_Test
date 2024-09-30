@@ -29,11 +29,12 @@
     <ClCompile Include="Source\System\Engine\Core\PipelineState\PipelineState.cpp" />
     <ClCompile Include="Source\System\Engine\Core\RootSignature\RootSignature.cpp" />
     <ClCompile Include="Source\System\Engine\Core\SharedStruct\SharedStruct.cpp" />
-    <ClCompile Include="Source\System\Engine\Core\Texture2D\Texture2D.cpp" />
+    <ClCompile Include="Source\System\Engine\Core\Texture2D\Texture3D.cpp" />
     <ClCompile Include="Source\System\Engine\Core\VertexBuffer\VertexBuffer.cpp" />
     <ClCompile Include="Source\System\Engine\Input\Input.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Model.cpp" />
     <ClCompile Include="Source\System\Main\Main.cpp" />
+    <ClCompile Include="System\Engine\Texture2D\Texture2D.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Scene\Scene\Scene.h" />
@@ -47,11 +48,12 @@
     <ClInclude Include="Source\System\Engine\Core\PipelineState\PipelineState.h" />
     <ClInclude Include="Source\System\Engine\Core\RootSignature\RootSignature.h" />
     <ClInclude Include="Source\System\Engine\Core\SharedStruct\SharedStruct.h" />
-    <ClInclude Include="Source\System\Engine\Core\Texture2D\Texture2D.h" />
+    <ClInclude Include="Source\System\Engine\Core\Texture2D\Texture3D.h" />
     <ClInclude Include="Source\System\Engine\Core\VertexBuffer\VertexBuffer.h" />
     <ClInclude Include="Source\System\Engine\Input\Input.h" />
     <ClInclude Include="Source\System\Engine\Model\Model.h" />
     <ClInclude Include="Source\System\Main\Main.h" />
+    <ClInclude Include="System\Engine\Texture2D\Texture2D.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Source\System\Shader\SimplePS.hlsl">

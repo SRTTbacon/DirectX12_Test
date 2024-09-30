@@ -8,7 +8,7 @@
 #include "..\\\Core\\IndexBuffer\\IndexBuffer.h"
 #include "..\\Core\\FBXLoader\\FBXLoader.h"
 #include "..\\Core\\DescriptorHeap\\DescriptorHeap.h"
-#include "..\\Core\\Texture2D\\Texture2D.h"
+#include "..\\Core\\Texture3D\\Texture3D.h"
 
 #include "..\\Camera\\Camera.h"
 

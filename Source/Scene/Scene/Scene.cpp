@@ -21,10 +21,8 @@ bool Scene::Init()
 	m_camera.SetFov(45.0f);
 
 	m_model1.Initialize(modelFile1, &m_camera, true);
-	m_model2.Initialize(modelFile2, &m_camera, true);
 
 	m_model1.SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f));
-	m_model2.SetPosition(XMFLOAT3(-20.0f, 0.0f, 0.0f));
 
 	printf("ÉVÅ[ÉìÇÃèâä˙âªÇ…ê¨å˜\n");
 	return true;
@@ -49,13 +47,11 @@ void Scene::Update()
 	m_camera.Update();
 
 	m_model1.Update();
-	m_model2.Update();
 }
 
 void Scene::Draw()
 {
 	m_model1.Draw();
-	m_model2.Draw();
 }
 
 Scene::Scene()
