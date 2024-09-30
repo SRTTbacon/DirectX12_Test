@@ -11,6 +11,7 @@ class DescriptorHandle
 public:
 	D3D12_CPU_DESCRIPTOR_HANDLE HandleCPU;
 	D3D12_GPU_DESCRIPTOR_HANDLE HandleGPU;
+	BYTE UseCount;
 };
 
 class DescriptorHeap
@@ -26,3 +27,5 @@ private:
 	ComPtr<ID3D12DescriptorHeap> m_pHeap = nullptr; // ディスクリプタヒープ本体
 	std::vector<DescriptorHandle*> m_pHandles; // 登録されているハンドル
 };
+
+static std::vector<DescriptorHandle*> g_materials;	//テクスチャ用のハンドル一覧

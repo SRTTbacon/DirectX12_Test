@@ -14,9 +14,9 @@ public:
 	Scene();
 
 private:
-	Model m_model1;
-	Model m_model2;
 	Camera m_camera;
+
+	Model m_model1;
 };
 
 extern Scene* g_Scene;

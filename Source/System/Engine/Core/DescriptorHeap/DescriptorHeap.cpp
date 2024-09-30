@@ -56,6 +56,7 @@ DescriptorHandle* DescriptorHeap::Register(Texture2D* texture)
 
 	pHandle->HandleCPU = handleCPU;
 	pHandle->HandleGPU = handleGPU;
+	pHandle->UseCount = 1;
 
 	auto device = g_Engine->Device();
 	auto resource = texture->Resource();

@@ -329,15 +329,17 @@ void Engine::BeginRender()
 void Engine::WaitRender()
 {
 	//描画終了待ち
-	const UINT64 fenceValue = m_fenceValue[m_CurrentBackBufferIndex];
-	m_pQueue->Signal(m_pFence.Get(), fenceValue);
-	m_fenceValue[m_CurrentBackBufferIndex]++;
+	const UINT64 currentFanceValue = m_fenceValue[m_CurrentBackBufferIndex];
+	m_pQueue->Signal(m_pFence.Get(), currentFanceValue);
+
+	// バックバッファ番号更新
+	m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
 	// 次のフレームの描画準備がまだであれば待機する.
-	if (m_pFence->GetCompletedValue() < fenceValue)
+	if (m_pFence->GetCompletedValue() < currentFanceValue)
 	{
 		// 完了時にイベントを設定.
-		auto hr = m_pFence->SetEventOnCompletion(fenceValue, m_fenceEvent);
+		auto hr = m_pFence->SetEventOnCompletion(currentFanceValue, m_fenceEvent);
 		if (FAILED(hr))
 		{
 			return;
@@ -348,6 +350,8 @@ void Engine::WaitRender()
 		{
 			return;
 		}
+
+		m_fenceValue[m_CurrentBackBufferIndex] = currentFanceValue + 1;
 	}
 }
 
@@ -365,13 +369,12 @@ void Engine::EndRender()
 	m_pQueue->ExecuteCommandLists(1, ppCmdLists);
 
 	// スワップチェーンを切り替え
-	m_pSwapChain->Present(1, 0);
+	m_pSwapChain->Present(0, 0);
 
 	// 描画完了を待つ
 	WaitRender();
 
-	// バックバッファ番号更新
-	m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+	//m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 }
 
 bool Engine::GetKeyState(UINT key)

@@ -9,8 +9,8 @@ LARGE_INTEGER str;
 std::list <LONGLONG> strTime;
 std::list <LARGE_INTEGER> mTimes;
 LONGLONG strTime_sum = 0;
-LONGLONG oldCount;
-LONGLONG freq;
+LONGLONG oldCount = 0;
+LONGLONG freq = 0;
 
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -82,7 +82,7 @@ static void InitWindow(const TCHAR* appName)
 }
 
 //#include <time.h>
-double GetFPS()
+static double GetFPS()
 {
 	double fps_result;
 	LARGE_INTEGER str;

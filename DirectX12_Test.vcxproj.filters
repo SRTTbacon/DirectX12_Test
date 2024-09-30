@@ -26,17 +26,8 @@
     <Filter Include="Source\System\Engine\Core">
       <UniqueIdentifier>{9409088e-2705-4e34-8f4e-f813089b84e0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\System\Engine\Core\DescriptorHeap">
-      <UniqueIdentifier>{e425e804-3d48-49ca-94eb-b9f446afdd8e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\System\Engine\Core\ConstantBuffer">
       <UniqueIdentifier>{24fdc770-daad-42db-8655-8d8a95b2f051}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\System\Engine\Core\IndexBuffer">
-      <UniqueIdentifier>{793340d0-973e-4558-853e-3bf0d7e989c3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\System\Engine\Core\FBXLoader">
-      <UniqueIdentifier>{ed14b026-4a47-4ca8-a231-446894e50b3b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\System\Engine\Core\Texture2D">
       <UniqueIdentifier>{6f838cad-3e31-4c99-a8da-5b59e6ba6ece}</UniqueIdentifier>
@@ -47,20 +38,23 @@
     <Filter Include="Source\System\Engine\Core\RootSignature">
       <UniqueIdentifier>{873221dd-94a2-43cc-ad21-ababc24a55b8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\System\Engine\Core\SharedStruct">
-      <UniqueIdentifier>{a11ca500-13d0-4c66-ba09-685d4888ca99}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\System\Engine\Core\VertexBuffer">
       <UniqueIdentifier>{bba89e76-72a1-4f44-9776-edd24a4009f9}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\System\Engine\Model">
       <UniqueIdentifier>{6367e740-71c3-4ec9-9a09-f4e7c493866b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\System\Engine\Camera">
-      <UniqueIdentifier>{308858fb-c793-48bb-bbe4-363c803cce04}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\System\Engine\Input">
       <UniqueIdentifier>{7a1041b1-c7b6-45fa-b54f-1b428f48bee7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Camera">
+      <UniqueIdentifier>{3e35cd8c-a153-425f-a3b1-73a3a136d8df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\SharedStruct">
+      <UniqueIdentifier>{5c105bb1-75a6-4598-abf9-cf229049dd8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\DescriptorHeap">
+      <UniqueIdentifier>{a4392a85-ce02-403d-a361-a4ab6bad89c2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -82,20 +76,8 @@
     <ClCompile Include="Source\System\Engine\Core\RootSignature\RootSignature.cpp">
       <Filter>Source\System\Engine\Core\RootSignature</Filter>
     </ClCompile>
-    <ClCompile Include="Source\System\Engine\Core\SharedStruct\SharedStruct.cpp">
-      <Filter>Source\System\Engine\Core\SharedStruct</Filter>
-    </ClCompile>
     <ClCompile Include="Source\System\Engine\Core\PipelineState\PipelineState.cpp">
       <Filter>Source\System\Engine\Core\PipelineState</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\System\Engine\Core\IndexBuffer\IndexBuffer.cpp">
-      <Filter>Source\System\Engine\Core\IndexBuffer</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\System\Engine\Core\FBXLoader\FBXLoader.cpp">
-      <Filter>Source\System\Engine\Core\FBXLoader</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.cpp">
-      <Filter>Source\System\Engine\Core\DescriptorHeap</Filter>
     </ClCompile>
     <ClCompile Include="Source\System\Engine\Core\Texture2D\Texture2D.cpp">
       <Filter>Source\System\Engine\Core\Texture2D</Filter>
@@ -103,11 +85,17 @@
     <ClCompile Include="Source\System\Engine\Model\Model.cpp">
       <Filter>Source\System\Engine\Model</Filter>
     </ClCompile>
-    <ClCompile Include="Source\System\Engine\Camera\Camera.cpp">
-      <Filter>Source\System\Engine\Camera</Filter>
-    </ClCompile>
     <ClCompile Include="Source\System\Engine\Input\Input.cpp">
       <Filter>Source\System\Engine\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Camera\Camera.cpp">
+      <Filter>Source\System\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\SharedStruct\SharedStruct.cpp">
+      <Filter>Source\System\Engine\Core\SharedStruct</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.cpp">
+      <Filter>Source\System\Engine\Core\DescriptorHeap</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -120,6 +108,9 @@
     <ClInclude Include="Source\System\Engine\Engine.h">
       <Filter>Source\System\Engine</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Scene\Scene\Scene.h">
+      <Filter>Source\Scene\Scene</Filter>
+    </ClInclude>
     <ClInclude Include="Source\System\Engine\Core\VertexBuffer\VertexBuffer.h">
       <Filter>Source\System\Engine\Core\VertexBuffer</Filter>
     </ClInclude>
@@ -129,20 +120,8 @@
     <ClInclude Include="Source\System\Engine\Core\RootSignature\RootSignature.h">
       <Filter>Source\System\Engine\Core\RootSignature</Filter>
     </ClInclude>
-    <ClInclude Include="Source\System\Engine\Core\SharedStruct\SharedStruct.h">
-      <Filter>Source\System\Engine\Core\SharedStruct</Filter>
-    </ClInclude>
     <ClInclude Include="Source\System\Engine\Core\PipelineState\PipelineState.h">
       <Filter>Source\System\Engine\Core\PipelineState</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\System\Engine\Core\IndexBuffer\IndexBuffer.h">
-      <Filter>Source\System\Engine\Core\IndexBuffer</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\System\Engine\Core\FBXLoader\FBXLoader.h">
-      <Filter>Source\System\Engine\Core\FBXLoader</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.h">
-      <Filter>Source\System\Engine\Core\DescriptorHeap</Filter>
     </ClInclude>
     <ClInclude Include="Source\System\Engine\Core\Texture2D\Texture2D.h">
       <Filter>Source\System\Engine\Core\Texture2D</Filter>
@@ -150,14 +129,17 @@
     <ClInclude Include="Source\System\Engine\Model\Model.h">
       <Filter>Source\System\Engine\Model</Filter>
     </ClInclude>
-    <ClInclude Include="Source\System\Engine\Camera\Camera.h">
-      <Filter>Source\System\Engine\Camera</Filter>
-    </ClInclude>
     <ClInclude Include="Source\System\Engine\Input\Input.h">
       <Filter>Source\System\Engine\Input</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Scene\Scene\Scene.h">
-      <Filter>Source\System</Filter>
+    <ClInclude Include="Source\System\Engine\Camera\Camera.h">
+      <Filter>Source\System\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\SharedStruct\SharedStruct.h">
+      <Filter>Source\System\Engine\Core\SharedStruct</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.h">
+      <Filter>Source\System\Engine\Core\DescriptorHeap</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

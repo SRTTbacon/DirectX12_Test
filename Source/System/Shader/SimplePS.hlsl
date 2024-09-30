@@ -1,8 +1,7 @@
 struct VSOutput
 {
-	float4 svpos : SV_POSITION;
-	float4 color : COLOR;
-	//float3 normal : NORMAL;
+	float4 svpos : SV_POSITION; // 頂点シェーダーから来た座標
+	float4 color : COLOR; // 頂点シェーダーから来た色
 	float2 uv : TEXCOORD;
 };
 

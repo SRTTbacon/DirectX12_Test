@@ -1,19 +1,12 @@
 #pragma once
+#include <d3d12.h>
 #include "..\\..\\..\\ComPtr.h"
-#include "..\\..\\Engine.h"
 
-struct ID3D12RootSignature;
-
-class RootSignature
-{
+class RootSignature {
 public:
-	RootSignature(ID3D12Device* device);
-	~RootSignature();
-
-	ID3D12RootSignature* Get() { return m_rootSignature.Get(); }
-	void Create();
+    RootSignature(ID3D12Device* device);
+    ID3D12RootSignature* GetRootSignature() const;
 
 private:
-	ComPtr<ID3D12Device> m_device;
-	ComPtr<ID3D12RootSignature> m_rootSignature;
+    ComPtr<ID3D12RootSignature> rootSignature;
 };

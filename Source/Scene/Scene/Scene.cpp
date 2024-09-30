@@ -13,19 +13,11 @@ Scene* g_Scene;
 
 using namespace DirectX;
 
-const wchar_t* modelFile1 = L"Resource/Model/FBX_Moe.fbx";
-const wchar_t* modelFile2 = L"Resource/Model/FBX_Moe2.fbx";
+const std::string modelFile1 = "Resource/Model/FBX_Moe.fbx";
+const std::string modelFile2 = "Resource/Model/FBX_Moe2.fbx";
 
 bool Scene::Init()
 {
-	m_camera.SetFov(45.0f);
-
-	m_model1.Initialize(modelFile1, &m_camera, true);
-	m_model2.Initialize(modelFile2, &m_camera, true);
-
-	m_model1.SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f));
-	m_model2.SetPosition(XMFLOAT3(-20.0f, 0.0f, 0.0f));
-
 	printf("ƒV[ƒ“‚Ì‰Šú‰»‚É¬Œ÷\n");
 	return true;
 }
@@ -48,16 +40,33 @@ void Scene::Update()
 
 	m_camera.Update();
 
+	if (g_Engine->GetKeyState(DIK_X) && g_Engine->GetKeyState(DIK_J)) {
+		m_model1.m_scale.x -= 0.005f;
+	}
+	if (g_Engine->GetKeyState(DIK_X) && g_Engine->GetKeyState(DIK_L)) {
+		m_model1.m_scale.x += 0.005f;
+	}
+	if (g_Engine->GetKeyState(DIK_R) && g_Engine->GetKeyState(DIK_J)) {
+		m_model1.m_rotation.y -= 0.5f;
+	}
+	if (g_Engine->GetKeyState(DIK_R) && g_Engine->GetKeyState(DIK_L)) {
+		m_model1.m_rotation.y += 0.5f;
+	}
+	if (g_Engine->GetKeyState(DIK_P) && g_Engine->GetKeyState(DIK_J)) {
+		m_model1.m_position.x -= 0.005f;
+	}
+	if (g_Engine->GetKeyState(DIK_P) && g_Engine->GetKeyState(DIK_L)) {
+		m_model1.m_position.x += 0.005f;
+	}
+
 	m_model1.Update();
-	m_model2.Update();
 }
 
 void Scene::Draw()
 {
-	m_model1.Draw();
-	m_model2.Draw();
+	m_model1.Draw(g_Engine->CommandList());
 }
 
-Scene::Scene()
+Scene::Scene() : m_model1(Model(g_Engine->Device(), g_Engine->CommandList(), modelFile1, &m_camera))
 {
 }

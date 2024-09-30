@@ -5,83 +5,81 @@ using namespace DirectX;
 void Camera::SetFov(float fovDegree)
 {
 	m_fov = XMConvertToRadians(fovDegree);
-	m_constantBuffer->Proj = XMMatrixPerspectiveFovRH(m_fov, 1920.0f / 1080.0f, 0.1f, 1000.0f);
 }
 
 void Camera::Update()
 {
-	/*if (g_Engine->GetKeyState(DIK_LEFT)) {
-		m_eyePos.x -= 0.1f;
-	}
-	if (g_Engine->GetKeyState(DIK_RIGHT)) {
-		m_eyePos.x += 0.1f;
-	}
-	XMVECTOR eyePos = XMVectorSet(m_eyePos.x, m_eyePos.y, m_eyePos.z, 0.0f);
-	XMVECTOR targetPos = XMVectorSet(m_targetPos.x, m_targetPos.y, m_targetPos.z, 0.0f);
-	XMVECTOR upFoward = XMVectorSet(m_upFoward.x, m_upFoward.y, m_upFoward.z, 0.0f);
-	m_constantBuffer->View = XMMatrixLookAtRH(eyePos, targetPos, upFoward);*/
-    // Get Datas
-    XMMATRIX& viewMatrix = m_constantBuffer->View;
+    // カメラの前方ベクトルを計算
+    XMVECTOR forward = XMVector3Normalize(m_targetPos - m_eyePos);
 
-    //Move Up and bottom
+    // カメラの右方向ベクトルを計算
+    XMVECTOR right = XMVector3Normalize(XMVector3Cross(m_upFoward, forward));
+
+    const float cameraSpeed = 0.01f;
+    const float rotationSpeed = 0.01f;
+
     if (g_Engine->GetKeyState(DIK_SPACE)) {
-        viewMatrix *= XMMatrixTranslation(0.0f, -0.1f, 0.0f);
+        m_eyePos = XMVectorAdd(m_eyePos, XMVectorScale(m_upFoward, cameraSpeed));
+        m_targetPos = XMVectorAdd(m_targetPos, XMVectorScale(m_upFoward, cameraSpeed));
     }
     else if (g_Engine->GetKeyState(DIK_LSHIFT)) {
-        viewMatrix *= XMMatrixTranslation(0.0f, 0.1f, 0.0f);
+        m_eyePos = XMVectorSubtract(m_eyePos, XMVectorScale(m_upFoward, cameraSpeed));
+        m_targetPos = XMVectorSubtract(m_targetPos, XMVectorScale(m_upFoward, cameraSpeed));
     }
 
     //Move Right and Left
     if (g_Engine->GetKeyState(DIK_A)) {
-        viewMatrix *= XMMatrixTranslation(0.1f, 0.0f, 0.0f);
+        m_eyePos = XMVectorAdd(m_eyePos, XMVectorScale(right, cameraSpeed));
+        m_targetPos = XMVectorAdd(m_targetPos, XMVectorScale(right, cameraSpeed));
     }
     else if (g_Engine->GetKeyState(DIK_D)) {
-        viewMatrix *= XMMatrixTranslation(-0.1f, 0.0f, 0.0f);
+        m_eyePos = XMVectorSubtract(m_eyePos, XMVectorScale(right, cameraSpeed));
+        m_targetPos = XMVectorSubtract(m_targetPos, XMVectorScale(right, cameraSpeed));
     }
 
     //Move forward/Backward
     if (g_Engine->GetKeyState(DIK_S)) {
-        viewMatrix *= XMMatrixTranslation(0.0f, 0.0f, -0.1f);
+        m_eyePos = XMVectorSubtract(m_eyePos, XMVectorScale(forward, cameraSpeed));
+        m_targetPos = XMVectorSubtract(m_targetPos, XMVectorScale(forward, cameraSpeed));
     }
     else if (g_Engine->GetKeyState(DIK_W)) {
-        viewMatrix *= XMMatrixTranslation(0.0f, 0.0f, 0.1f);
+        m_eyePos = XMVectorAdd(m_eyePos, XMVectorScale(forward, cameraSpeed));
+        m_targetPos = XMVectorAdd(m_targetPos, XMVectorScale(forward, cameraSpeed));
     }
 
     //Rotate Y axis
     if (g_Engine->GetKeyState(DIK_RIGHT)) {
-        viewMatrix *= XMMatrixRotationY(0.01f);
+        m_yaw -= rotationSpeed;
     }
     if (g_Engine->GetKeyState(DIK_LEFT)) {
-        viewMatrix *= XMMatrixRotationY(-0.01f);
+        m_yaw += rotationSpeed;
     }
 
     //Rotate X axis
     if (g_Engine->GetKeyState(DIK_DOWN)) {
-        viewMatrix *= XMMatrixRotationX(0.01f);
+        m_pitch -= rotationSpeed;
     }
     if (g_Engine->GetKeyState(DIK_UP)) {
-        viewMatrix *= XMMatrixRotationX(-0.01f);
+        m_pitch += rotationSpeed;
     }
 
-    //Rotate Z axis
-    if (g_Engine->GetKeyState(DIK_X)) {
-        viewMatrix *= XMMatrixRotationZ(0.01f);
-    }
-    if (g_Engine->GetKeyState(DIK_Z)) {
-        viewMatrix *= XMMatrixRotationZ(-0.01f);
-    }
+    m_pitch = max(-XM_PIDIV2 + 0.01f, min(XM_PIDIV2 - 0.01f, m_pitch));
+
+    XMVECTOR direction;
+    direction.m128_f32[0] = cosf(m_pitch) * sinf(m_yaw);
+    direction.m128_f32[1] = sinf(m_pitch);
+    direction.m128_f32[2] = cosf(m_pitch) * cosf(m_yaw);
+
+    m_targetPos = XMVectorAdd(m_eyePos, XMVector3Normalize(direction));
 }
 
 Camera::Camera()
-	: m_eyePos(XMFLOAT3(0.0f, 20.0f, 25.0f))
-	, m_targetPos(XMFLOAT3(0.0f, 8.0f, 0.0f))
-	, m_upFoward(XMFLOAT3(0.0f, 1.0f, 0.0f))
-	, m_fov(XMConvertToRadians(40.0f))
+	: m_eyePos(XMVectorSet(0.0f, 1.0f, -3.0f, 0.0f))
+	, m_targetPos(XMVectorSet(0.0f, 0.0f, 0.75f, 0.0f))
+	, m_upFoward(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f))
+	, m_fov(XMConvertToRadians(35.0f))
+    , m_aspect(static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT))
+    , m_yaw(0.0f)
+    , m_pitch(0.0f)
 {
-	m_constantBuffer = new Transform();
-	// 変換行列の登録
-	m_constantBuffer->World = XMMatrixIdentity();
-	m_constantBuffer->Proj = XMMatrixPerspectiveFovRH(m_fov, 1920.0f / 1080.0f, 0.1f, 1000.0f);
-    m_constantBuffer->View = XMMatrixLookAtRH(XMVectorSet(m_eyePos.x, m_eyePos.y, m_eyePos.z, 0.0f),
-        XMVectorSet(m_targetPos.x, m_targetPos.y, m_targetPos.z, 0.0f), XMVectorSet(m_upFoward.x, m_upFoward.y, m_upFoward.z, 0.0f));
 }

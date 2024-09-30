@@ -6,12 +6,14 @@
 class DescriptorHeap;
 class DescriptorHandle;
 
+static std::vector<std::wstring> textures;
 class Texture2D
 {
 public:
 	static Texture2D* Get(std::string path); // stringで受け取ったパスからテクスチャを読み込む
 	static Texture2D* Get(std::wstring path); // wstringで受け取ったパスからテクスチャを読み込む
 	static Texture2D* GetWhite(); // 白の単色テクスチャを生成する
+	static int GetTextureIndex(std::string path);
 	bool IsValid() const; // 正常に読み込まれているかどうかを返す
 
 	ID3D12Resource* Resource(); // リソースを返す

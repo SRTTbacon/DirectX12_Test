@@ -1,13 +1,13 @@
 #include "Texture2D.h"
-#include "..\\..\\Engine.h"
 #include <DirectXTex.h>
+#include "..\\..\\Engine.h"
 
 #pragma comment(lib, "DirectXTex.lib")
 
 using namespace DirectX;
 
 // std::string(マルチバイト文字列)からstd::wstring(ワイド文字列)を得る。AssimpLoaderと同じものだけど、共用にするのがめんどくさかったので許してください
-static std::wstring GetWideString(const std::string& str)
+std::wstring GetWideString(const std::string& str)
 {
 	auto num1 = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, nullptr, 0);
 
@@ -54,20 +54,12 @@ bool Texture2D::Load(std::wstring& path)
 	//WICテクスチャのロード
 	TexMetadata meta = {};
 	ScratchImage scratch = {};
-	auto ext = FileExtension(path);
 
-	HRESULT hr = S_FALSE;
-	if (ext == L"png") // pngの時はWICFileを使う
-	{
-		LoadFromWICFile(path.c_str(), WIC_FLAGS_NONE, &meta, scratch);
-	}
-	else if (ext == L"tga") // tgaの時はTGAFileを使う
-	{
-		hr = LoadFromTGAFile(path.c_str(), &meta, scratch);
-	}
+	HRESULT hr = LoadFromWICFile(path.c_str(), WIC_FLAGS_NONE, &meta, scratch);
 
 	if (FAILED(hr))
 	{
+		printf("テクスチャの読み込みに失敗\n");
 		return false;
 	}
 
@@ -91,6 +83,7 @@ bool Texture2D::Load(std::wstring& path)
 
 	if (FAILED(hr))
 	{
+		printf("テクスチャの読み込みに失敗 Code = %1x\n", hr);
 		return false;
 	}
 
@@ -102,6 +95,7 @@ bool Texture2D::Load(std::wstring& path)
 	);
 	if (FAILED(hr))
 	{
+		printf("テクスチャの読み込みに失敗\n");
 		return false;
 	}
 
@@ -121,6 +115,7 @@ Texture2D* Texture2D::Get(std::wstring path)
 	{
 		return GetWhite(); // 読み込みに失敗した時は白単色テクスチャを返す
 	}
+	textures.push_back(path);
 	return tex;
 }
 
@@ -138,6 +133,16 @@ Texture2D* Texture2D::GetWhite()
 	}
 
 	return new Texture2D(buff);;
+}
+
+int Texture2D::GetTextureIndex(std::string path)
+{
+	for (UINT i = 0; i < textures.size(); i++) {
+		if (textures[i] == GetWideString(path)) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 ID3D12Resource* Texture2D::GetDefaultResource(size_t width, size_t height)

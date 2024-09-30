@@ -6,42 +6,61 @@
 #include <vector>
 #include "..\\ComPtr.h"
 #include "Input\\Input.h"
+#include <DirectXMath.h>
 
 #pragma comment(lib, "d3d12.lib") // d3d12ライブラリをリンクする
 #pragma comment(lib, "dxgi.lib") // dxgiライブラリをリンクする
 
+constexpr int FRAME_BUFFER_COUNT = 3;
+
 class Engine
 {
 public:
-	enum { FRAME_BUFFER_COUNT = 2 }; // ダブルバッファリングするので2
+	//エンジン初期化
+	bool Init(HWND hwnd, UINT windowWidth, UINT windowHeight);
 
-public:
-	bool Init(HWND hwnd, UINT windowWidth, UINT windowHeight); // エンジン初期化
+	//描画の開始処理
+	void BeginRender();
+	//描画の終了処理
+	void EndRender();
 
-	void BeginRender(); // 描画の開始処理
-	void EndRender(); // 描画の終了処理
-
-	bool GetKeyState(UINT key);
-	BYTE GetMouseState(const BYTE keyCode) const;
-	BYTE GetMouseStateSync(const BYTE keyCode);
-
+	//エンジンの更新
 	void Update();
 
-public: // 外からアクセスしたいのでGetterとして公開するもの
+public: //ゲッター関数
+	//エンジンのデバイス
 	ID3D12Device6* Device();
+
+	//コマンドリスト
 	ID3D12GraphicsCommandList* CommandList();
+
+	//トリプルバッファリングの現在のインデックス
 	UINT CurrentBackBufferIndex() const;
 
-private: // DirectX12初期化に使う関数たち
-	bool CreateDevice(); // デバイスを生成
-	bool CreateCommandQueue(); // コマンドキューを生成
-	bool CreateSwapChain(); // スワップチェインを生成
-	bool CreateCommandList(); // コマンドリストとコマンドアロケーターを生成
-	bool CreateFence(); // フェンスを生成
-	void CreateViewPort(); // ビューポートを生成
-	void CreateScissorRect(); // シザー矩形を生成
+	//マウスの状態を取得
+	BYTE GetMouseState(const BYTE keyCode) const;
+	//マウスのボタン状態を取得 (押した瞬間のみ)
+	BYTE GetMouseStateSync(const BYTE keyCode);
+	//キーの状態を取得
+	bool GetKeyState(UINT key);
 
-private: // 描画に使うDirectX12のオブジェクトたち
+private: // DirectX12の初期化
+	//デバイスを作成
+	bool CreateDevice();
+	//コマンドキューを生成
+	bool CreateCommandQueue();
+	//スワップチェインを生成 (トリプルバッファリング : 画面のちらつきを抑える)
+	bool CreateSwapChain();
+	//コマンドリストとコマンドアロケーターを生成
+	bool CreateCommandList();
+	//フェンスを生成
+	bool CreateFence();
+	//ビューポートを生成
+	void CreateViewPort();
+	//シザー矩形を生成
+	void CreateScissorRect();
+
+private: // 描画に使うDirectX12のオブジェクト
 	HWND m_hWnd;
 	UINT m_FrameBufferWidth = 0;
 	UINT m_FrameBufferHeight = 0;
@@ -54,26 +73,38 @@ private: // 描画に使うDirectX12のオブジェクトたち
 	ComPtr<ID3D12GraphicsCommandList> m_pCommandList = nullptr; // コマンドリスト
 	HANDLE m_fenceEvent = nullptr; // フェンスで使うイベント
 	ComPtr<ID3D12Fence> m_pFence = nullptr; // フェンス
-	UINT64 m_fenceValue[FRAME_BUFFER_COUNT]; // フェンスの値（ダブルバッファリング用に2個）
+	UINT64 m_fenceValue[FRAME_BUFFER_COUNT]; // フェンスの値（トリプルバッファリング用に3個）
 	D3D12_VIEWPORT m_Viewport; // ビューポート
 	D3D12_RECT m_Scissor; // シザー矩形
-	Input* m_keyInput;
+	Input* m_keyInput;	//キー状態
 
-private: // 描画に使うオブジェクトとその生成関数たち
-	bool CreateRenderTarget(); // レンダーターゲットを生成
-	bool CreateDepthStencil(); // 深度ステンシルバッファを生成
+private: // 描画に使うオブジェクト
+	//レンダーターゲットを生成
+	bool CreateRenderTarget();
+	//深度ステンシルバッファを生成
+	bool CreateDepthStencil();
 
-	UINT m_RtvDescriptorSize = 0; // レンダーターゲットビューのディスクリプタサイズ
-	ComPtr<ID3D12DescriptorHeap> m_pRtvHeap = nullptr; // レンダーターゲットのディスクリプタヒープ
-	ComPtr<ID3D12Resource> m_pRenderTargets[FRAME_BUFFER_COUNT] = { nullptr }; // レンダーターゲット（ダブルバッファリングするので2個）
+	//レンダーターゲットビューのディスクリプタサイズ
+	UINT m_RtvDescriptorSize = 0;
+	//レンダーターゲットのディスクリプタヒープ
+	ComPtr<ID3D12DescriptorHeap> m_pRtvHeap = nullptr;
+	//レンダーターゲット（トリプルバッファリング用に3個）
+	ComPtr<ID3D12Resource> m_pRenderTargets[FRAME_BUFFER_COUNT] = { nullptr };
 
-	UINT m_DsvDescriptorSize = 0; // 深度ステンシルのディスクリプターサイズ
-	ComPtr<ID3D12DescriptorHeap> m_pDsvHeap = nullptr; // 深度ステンシルのディスクリプタヒープ
-	ComPtr<ID3D12Resource> m_pDepthStencilBuffer = nullptr; // 深度ステンシルバッファ（こっちは1つでいい）
+	//深度ステンシルのディスクリプターサイズ
+	UINT m_DsvDescriptorSize = 0;
+	//深度ステンシルのディスクリプタヒープ
+	ComPtr<ID3D12DescriptorHeap> m_pDsvHeap = nullptr;
+	//深度ステンシルバッファ
+	ComPtr<ID3D12Resource> m_pDepthStencilBuffer = nullptr;
 
 private: // 描画ループで使用するもの
-	ID3D12Resource* m_currentRenderTarget = nullptr; // 現在のフレームのレンダーターゲットを一時的に保存しておく関数
-	void WaitRender(); // 描画完了を待つ処理
+	//現在のフレームのレンダーターゲットを一時的に保存
+	ID3D12Resource* m_currentRenderTarget = nullptr;
+
+	//描画完了を待つ処理
+	void WaitRender();
 };
 
-extern Engine* g_Engine; // どこからでも参照したいのでグローバルにする
+//どこからでも参照するためグローバル変数
+extern Engine* g_Engine;

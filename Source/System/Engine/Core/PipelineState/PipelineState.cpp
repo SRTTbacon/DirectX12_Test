@@ -1,79 +1,78 @@
 #include "PipelineState.h"
-#include "..\\..\\Engine.h"
-#include <d3dx12.h>
 #include <d3dcompiler.h>
 
 #pragma comment(lib, "d3dcompiler.lib")
 
-PipelineState::PipelineState(ID3D12Device* device) {
-    m_pDevice = device;
-    m_bInited = false;
-}
-
-PipelineState::~PipelineState() {
-    // 自動的にリソースが解放されます
-}
-
-void PipelineState::SetVS(std::wstring filePath)
-{
-    vsFilePath = filePath;
-}
-
-void PipelineState::SetPS(std::wstring filePath)
-{
-    psFilePath = filePath;
-}
-
-void PipelineState::CreatePipelineState(RootSignature* pRootSignature) {
-    // シェーダーコンパイル
-    ID3DBlob* vertexShader = nullptr;
-    ID3DBlob* pixelShader = nullptr;
-
-    // パイプラインステートの設定
+PipelineState::PipelineState(ID3D12Device* device, ID3D12RootSignature* rootSignature) {
+    // パイプラインステートオブジェクトの作成
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.InputLayout = Vertex::InputLayout;
-    psoDesc.pRootSignature = pRootSignature->Get(); // Root Signatureを指定
-    //psoDesc.VS = { vertexShader->GetBufferPointer(), vertexShader->GetBufferSize() };
-    //psoDesc.PS = { pixelShader->GetBufferPointer(), pixelShader->GetBufferSize() };
+    ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+
+    // 入力レイアウトの定義
+    D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "BONEWEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "BONEIDS", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+    };
+
+    psoDesc.InputLayout = { inputLayout, _countof(inputLayout) };
+
+    if (!rootSignature) {
+        printf("RootSignatureが無効です。\n");
+        return; // エラーハンドリング
+    }
+
+    psoDesc.pRootSignature = rootSignature;
+
+    // シェーダーバイナリを設定
+    ComPtr<ID3DBlob> pVsBlob, pPsBlob;
+    HRESULT hr = D3DReadFileToBlob(L"x64/Debug/SimpleVS.cso", pVsBlob.GetAddressOf());
+    if (FAILED(hr) || !pVsBlob)
+    {
+        printf("頂点シェーダーの読み込みに失敗。エラーコード:%lx\n", hr);
+        return;
+    }
+    hr = D3DReadFileToBlob(L"x64/Debug/SimplePS.cso", pPsBlob.GetAddressOf());
+    if (FAILED(hr) || !pPsBlob)
+    {
+        printf("ピクセルシェーダーの読み込みに失敗。エラーコード:%lx\n", hr);
+        return;
+    }
+
+    psoDesc.VS = CD3DX12_SHADER_BYTECODE(pVsBlob.Get());
+    psoDesc.PS = CD3DX12_SHADER_BYTECODE(pPsBlob.Get());
+
+    // ラスタライザーステート（デフォルト）
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE; // カリングはなし
+
+    // ブレンドステート（デフォルト）
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+
+    // 深度・ステンシルステート（デフォルト）
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+
     psoDesc.SampleMask = UINT_MAX;
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    psoDesc.NumRenderTargets = 1; // Render Target の数
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // Render Target のフォーマット
-    psoDesc.SampleDesc.Count = 1; // MSAA サンプル数
-    psoDesc.SampleDesc.Quality = 0; // MSAA の品質
 
-    // 頂点シェーダー読み込み
-    auto hr = D3DReadFileToBlob(vsFilePath.c_str(), &vertexShader);
-    if (FAILED(hr))
-    {
-        printf("頂点シェーダーの読み込みに失敗\n");
-        return;
-    }
-    // ピクセルシェーダー読み込み
-    hr = D3DReadFileToBlob(psFilePath.c_str(), &pixelShader);
-    if (FAILED(hr))
-    {
-        printf("ピクセルシェーダーの読み込みに失敗\n");
-        return;
-    }
+    // レンダーターゲットの設定（1つのレンダーターゲット、RGBA8フォーマット）
+    psoDesc.NumRenderTargets = 1;
+    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-    psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader);
-    psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader);
+    // マルチサンプリングの設定
+    psoDesc.SampleDesc.Count = 1;
+    psoDesc.SampleDesc.Quality = 0;
 
-    // パイプラインステートオブジェクトを作成
-    hr = m_pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
+    // パイプラインステートの作成
+    hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pipelineState));
     if (FAILED(hr)) {
-        // エラーハンドリング
-        printf("シェーダーの作成に失敗%d\n", hr);
-        return;
+        printf("パイプラインステートの作成に失敗しました。エラーコード:%lx\n", hr);
     }
+}
 
-    // シェーダーを解放
-    if (vertexShader) vertexShader->Release();
-    if (pixelShader) pixelShader->Release();
-
-    m_bInited = true;
+ID3D12PipelineState* PipelineState::GetPipelineState() const {
+    return pipelineState.Get();
 }

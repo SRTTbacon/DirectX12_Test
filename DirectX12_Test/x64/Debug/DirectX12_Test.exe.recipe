@@ -2,15 +2,15 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>d:\Users\5231058\Desktop\C++Projects\DirectX12_Test\x64\Debug\DirectX12_Test.exe</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\DirectX12_Test.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles>
     <ContentFile>
-      <FullPath>d:\Users\5231058\Desktop\C++Projects\DirectX12_Test\x64\Debug\SimplePS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\SimplePS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>d:\Users\5231058\Desktop\C++Projects\DirectX12_Test\x64\Debug\SimpleVS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\SimpleVS.cso</FullPath>
     </ContentFile>
   </ContentFiles>
   <SatelliteDlls />

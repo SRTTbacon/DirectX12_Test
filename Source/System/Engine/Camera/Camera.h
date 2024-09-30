@@ -1,22 +1,21 @@
 #pragma once
 #include "..\\Engine.h"
-#include "..\\Core\\ConstantBuffer\\ConstantBuffer.h"
-#include <DirectXMath.h>
-#include "..\\Core\\SharedStruct\\SharedStruct.h"
+#include "..\\..\\Main\\Main.h"
 
 struct Camera
 {
-	Transform* m_constantBuffer;
-
-	DirectX::XMFLOAT3 m_eyePos;
-	DirectX::XMFLOAT3 m_targetPos;
-	DirectX::XMFLOAT3 m_upFoward;
+	DirectX::XMVECTOR m_eyePos;
+	DirectX::XMVECTOR m_targetPos;
+	DirectX::XMVECTOR m_upFoward;
 
 	float m_fov;
+	float m_aspect;
 
-	void SetFov(float fovDegree);
+	float m_yaw;
+	float m_pitch;
 
 	void Update();
+	void SetFov(float fovDegree);
 
 	Camera();
 };
