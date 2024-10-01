@@ -22,6 +22,10 @@ bool Scene::Init()
 	return true;
 }
 
+float x = 0.0f;
+float y = 0.0f;
+float z = 0.0f;
+
 void Scene::Update()
 {
 	/*for (size_t i = 0; i < meshes.size(); i++)
@@ -41,23 +45,25 @@ void Scene::Update()
 	m_camera.Update();
 
 	if (g_Engine->GetKeyState(DIK_X) && g_Engine->GetKeyState(DIK_J)) {
-		m_model1.m_scale.x -= 0.005f;
+		x -= 0.5f;
 	}
 	if (g_Engine->GetKeyState(DIK_X) && g_Engine->GetKeyState(DIK_L)) {
-		m_model1.m_scale.x += 0.005f;
+		x += 0.5f;
 	}
 	if (g_Engine->GetKeyState(DIK_R) && g_Engine->GetKeyState(DIK_J)) {
-		m_model1.m_rotation.y -= 0.5f;
+		y -= 0.5f;
 	}
 	if (g_Engine->GetKeyState(DIK_R) && g_Engine->GetKeyState(DIK_L)) {
-		m_model1.m_rotation.y += 0.5f;
+		y += 0.5f;
 	}
 	if (g_Engine->GetKeyState(DIK_P) && g_Engine->GetKeyState(DIK_J)) {
-		m_model1.m_position.x -= 0.005f;
+		z -= 0.5f;
 	}
 	if (g_Engine->GetKeyState(DIK_P) && g_Engine->GetKeyState(DIK_L)) {
-		m_model1.m_position.x += 0.005f;
+		z += 0.5f;
 	}
+	XMFLOAT3 a = { x, y, z };
+	m_model1.UpdateBoneRotation("Head", a);
 
 	m_model1.Update();
 }

@@ -55,34 +55,39 @@ void Model::LoadFBX(const std::string& fbxFile) {
     LoadBoneFamily(scene->mRootNode);
 
 
-    XMFLOAT3 mat = XMFLOAT3(0.0f, 0.0f, 0.0f);
-    UpdateBoneTransform("Head", mat);
+    XMFLOAT3 rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
+    UpdateBoneRotation("Head", rot);
 
     //マテリアルの読み込み
     descriptorHeap = new DescriptorHeap();
 
     std::string dir = "Resource\\Model\\";
-    std::string fileNames[15] = { "Cloth.png", "Hair.png","Cloth.png", "Hair.png", "Cloth.png", "Cloth.png", "Cloth.png", "Cloth.png", "Cloth.png", "Cloth.png", "Cloth.png", "Body.png", "Face.png", "Face.png", "Hair.png"};
     for (size_t i = 0; i < scene->mNumMeshes; i++)
     {
         aiMesh* mesh = scene->mMeshes[i];
-        std::string nameOnly = fileNames[i];
+        std::string nameOnly = "";
         // メッシュのマテリアルを取得する
         if (mesh->mMaterialIndex >= 0) {
             aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+            //ファイル名 = マテリアル名 + .png
             nameOnly = material->GetName().C_Str() + std::string(".png");
-        }
-        std::string texPath = dir + nameOnly;
-        int index = Texture2D::GetTextureIndex(texPath);
-        if (index == -1) {
-            Texture2D* mainTex = Texture2D::Get(texPath);
-            DescriptorHandle* handle = descriptorHeap->Register(mainTex);
-            g_materials.push_back(handle);
-            meshes[i].materialIndex = (BYTE)(g_materials.size() - 1);
-        }
-        else {
-            meshes[i].materialIndex = (BYTE)index;
-            g_materials[index]->UseCount++;
+            std::string texPath = dir + nameOnly;
+            
+            //テクスチャがまだロードされていない場合はロードし、ロード済みの場合は入っているインデックスを参照
+            int index = Texture2D::GetTextureIndex(texPath);
+            if (index == -1) {
+                //テクスチャを作成
+                Texture2D* mainTex = Texture2D::Get(texPath);
+                //マテリアルを作成
+                DescriptorHandle* handle = descriptorHeap->Register(mainTex);
+
+                g_materials.push_back(handle);
+                meshes[i].materialIndex = (BYTE)(g_materials.size() - 1);
+            }
+            else {
+                meshes[i].materialIndex = (BYTE)index;
+                g_materials[index]->UseCount++;
+            }
         }
     }
 }
@@ -138,11 +143,14 @@ Model::Mesh Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
     // ボーンの処理
     LoadBones(scene, meshData, mesh, vertices);
 
+    //頂点バッファを設定
     const UINT vertexBufferSize = static_cast<UINT>(sizeof(Vertex) * vertices.size());
 
+    //ヒープ設定
     D3D12_HEAP_PROPERTIES heapProps = {};
     heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
 
+    //頂点バッファのリソース
     D3D12_RESOURCE_DESC vertexBufferDesc = {};
     vertexBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
     vertexBufferDesc.Width = vertexBufferSize;
@@ -153,6 +161,7 @@ Model::Mesh Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
     vertexBufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     vertexBufferDesc.SampleDesc.Count = 1;
 
+    //デバイスで作成
     HRESULT result = device->CreateCommittedResource(
         &heapProps,
         D3D12_HEAP_FLAG_NONE,
@@ -166,6 +175,7 @@ Model::Mesh Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
         printf("頂点バッファの生成に失敗しました。\n");
     }
 
+    //頂点データをGPUに送信
     void* vertexDataBegin;
     CD3DX12_RANGE readRange(0, 0);
     meshData.vertexBuffer->Map(0, &readRange, &vertexDataBegin);
@@ -176,9 +186,10 @@ Model::Mesh Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
     meshData.vertexBufferView.StrideInBytes = sizeof(Vertex);
     meshData.vertexBufferView.SizeInBytes = vertexBufferSize;
 
-    // インデックスバッファの作成
+    //インデックスバッファの作成
     const UINT indexBufferSize = static_cast<UINT>(sizeof(UINT) * indices.size());
 
+    //インデックスバッファのリソース
     D3D12_RESOURCE_DESC indexBufferDesc = {};
     indexBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
     indexBufferDesc.Width = indexBufferSize;
@@ -202,6 +213,7 @@ Model::Mesh Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
         printf("インデックスバッファの生成に失敗しました。\n");
     }
 
+    //インデックスデータをGPUに送信
     void* indexDataBegin;
     meshData.indexBuffer->Map(0, &readRange, &indexDataBegin);
     memcpy(indexDataBegin, indices.data(), indexBufferSize);
@@ -213,6 +225,7 @@ Model::Mesh Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
 
     meshData.indexCount = static_cast<UINT>(indices.size());
 
+    //ボーン情報のリソースを作成
     CD3DX12_RESOURCE_DESC d = CD3DX12_RESOURCE_DESC::Buffer(sizeof(XMMATRIX) * boneInfos.size());
 
     HRESULT hr = device->CreateCommittedResource(
@@ -238,16 +251,23 @@ void Model::LoadBones(const aiScene* scene, Mesh& meshStruct, aiMesh* mesh, std:
         // ボーンがまだ登録されていない場合、マッピングを追加
         if (boneMapping.find(bone->mName.C_Str()) == boneMapping.end()) {
             boneIndex = static_cast<UINT>(boneInfos.size());
+
+            //配列に追加
             boneInfos.push_back(XMMatrixIdentity());
             finalBoneInfos.push_back(XMMatrixIdentity());
             boneWorlds.push_back(BoneNode{});
+
             boneWorlds[boneIndex].boneName = bone->mName.C_Str();
             //boneInfos[boneIndex] = XMMatrixTranspose(XMLoadFloat4x4(reinterpret_cast<XMFLOAT4X4*>(&bone->mOffsetMatrix)));
             boneInfos[boneIndex] = XMMatrixIdentity();
+
+            //ボーンの位置、回転、スケールを初期化
             boneWorlds[boneIndex].m_position = XMFLOAT3(0.0f, 0.0f, 0.0f);
             boneWorlds[boneIndex].m_rotation = XMFLOAT3(0.0f, 0.0f, 0.0f);
             boneWorlds[boneIndex].m_scale = XMFLOAT3(1.0f, 1.0f, 1.0f);
-            boneWorlds[boneIndex].boneOffset = XMMatrixTranspose(XMLoadFloat4x4(reinterpret_cast<XMFLOAT4X4*>(&bone->mOffsetMatrix)));
+            boneWorlds[boneIndex].boneOffset = XMLoadFloat4x4(reinterpret_cast<XMFLOAT4X4*>(&bone->mOffsetMatrix));
+
+            //ボーン名とインデックスを紐づけ
             boneMapping[bone->mName.C_Str()] = boneIndex;
         }
         else {
@@ -290,11 +310,11 @@ void Model::LoadBones(const aiScene* scene, Mesh& meshStruct, aiMesh* mesh, std:
     }
 }
 
+//ボーンの親子関係を取得
 void Model::LoadBoneFamily(const aiNode* node)
 {
     if (boneMapping.find(node->mName.C_Str()) != boneMapping.end()) {
         UINT boneIndex = boneMapping[node->mName.C_Str()];
-        //printf("%s\n", node->mName.C_Str());
         for (UINT i = 0; i < node->mNumChildren; i++) {
             if (boneMapping.find(node->mChildren[i]->mName.C_Str()) != boneMapping.end()) {
                 UINT childIndex = boneMapping[node->mChildren[i]->mName.C_Str()];
@@ -308,15 +328,29 @@ void Model::LoadBoneFamily(const aiNode* node)
     }
 }
 
-void Model::UpdateBoneTransform(std::string boneName, XMFLOAT3& position)
+void Model::UpdateBonePosition(std::string boneName, XMFLOAT3& position)
 {
     UINT boneIndex = boneMapping[boneName];
     if (boneIndex == 0)
         return;
 
-    //mesh.boneWorlds[boneIndex].boneTransform = matrix;
     boneWorlds[boneIndex].m_position = position;
-    boneWorlds[boneIndex].m_rotation = XMFLOAT3(25.0f, 0.0f, 0.0f);
+}
+void Model::UpdateBoneRotation(std::string boneName, XMFLOAT3& rotation)
+{
+    UINT boneIndex = boneMapping[boneName];
+    if (boneIndex == 0)
+        return;
+
+    boneWorlds[boneIndex].m_rotation = rotation;
+}
+void Model::UpdateBoneScale(std::string boneName, XMFLOAT3& scale)
+{
+    UINT boneIndex = boneMapping[boneName];
+    if (boneIndex == 0)
+        return;
+
+    boneWorlds[boneIndex].m_scale = scale;
 }
 
 void Model::UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix)
@@ -351,15 +385,15 @@ void Model::UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix)
     XMMATRIX rotZ = XMMatrixRotationZ(XMConvertToRadians(node.m_rotation.z));
     XMMATRIX rot = rotX * rotY * rotZ;
     XMMATRIX pos = XMMatrixTranslation(node.m_position.x, node.m_position.y, node.m_position.z);
-    XMMATRIX aaa = XMMatrixTranslation(node.boneOffset.r[3].m128_f32[0], node.boneOffset.r[3].m128_f32[1], node.boneOffset.r[3].m128_f32[2]);
-    XMMATRIX bbb = XMMatrixTranslation(-node.boneOffset.r[3].m128_f32[0], -node.boneOffset.r[3].m128_f32[1], -node.boneOffset.r[3].m128_f32[2]);
-    XMMATRIX boneTransform = scale * aaa * rot * bbb * pos;
+    //XMMATRIX aaa = XMMatrixTranslation(node.boneOffset.r[3].m128_f32[0], node.boneOffset.r[3].m128_f32[1], node.boneOffset.r[3].m128_f32[2]);
+    //XMMATRIX bbb = XMMatrixTranslation(-node.boneOffset.r[3].m128_f32[0], -node.boneOffset.r[3].m128_f32[1], -node.boneOffset.r[3].m128_f32[2]);
+    XMMATRIX boneTransform = scale * rot * pos;
 
     XMMATRIX finalTransform = XMMatrixTranspose(boneTransform) * parentTransform;
 
     // 親のワールド変換とローカル変換を合成
     boneInfos[boneIndex] = finalTransform;
-    finalBoneInfos[boneIndex] = boneInfos[boneIndex] * node.boneOffset;
+    //finalBoneInfos[boneIndex] = boneInfos[boneIndex] * node.boneOffset;
 
     if (node.boneName == "Head") {
         XMFLOAT4 a = XMFLOAT4(boneInfos[boneIndex].r[0].m128_f32[0], boneInfos[boneIndex].r[0].m128_f32[1], boneInfos[boneIndex].r[0].m128_f32[2], boneInfos[boneIndex].r[0].m128_f32[3]);
@@ -369,7 +403,7 @@ void Model::UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix)
         printf("a1:%f, a2:%f, a3:%f, a4:%f\nb1:%f, b2:%f, b3:%f, b4:%f\nc1:%f, c2:%f, c3:%f, c4:%f\nd1:%f, d2:%f, d3:%f, d4:%f\n", a.x, a.y, a.z, a.w,
             b.x, b.y, b.z, b.w, c.x, c.y, c.z, c.w, d.x, d.y, d.z, d.w);
         // 行列の4行目（平行移動ベクトル）を抽出してワールド座標を取得
-        XMFLOAT3 worldPosition;
+        XMFLOAT3 worldPosition{};
         worldPosition.x = boneInfos[boneIndex].r[3].m128_f32[0];
         worldPosition.y = boneInfos[boneIndex].r[3].m128_f32[1];
         worldPosition.z = boneInfos[boneIndex].r[3].m128_f32[2];

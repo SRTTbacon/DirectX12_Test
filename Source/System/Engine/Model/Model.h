@@ -10,8 +10,10 @@
 
 using namespace DirectX;
 
-constexpr int MAX_BONE_COUNT = 300;
+//ボーンは最大512個
+constexpr int MAX_BONE_COUNT = 512;
 
+//シェーダーに渡す頂点情報
 struct Vertex {
     XMFLOAT3 Position;
     XMFLOAT3 Normal;
@@ -21,6 +23,7 @@ struct Vertex {
     UINT BoneIDs[4];
 };
 
+//シェーダーに渡すビュー情報
 struct ModelConstantBuffer {
     XMMATRIX modelMatrix;
     XMMATRIX viewMatrix;
@@ -32,8 +35,18 @@ class Model
 public:
     Model(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const std::string& fbxFile, const Camera* pCamera);
 
+    //更新
     void Update();
+
+    //描画
     void Draw(ID3D12GraphicsCommandList* commandList);
+
+    //ボーンの位置を更新
+    void UpdateBonePosition(std::string boneName, XMFLOAT3& position);
+    //ボーンの回転を変更
+    void UpdateBoneRotation(std::string boneName, XMFLOAT3& rotation);
+    //ボーンのスケールを変更
+    void UpdateBoneScale(std::string boneName, XMFLOAT3& scale);
 
     XMFLOAT3 m_position;    //モデル全体の位置
     XMFLOAT3 m_rotation;    //モデル全体の回転 (デグリー角)
@@ -43,7 +56,7 @@ private:
     struct BoneNode {
         std::string boneName;           //ボーン名
         std::vector<UINT> childBones;   //子ボーン
-        XMMATRIX boneOffset;
+        XMMATRIX boneOffset;            //ボーンの原点との差
         UINT parentBoneIndex;           //親ボーンのインデックス
         XMFLOAT3 m_position;            //ボーンの位置
         XMFLOAT3 m_rotation;            //ボーンの回転 (デグリー角)
@@ -66,22 +79,21 @@ private:
     ComPtr<ID3D12Resource> modelConstantBuffer[FRAME_BUFFER_COUNT]; //画面のちらつきを防止するためトリプルバッファリング
     ComPtr<ID3D12Resource> m_boneMatricesBuffer;
 
-    const Camera* m_pCamera;
+    const Camera* m_pCamera;                        //カメラ情報
 
-    std::vector<Mesh> meshes;                       //メッシュの配列 (キャラクターなど、FBX内に複数のメッシュが存在するものに対応)
-    std::vector<XMMATRIX> boneInfos;
+    std::vector<Mesh> meshes;                           //メッシュの配列 (キャラクターなど、FBX内に複数のメッシュが存在するものに対応)
+    std::vector<XMMATRIX> boneInfos;                    //シェーダーに送信するボーンのマトリックス
     std::vector<XMMATRIX> finalBoneInfos;
-    std::vector<BoneNode> boneWorlds;
-    std::unordered_map<std::string, UINT> boneMapping;
+    std::vector<BoneNode> boneWorlds;                   //ボーン情報
+    std::unordered_map<std::string, UINT> boneMapping;  //ボーン名からインデックスを取得
 
-    XMMATRIX m_modelMatrix;                         //位置、回転、スケールをMatrixで保持
+    XMMATRIX m_modelMatrix;         //位置、回転、スケールをMatrixで保持
 
-    void LoadFBX(const std::string& fbxFile);
+    void LoadFBX(const std::string& fbxFile);               //FBXをロード
     void ProcessNode(const aiScene* scene, aiNode* node);
     Mesh ProcessMesh(const aiScene* scene, aiMesh* mesh);
-    void LoadBones(const aiScene* scene, Mesh& meshStruct, aiMesh* mesh, std::vector<Vertex>& vertices);
-    void LoadBoneFamily(const aiNode* node);
-    void UpdateBoneTransform(std::string boneName, XMFLOAT3& position);
-    void UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix);
-    void UpdateBoneTransform();
+    void LoadBones(const aiScene* scene, Mesh& meshStruct, aiMesh* mesh, std::vector<Vertex>& vertices);    //ボーン情報を取得
+    void LoadBoneFamily(const aiNode* node);        //ボーンの親子関係を取得
+    void UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix);   //シェーダーに渡すボーンの座標を計算
+    void UpdateBoneTransform();                                         //シェーダーに渡すボーンの座標を計算
 };
