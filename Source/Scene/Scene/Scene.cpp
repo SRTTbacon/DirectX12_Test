@@ -14,11 +14,12 @@ Scene* g_Scene;
 using namespace DirectX;
 
 const std::string modelFile1 = "Resource/Model/FBX_Moe.fbx";
-const std::string modelFile2 = "Resource/Model/FBX_Moe2.fbx";
+const std::string modelFile2 = "Resource/Model/Sphere.fbx";
 
 bool Scene::Init()
 {
 	printf("ƒV[ƒ“‚Ì‰Šú‰»‚É¬Œ÷\n");
+	m_camera.SetFov(69.0f);
 	return true;
 }
 
@@ -62,17 +63,79 @@ void Scene::Update()
 	if (g_Engine->GetKeyState(DIK_P) && g_Engine->GetKeyState(DIK_L)) {
 		z += 0.5f;
 	}
+	if (g_Engine->GetMouseStateSync(0x00)) {
+		m_model1.m_rotation.x += -90.0f;
+	}
 	XMFLOAT3 a = { x, y, z };
-	m_model1.UpdateBoneRotation("Head", a);
+	m_model1.UpdateBoneRotation("Left arm", a);
+
+	printf("x=%f, y=%f, z=%f\n", x, y, z);
+
+	for (BoneAnimation& bone : m_anim.m_boneAnim) {
+		/*if (bone.boneName == "Left leg") {
+			m_model1.UpdateBoneRotation(bone.boneName, bone.rotation);
+		}
+		if (bone.boneName == "Left knee") {
+			m_model1.UpdateBoneRotation(bone.boneName, bone.rotation);
+			printf("rotationX = %f, rotationY = %f, rotationZ = %f\n", bone.rotation.x, bone.rotation.y, bone.rotation.z);
+		}
+		if (bone.boneName == "Right leg") {
+			m_model1.UpdateBoneRotation(bone.boneName, bone.rotation);
+		}
+		if (bone.boneName == "Right knee") {
+			m_model1.UpdateBoneRotation(bone.boneName, bone.rotation);
+		}*/
+		//m_model1.UpdateBonePosition(bone.boneName, bone.position);
+		//m_model1.UpdateBoneRotation(bone.boneName, bone.rotation);
+	}
 
 	m_model1.Update();
+	for (Model& model : m_spheres) {
+		model.Update();
+	}
 }
 
 void Scene::Draw()
 {
-	m_model1.Draw(g_Engine->CommandList());
+	m_model1.Draw();
+	for (Model& model : m_spheres) {
+		model.Draw();
+	}
 }
 
-Scene::Scene() : m_model1(Model(g_Engine->Device(), g_Engine->CommandList(), modelFile1, &m_camera))
+Scene::Scene() 
+	: m_model1(Character(modelFile1, &m_camera))
+	, m_anim("Resource\\Test.hcs")
 {
+	XMFLOAT3 a = { -10.0f, 13.5f, 0.58f };
+	m_model1.UpdateBoneRotation("Left leg", a);
+	a = { 6.9f, -7.4f, -1.9f };
+	m_model1.UpdateBoneRotation("Left knee", a);
+	a = { 6.7f, -9.4f, -1.0f };
+	m_model1.UpdateBoneRotation("Right leg", a);
+	a = { 22.0f, 7.3f, 7.0f };
+	m_model1.UpdateBoneRotation("Right knee", a);
+	a = { 15.0f, 0.0f, 0.0f };
+	m_model1.UpdateBoneRotation("Right ankle", a);
+	//a = { -76.0f, -9.8f, 0.0f };
+	a = { -7.0f, -9.8f, 0.0f };
+	m_model1.UpdateBoneRotation("Left arm", a);
+
+	for (BoneAnimation& bone : m_anim.m_boneAnim) {
+		Bone* boneInfo = m_model1.GetBone(bone.boneName);
+		boneInfo->m_boneOffset = XMMatrixTranslation(bone.initPosition.x, -bone.initPosition.z, bone.initPosition.y);
+	}
+
+	//m_model1.m_position.x = 2.0f;
+
+	//m_model2.LoadModel(Primitive_Sphere);
+	for (std::string name : m_model1.GetBoneNames()) {
+		if (name == "Chest" || name == "Left arm" || name == "Left elbow") {
+			Model model(&m_camera);
+			model.LoadModel(modelFile2);
+			model.m_position = m_model1.GetBoneOffset(name);
+			model.m_scale = XMFLOAT3(0.05f, 0.05f, 0.05f);
+			m_spheres.push_back(model);
+		}
+	}
 }

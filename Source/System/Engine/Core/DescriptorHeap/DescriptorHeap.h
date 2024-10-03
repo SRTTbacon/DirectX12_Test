@@ -28,4 +28,4 @@ private:
 	std::vector<DescriptorHandle*> m_pHandles; // 登録されているハンドル
 };
 
-static std::vector<DescriptorHandle*> g_materials;	//テクスチャ用のハンドル一覧
+__declspec(selectany) std::vector<DescriptorHandle*> g_materials;	//テクスチャ用のハンドル一覧

@@ -21,36 +21,55 @@
   <ItemGroup>
     <ClCompile Include="Source\Scene\Scene\Scene.cpp" />
     <ClCompile Include="Source\System\Engine\Camera\Camera.cpp" />
-    <ClCompile Include="Source\System\Engine\Core\ConstantBuffer\ConstantBuffer.cpp" />
+    <ClCompile Include="Source\System\Engine\Core\BinaryFile\BinaryReader.cpp" />
     <ClCompile Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.cpp" />
-    <ClCompile Include="Source\System\Engine\Core\SharedStruct\SharedStruct.cpp" />
     <ClCompile Include="Source\System\Engine\Engine.cpp" />
     <ClCompile Include="Source\System\Engine\Core\PipelineState\PipelineState.cpp" />
     <ClCompile Include="Source\System\Engine\Core\RootSignature\RootSignature.cpp" />
     <ClCompile Include="Source\System\Engine\Core\Texture2D\Texture2D.cpp" />
-    <ClCompile Include="Source\System\Engine\Core\VertexBuffer\VertexBuffer.cpp" />
     <ClCompile Include="Source\System\Engine\Input\Input.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\Animation\Animation.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\Bone\Bone.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\Character.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Model.cpp" />
     <ClCompile Include="Source\System\Main\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\GameBase.h" />
     <ClInclude Include="Source\Scene\Scene\Scene.h" />
     <ClInclude Include="Source\System\ComPtr.h" />
     <ClInclude Include="Source\System\Engine\Camera\Camera.h" />
-    <ClInclude Include="Source\System\Engine\Core\ConstantBuffer\ConstantBuffer.h" />
+    <ClInclude Include="Source\System\Engine\Core\BinaryFile\BinaryReader.h" />
     <ClInclude Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.h" />
-    <ClInclude Include="Source\System\Engine\Core\SharedStruct\SharedStruct.h" />
     <ClInclude Include="Source\System\Engine\Engine.h" />
     <ClInclude Include="Source\System\Engine\Core\PipelineState\PipelineState.h" />
     <ClInclude Include="Source\System\Engine\Core\RootSignature\RootSignature.h" />
     <ClInclude Include="Source\System\Engine\Core\Texture2D\Texture2D.h" />
-    <ClInclude Include="Source\System\Engine\Core\VertexBuffer\VertexBuffer.h" />
     <ClInclude Include="Source\System\Engine\Input\Input.h" />
+    <ClInclude Include="Source\System\Engine\Model\Animation\Animation.h" />
+    <ClInclude Include="Source\System\Engine\Model\Bone\Bone.h" />
+    <ClInclude Include="Source\System\Engine\Model\Character.h" />
     <ClInclude Include="Source\System\Engine\Model\Model.h" />
     <ClInclude Include="Source\System\Main\Main.h" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Source\System\Shader\SimplePS.hlsl">
+    <FxCompile Include="Source\System\Shader\PrimitivePS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pixel</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\PrimitiveVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vert</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\TexturePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
@@ -59,9 +78,9 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pixel</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pixel</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pixel</EntryPointName>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
     </FxCompile>
-    <FxCompile Include="Source\System\Shader\SimpleVS.hlsl">
+    <FxCompile Include="Source\System\Shader\BoneVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
@@ -71,7 +90,7 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vert</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vert</EntryPointName>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vert</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
     </FxCompile>

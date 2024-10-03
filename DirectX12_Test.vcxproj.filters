@@ -26,9 +26,6 @@
     <Filter Include="Source\System\Engine\Core">
       <UniqueIdentifier>{9409088e-2705-4e34-8f4e-f813089b84e0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\System\Engine\Core\ConstantBuffer">
-      <UniqueIdentifier>{24fdc770-daad-42db-8655-8d8a95b2f051}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\System\Engine\Core\Texture2D">
       <UniqueIdentifier>{6f838cad-3e31-4c99-a8da-5b59e6ba6ece}</UniqueIdentifier>
     </Filter>
@@ -37,9 +34,6 @@
     </Filter>
     <Filter Include="Source\System\Engine\Core\RootSignature">
       <UniqueIdentifier>{873221dd-94a2-43cc-ad21-ababc24a55b8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\System\Engine\Core\VertexBuffer">
-      <UniqueIdentifier>{bba89e76-72a1-4f44-9776-edd24a4009f9}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\System\Engine\Model">
       <UniqueIdentifier>{6367e740-71c3-4ec9-9a09-f4e7c493866b}</UniqueIdentifier>
@@ -50,11 +44,17 @@
     <Filter Include="Source\System\Camera">
       <UniqueIdentifier>{3e35cd8c-a153-425f-a3b1-73a3a136d8df}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\System\Engine\Core\SharedStruct">
-      <UniqueIdentifier>{5c105bb1-75a6-4598-abf9-cf229049dd8f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\System\Engine\Core\DescriptorHeap">
       <UniqueIdentifier>{a4392a85-ce02-403d-a361-a4ab6bad89c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Model\Animation">
+      <UniqueIdentifier>{1cbf07db-94de-4ba8-a466-3797647a87be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\BinaryFile">
+      <UniqueIdentifier>{4e24bbaa-d610-4e70-b1ff-d387cff042aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Model\Bone">
+      <UniqueIdentifier>{ba25fdd3-6979-431a-9f6b-af55528a29a3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -66,12 +66,6 @@
     </ClCompile>
     <ClCompile Include="Source\Scene\Scene\Scene.cpp">
       <Filter>Source\Scene\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\System\Engine\Core\VertexBuffer\VertexBuffer.cpp">
-      <Filter>Source\System\Engine\Core\VertexBuffer</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\System\Engine\Core\ConstantBuffer\ConstantBuffer.cpp">
-      <Filter>Source\System\Engine\Core\ConstantBuffer</Filter>
     </ClCompile>
     <ClCompile Include="Source\System\Engine\Core\RootSignature\RootSignature.cpp">
       <Filter>Source\System\Engine\Core\RootSignature</Filter>
@@ -91,11 +85,20 @@
     <ClCompile Include="Source\System\Engine\Camera\Camera.cpp">
       <Filter>Source\System\Camera</Filter>
     </ClCompile>
-    <ClCompile Include="Source\System\Engine\Core\SharedStruct\SharedStruct.cpp">
-      <Filter>Source\System\Engine\Core\SharedStruct</Filter>
-    </ClCompile>
     <ClCompile Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.cpp">
       <Filter>Source\System\Engine\Core\DescriptorHeap</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Model\Animation\Animation.cpp">
+      <Filter>Source\System\Engine\Model\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\BinaryFile\BinaryReader.cpp">
+      <Filter>Source\System\Engine\Core\BinaryFile</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Model\Bone\Bone.cpp">
+      <Filter>Source\System\Engine\Model\Bone</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Model\Character.cpp">
+      <Filter>Source\System\Engine\Model</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -110,12 +113,6 @@
     </ClInclude>
     <ClInclude Include="Source\Scene\Scene\Scene.h">
       <Filter>Source\Scene\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\System\Engine\Core\VertexBuffer\VertexBuffer.h">
-      <Filter>Source\System\Engine\Core\VertexBuffer</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\System\Engine\Core\ConstantBuffer\ConstantBuffer.h">
-      <Filter>Source\System\Engine\Core\ConstantBuffer</Filter>
     </ClInclude>
     <ClInclude Include="Source\System\Engine\Core\RootSignature\RootSignature.h">
       <Filter>Source\System\Engine\Core\RootSignature</Filter>
@@ -135,18 +132,36 @@
     <ClInclude Include="Source\System\Engine\Camera\Camera.h">
       <Filter>Source\System\Camera</Filter>
     </ClInclude>
-    <ClInclude Include="Source\System\Engine\Core\SharedStruct\SharedStruct.h">
-      <Filter>Source\System\Engine\Core\SharedStruct</Filter>
-    </ClInclude>
     <ClInclude Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.h">
       <Filter>Source\System\Engine\Core\DescriptorHeap</Filter>
     </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\Animation\Animation.h">
+      <Filter>Source\System\Engine\Model\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\BinaryFile\BinaryReader.h">
+      <Filter>Source\System\Engine\Core\BinaryFile</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\GameBase.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\Bone\Bone.h">
+      <Filter>Source\System\Engine\Model\Bone</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\Character.h">
+      <Filter>Source\System\Engine\Model</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Source\System\Shader\SimplePS.hlsl">
+    <FxCompile Include="Source\System\Shader\TexturePS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Source\System\Shader\SimpleVS.hlsl">
+    <FxCompile Include="Source\System\Shader\BoneVS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\PrimitiveVS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\PrimitivePS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
   </ItemGroup>

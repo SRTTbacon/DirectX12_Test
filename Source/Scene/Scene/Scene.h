@@ -1,7 +1,7 @@
 #pragma once
-#include "..\\..\\System\\Engine\Model\Model.h"
-#include "..\\..\\System\\Engine\\Core\\ConstantBuffer\\ConstantBuffer.h"
+#include "..\\..\\System\\Engine\Model\Character.h"
 #include <DirectXMath.h>
+#include "..\\..\\System\\Engine\\Model\\Animation\\Animation.h"
 
 class Scene
 {
@@ -16,7 +16,9 @@ public:
 private:
 	Camera m_camera;
 
-	Model m_model1;
+	Animation m_anim;
+	Character m_model1;
+	std::vector<Model> m_spheres;
 };
 
 extern Scene* g_Scene;
