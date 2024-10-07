@@ -7,6 +7,7 @@
 #include "..\\ComPtr.h"
 #include "Input\\Input.h"
 #include <DirectXMath.h>
+#include <timeapi.h>
 
 #pragma comment(lib, "d3d12.lib") // d3d12ライブラリをリンクする
 #pragma comment(lib, "dxgi.lib") // dxgiライブラリをリンクする
@@ -44,7 +45,12 @@ public: //ゲッター関数
 	//キーの状態を取得
 	bool GetKeyState(UINT key);
 
-private: // DirectX12の初期化
+	inline float GetFrameTime() const
+	{
+		return m_frameTime;
+	}
+
+private: //DirectX12の初期化
 	//デバイスを作成
 	bool CreateDevice();
 	//コマンドキューを生成
@@ -60,7 +66,7 @@ private: // DirectX12の初期化
 	//シザー矩形を生成
 	void CreateScissorRect();
 
-private: // 描画に使うDirectX12のオブジェクト
+private: //描画に使うDirectX12のオブジェクト
 	HWND m_hWnd;
 	UINT m_FrameBufferWidth = 0;
 	UINT m_FrameBufferHeight = 0;
@@ -78,7 +84,7 @@ private: // 描画に使うDirectX12のオブジェクト
 	D3D12_RECT m_Scissor; // シザー矩形
 	Input* m_keyInput;	//キー状態
 
-private: // 描画に使うオブジェクト
+private: //描画に使うオブジェクト
 	//レンダーターゲットを生成
 	bool CreateRenderTarget();
 	//深度ステンシルバッファを生成
@@ -98,13 +104,20 @@ private: // 描画に使うオブジェクト
 	//深度ステンシルバッファ
 	ComPtr<ID3D12Resource> m_pDepthStencilBuffer = nullptr;
 
-private: // 描画ループで使用するもの
+private: //描画ループで使用するもの
 	//現在のフレームのレンダーターゲットを一時的に保存
 	ID3D12Resource* m_currentRenderTarget = nullptr;
 
 	//描画完了を待つ処理
 	void WaitRender();
+
+private:
+	//時間計測用変数
+	unsigned long m_initTime;
+	unsigned long m_sceneTimeMS;
+	float m_frameTime;
 };
+
 
 //どこからでも参照するためグローバル変数
 extern Engine* g_Engine;

@@ -1,14 +1,16 @@
 #pragma once
 #include "..\\..\\Core\\BinaryFile\\BinaryReader.h"
-#include <DirectXMath.h>
-#include <vector>
+#include "..\\..\\Engine.h"
 
 struct BoneAnimation
 {
-	std::string boneName;
 	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT3 initPosition;
-	DirectX::XMFLOAT3 rotation;
+	DirectX::XMFLOAT4 rotation;
+};
+struct AnimationFrame
+{
+	float time;
+	std::vector<BoneAnimation> anim;
 };
 
 class Animation
@@ -16,5 +18,10 @@ class Animation
 public:
 	Animation(std::string animFilePath);
 
-	std::vector<BoneAnimation> m_boneAnim;
+	std::vector<BoneAnimation>& Update();
+
+	std::vector<std::string> boneMapping;
+	std::vector<AnimationFrame> m_frames;
+
+	float m_nowAnimTime;
 };

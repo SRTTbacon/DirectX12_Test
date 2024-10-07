@@ -11,7 +11,7 @@ public:
     //ボーンの位置を更新
     void UpdateBonePosition(std::string boneName, XMFLOAT3& position);
     //ボーンの回転を変更
-    void UpdateBoneRotation(std::string boneName, XMFLOAT3& rotation);
+    void UpdateBoneRotation(std::string boneName, XMFLOAT4& rotation);
     //ボーンのスケールを変更
     void UpdateBoneScale(std::string boneName, XMFLOAT3& scale);
 

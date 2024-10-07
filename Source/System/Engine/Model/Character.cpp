@@ -23,8 +23,8 @@ void Character::LoadFBX(const std::string& fbxFile)
 {
     Assimp::Importer importer;
 
-    //モデル読み込み時のフラグ。メッシュのポリゴンはすべて三角形にし、左手座標系に変換
-    unsigned int flag = aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType |
+    //モデル読み込み時のフラグ。メッシュのポリゴンはすべて三角形にし、ボーンが存在する場合は影響を受けるウェイトを4つまでにする
+    UINT flag = aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType |
         aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights;// | aiProcess_MakeLeftHanded;
     const aiScene* scene = importer.ReadFile(fbxFile, flag);
 
@@ -37,9 +37,6 @@ void Character::LoadFBX(const std::string& fbxFile)
 
     //ボーンに親子関係を付ける
     LoadBoneFamily(scene->mRootNode);
-
-    XMFLOAT3 rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-    UpdateBoneRotation("Left leg", rot);
 
     //マテリアルの読み込み
     m_pDescriptorHeap = new DescriptorHeap();
@@ -65,6 +62,7 @@ void Character::LoadFBX(const std::string& fbxFile)
                 DescriptorHandle* handle = m_pDescriptorHeap->Register(mainTex);
 
                 g_materials.push_back(handle);
+                //マテリアルインデックスは最後に追加したものを使用
                 meshes[i].materialIndex = (BYTE)(g_materials.size() - 1);
             }
             else {
@@ -92,7 +90,7 @@ Model::Mesh Character::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
     std::vector<Vertex> vertices;
     std::vector<UINT> indices;
 
-    // 頂点の処理
+    //頂点の処理
     for (UINT i = 0; i < mesh->mNumVertices; i++) {
         Vertex vertex{};
 
@@ -112,7 +110,7 @@ Model::Mesh Character::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
         vertices.push_back(vertex);
     }
 
-    // インデックスの処理
+    //インデックスの処理
     for (UINT i = 0; i < mesh->mNumFaces; i++) {
         aiFace face = mesh->mFaces[i];
         for (UINT j = 0; j < face.mNumIndices; j++) {
@@ -120,10 +118,10 @@ Model::Mesh Character::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
         }
     }
 
-    // 頂点バッファの作成
+    //頂点バッファの作成
     Mesh meshData;
 
-    // ボーンの処理
+    //ボーンの処理
     LoadBones(scene, meshData, mesh, vertices);
 
     //頂点バッファを設定
@@ -196,7 +194,7 @@ Model::Mesh Character::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
         printf("インデックスバッファの生成に失敗しました。\n");
     }
 
-    //インデックスデータをGPUに送信
+    //インデックスデータをGPUメモリに記録
     void* indexDataBegin;
     meshData.indexBuffer->Map(0, &readRange, &indexDataBegin);
     memcpy(indexDataBegin, indices.data(), indexBufferSize);
@@ -225,6 +223,26 @@ Model::Mesh Character::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
     return meshData;
 }
 
+static XMVECTOR ExtractEulerAngles(const XMMATRIX& matrix) {
+    float pitch, yaw, roll;
+
+    // Y軸方向の回転（yaw）
+    yaw = asinf(-matrix.r[2].m128_f32[0]);
+
+    if (cosf(yaw) > 0.0001f) {
+        // X軸とZ軸方向の回転（pitch と roll）
+        pitch = atan2f(matrix.r[2].m128_f32[1], matrix.r[2].m128_f32[2]);
+        roll = atan2f(matrix.r[1].m128_f32[0], matrix.r[0].m128_f32[0]);
+    }
+    else {
+        // Y軸が 90度または -90度の時は、Gimbal Lockに対応
+        pitch = atan2f(-matrix.r[0].m128_f32[2], matrix.r[1].m128_f32[1]);
+        roll = 0.0f;
+    }
+
+    return XMVectorSet(pitch, yaw, roll, 0.0f); // ラジアン角で出力
+}
+
 void Character::LoadBones(const aiScene* scene, Mesh& meshStruct, aiMesh* mesh, std::vector<Vertex>& vertices)
 {
     for (UINT i = 0; i < mesh->mNumBones; i++) {
@@ -239,37 +257,102 @@ void Character::LoadBones(const aiScene* scene, Mesh& meshStruct, aiMesh* mesh, 
             //原点から見て、ボーンが存在する位置(オフセット)を取得
             XMMATRIX boneOffset = XMMatrixTranspose(XMLoadFloat4x4(reinterpret_cast<XMFLOAT4X4*>(&bone->mOffsetMatrix)));
 
-            //なぜかオフセットのプラスマイナスが反転してしまうボーンがあるため、高さ(Z軸)のみ常にプラスへ修正
-            if (boneOffset.r[3].m128_f32[1] < 0.0f)
-                boneOffset.r[3].m128_f32[1] = -boneOffset.r[3].m128_f32[1];
-
-            //Y軸とZ軸を交換  (デフォルトはZ軸が高さのため)
-            float boneOffsetY = boneOffset.r[3].m128_f32[2];
-            boneOffset.r[3].m128_f32[2] = boneOffset.r[3].m128_f32[1];
-            boneOffset.r[3].m128_f32[1] = boneOffsetY;
-
             //ボーンを作成
             Bone boneChild(bone->mName.C_Str(), boneOffset);
 
-            XMMATRIX m = boneOffset;
-            if (boneChild.GetBoneName() == "Chest") {
-                printf("ChestMatrix = \n");
-                for (int i = 0; i < 4; i++) {
-                    printf("%f, %f, %f, %f\n", m.r[i].m128_f32[0], m.r[i].m128_f32[1], m.r[i].m128_f32[2], m.r[i].m128_f32[3]);
-                }
+            XMMATRIX& m = boneChild.GetBoneOffset();
+
+            XMVECTOR eulerAngles = ExtractEulerAngles(m);
+            // 各軸の回転角（ラジアン）
+            float pitch = XMVectorGetX(eulerAngles); // X軸の回転（ピッチ）
+            float yaw = XMVectorGetY(eulerAngles);   // Y軸の回転（ヨー）
+            float roll = XMVectorGetZ(eulerAngles);  // Z軸の回転（ロール）
+
+            if (abs(yaw) < 1.0) {
+                //Y軸とZ軸を交換  (デフォルトはZ軸が高さのため)
+                float boneOffsetZ = m.r[3].m128_f32[2];
+                m.r[3].m128_f32[2] = m.r[3].m128_f32[1];
+                m.r[3].m128_f32[1] = boneOffsetZ;
+                boneChild.m_bFlipRot = true;
             }
-            if (boneChild.GetBoneName() == "Left arm") {
-                printf("LeftArmMatrix = \n");
+            else {
+                if (m.r[3].m128_f32[0] < 0.0f) {
+                    m.r[3].m128_f32[1] = -m.r[3].m128_f32[1];
+                    m.r[3].m128_f32[0] = -m.r[3].m128_f32[0];
+                }
+                float boneOffsetY = m.r[3].m128_f32[1];
+                m.r[3].m128_f32[1] = m.r[3].m128_f32[0];
+                m.r[3].m128_f32[0] = boneOffsetY;
+            }
+
+            //なぜかオフセットのプラスマイナスが反転してしまうボーンがあるため、高さ(Y軸)のみ常にプラスへ修正
+            if (m.r[3].m128_f32[2] < 0.0f) {
+                m.r[3].m128_f32[2] = -m.r[3].m128_f32[2];
+            }
+            if (m.r[3].m128_f32[1] > 0.0f) {
+                m.r[3].m128_f32[1] = -m.r[3].m128_f32[1];
+            }
+
+            //float boneOffsetZ = boneOffset.r[3].m128_f32[1];
+            //boneOffset.r[3].m128_f32[1] = boneOffset.r[3].m128_f32[0];
+            //boneOffset.r[3].m128_f32[0] = boneOffsetZ;
+
+            /*if (boneChild.GetBoneName() == "Left arm") {
+                printf("Left arm = \n");
                 for (int i = 0; i < 4; i++) {
                     printf("%f, %f, %f, %f\n", m.r[i].m128_f32[0], m.r[i].m128_f32[1], m.r[i].m128_f32[2], m.r[i].m128_f32[3]);
                 }
+                printf("Rotation = {%f, %f, %f}\n", pitch, yaw, roll);
+            }
+            if (boneChild.GetBoneName() == "Right arm") {
+                printf("Right arm = \n");
+                for (int i = 0; i < 4; i++) {
+                    printf("%f, %f, %f, %f\n", m.r[i].m128_f32[0], m.r[i].m128_f32[1], m.r[i].m128_f32[2], m.r[i].m128_f32[3]);
+                }
+                printf("Rotation = {%f, %f, %f}\n", pitch, yaw, roll);
+            }
+            if (boneChild.GetBoneName() == "Left elbow") {
+                printf("Left elbow = \n");
+                for (int i = 0; i < 4; i++) {
+                    printf("%f, %f, %f, %f\n", m.r[i].m128_f32[0], m.r[i].m128_f32[1], m.r[i].m128_f32[2], m.r[i].m128_f32[3]);
+                }
+                printf("Rotation = {%f, %f, %f}\n", pitch, yaw, roll);
+            }
+            if (boneChild.GetBoneName() == "Right elbow") {
+                printf("Right elbow = \n");
+                for (int i = 0; i < 4; i++) {
+                    printf("%f, %f, %f, %f\n", m.r[i].m128_f32[0], m.r[i].m128_f32[1], m.r[i].m128_f32[2], m.r[i].m128_f32[3]);
+                }
+                printf("Rotation = {%f, %f, %f}\n", pitch, yaw, roll);
             }
             if (boneChild.GetBoneName() == "Left leg") {
-                printf("HeadMatrix = \n");
+                printf("Left leg = \n");
                 for (int i = 0; i < 4; i++) {
                     printf("%f, %f, %f, %f\n", m.r[i].m128_f32[0], m.r[i].m128_f32[1], m.r[i].m128_f32[2], m.r[i].m128_f32[3]);
                 }
+                printf("Rotation = {%f, %f, %f}\n", pitch, yaw, roll);
             }
+            if (boneChild.GetBoneName() == "Right leg") {
+                printf("Right leg = \n");
+                for (int i = 0; i < 4; i++) {
+                    printf("%f, %f, %f, %f\n", m.r[i].m128_f32[0], m.r[i].m128_f32[1], m.r[i].m128_f32[2], m.r[i].m128_f32[3]);
+                }
+                printf("Rotation = {%f, %f, %f}\n", pitch, yaw, roll);
+            }
+            if (boneChild.GetBoneName() == "Left knee") {
+                printf("Left knee = \n");
+                for (int i = 0; i < 4; i++) {
+                    printf("%f, %f, %f, %f\n", m.r[i].m128_f32[0], m.r[i].m128_f32[1], m.r[i].m128_f32[2], m.r[i].m128_f32[3]);
+                }
+                printf("Rotation = {%f, %f, %f}\n", pitch, yaw, roll);
+            }
+            if (boneChild.GetBoneName() == "Right knee") {
+                printf("Right knee = \n");
+                for (int i = 0; i < 4; i++) {
+                    printf("%f, %f, %f, %f\n", m.r[i].m128_f32[0], m.r[i].m128_f32[1], m.r[i].m128_f32[2], m.r[i].m128_f32[3]);
+                }
+                printf("Rotation = {%f, %f, %f}\n", pitch, yaw, roll);
+            }*/
 
             //配列に追加
             boneInfos.push_back(XMMatrixIdentity());
@@ -279,6 +362,7 @@ void Character::LoadBones(const aiScene* scene, Mesh& meshStruct, aiMesh* mesh, 
             boneMapping[bone->mName.C_Str()] = boneIndex;
         }
         else {
+            //同名のボーンが存在する場合それを使用 (異なるメッシュ間で同名のボーンの場合、ほとんどが共有されているため)
             boneIndex = boneMapping[bone->mName.C_Str()];
         }
 
@@ -286,16 +370,11 @@ void Character::LoadBones(const aiScene* scene, Mesh& meshStruct, aiMesh* mesh, 
         for (UINT j = 0; j < bone->mNumWeights; j++) {
             //頂点インデックス
             UINT vertexID = bone->mWeights[j].mVertexId;
-            //その頂点が受けるウェイト
+            //その頂点がどのくらい影響を受けるか
             float weight = bone->mWeights[j].mWeight;
 
             //頂点を取得
             Vertex& vertex = vertices[vertexID];
-
-            if (weight >= 1.00f && !bones[boneIndex].bInited) {
-                bones[boneIndex].m_boneOffset = XMMatrixTranslation(vertex.Position.x, vertex.Position.y, vertex.Position.z);
-                bones[boneIndex].bInited = true;
-            }
 
             //空いているボーンウェイトスロットを探す。 (最大4つのボーンから影響を受ける)
             if (vertex.BoneWeights.x == 0.0f) {
@@ -354,7 +433,7 @@ void Character::UpdateBonePosition(std::string boneName, XMFLOAT3& position)
 
     bones[boneIndex].m_position = position;
 }
-void Character::UpdateBoneRotation(std::string boneName, XMFLOAT3& rotation)
+void Character::UpdateBoneRotation(std::string boneName, XMFLOAT4& rotation)
 {
     if (boneMapping.find(boneName) == boneMapping.end()) {
         return;
@@ -398,12 +477,23 @@ void Character::UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix)
     Bone& bone = bones[boneIndex];
     XMMATRIX scale = XMMatrixScaling(bone.m_scale.x, bone.m_scale.y, bone.m_scale.z);
 
-    XMMATRIX rotX = XMMatrixRotationX(XMConvertToRadians(bone.m_rotation.x));  //Unity基準にするため、値を反転
-    XMMATRIX rotY = XMMatrixRotationY(XMConvertToRadians(bone.m_rotation.z));  //Unity基準にするため、Y軸とZ軸を入れ替え、Z軸を反転
-    XMMATRIX rotZ = XMMatrixRotationZ(XMConvertToRadians(bone.m_rotation.y));  //Y軸はそのまま
-    XMMATRIX rot = rotX * rotY * rotZ;
-    //XMVECTOR rotVec = XMQuaternionRotationRollPitchYaw(-bone.m_rotation.x, bone.m_rotation.z, -bone.m_rotation.y);
-    //XMMATRIX rot = XMMatrixRotationQuaternion(rotVec);
+    //XMMATRIX rotX = XMMatrixRotationX(XMConvertToRadians(bone.m_rotation.x));  //X軸
+    //XMMATRIX rotY = XMMatrixRotationY(XMConvertToRadians(bone.m_rotation.z));  //Unity基準にするため、Y軸とZ軸を入れ替え
+    //XMMATRIX rotZ = XMMatrixRotationZ(XMConvertToRadians(bone.m_rotation.y));  //Unity基準にするため、Y軸とZ軸を入れ替え
+    //XMMATRIX rot = rotX * rotY * rotZ;
+    //XMVECTOR rotVec = XMQuaternionRotationRollPitchYaw(bone.m_rotation.x, bone.m_rotation.z, bone.m_rotation.y);
+    XMVECTOR rotVec;
+    //rotVec = XMVectorSet(bone.m_rotation.x, bone.m_rotation.z, bone.m_rotation.y, bone.m_rotation.w);
+    if (bone.m_bFlipRot) {
+        rotVec = XMVectorSet(-bone.m_rotation.x, bone.m_rotation.z, bone.m_rotation.y, bone.m_rotation.w);
+    }
+    else {
+        rotVec = XMVectorSet(bone.m_rotation.x, bone.m_rotation.z, bone.m_rotation.y, bone.m_rotation.w);
+    }
+    XMMATRIX rot = XMMatrixRotationQuaternion(rotVec);
+    if (bone.GetBoneName() == "Left elbow") {
+        printf("x = %f, y = %f, z = %f, w = %f\n", rotVec.m128_f32[0], rotVec.m128_f32[1], rotVec.m128_f32[2], rotVec.m128_f32[3]);
+    }
 
     XMMATRIX pos = XMMatrixTranslation(bone.m_position.x, bone.m_position.y, bone.m_position.z);
     //XMMATRIX offsetBack = XMMatrixTranslation(bone.GetBoneOffset().r[3].m128_f32[0], bone.GetBoneOffset().r[3].m128_f32[1], bone.GetBoneOffset().r[3].m128_f32[2]);

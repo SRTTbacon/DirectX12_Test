@@ -36,17 +36,18 @@ public:
     {
         return m_parentBoneIndex;
     }
-    inline const DirectX::XMMATRIX GetBoneOffset() const
+    inline DirectX::XMMATRIX& GetBoneOffset()
     {
         return m_boneOffset;
     }
 
 public:
     DirectX::XMFLOAT3 m_position;           //ボーンの位置
-    DirectX::XMFLOAT3 m_rotation;           //ボーンの回転 (デグリー角)
+    DirectX::XMFLOAT4 m_rotation;           //ボーンの回転 (デグリー角)
     DirectX::XMFLOAT3 m_scale;              //ボーンのスケール
     DirectX::XMMATRIX m_boneOffset;         //Tポーズ時から見て原点との差
-    bool bInited = false;
+
+    bool m_bFlipRot;
 
 private:
     struct ChildBone

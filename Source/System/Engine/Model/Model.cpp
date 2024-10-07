@@ -26,10 +26,10 @@ Model::Model(const Camera* pCamera)
     D3D12_HEAP_PROPERTIES heapProps = {};
     heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
 
-    CD3DX12_RESOURCE_DESC d = CD3DX12_RESOURCE_DESC::Buffer(sizeof(ModelConstantBuffer));
+    CD3DX12_RESOURCE_DESC constantData = CD3DX12_RESOURCE_DESC::Buffer(sizeof(ModelConstantBuffer));
     // 定数バッファをリソースとして作成
     for (int i = 0; i < FRAME_BUFFER_COUNT; i++) {
-        m_pDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &d,
+        m_pDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &constantData,
             D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_modelConstantBuffer[i]));
     }
 }
@@ -108,7 +108,6 @@ Model::Mesh Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
         }
     }
 
-    // 頂点バッファの作成
     Mesh meshData;
 
     //頂点バッファを設定
@@ -143,7 +142,7 @@ Model::Mesh Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
         printf("頂点バッファの生成に失敗しました。\n");
     }
 
-    //頂点データをGPUに送信
+    //頂点データをGPUメモリに記録
     void* vertexDataBegin;
     CD3DX12_RANGE readRange(0, 0);
     meshData.vertexBuffer->Map(0, &readRange, &vertexDataBegin);
@@ -222,12 +221,13 @@ void Model::Update()
 
 void Model::Draw()
 {
+    //エンジンからコマンドリストを取得
     ID3D12GraphicsCommandList* pCommandList = g_Engine->CommandList();
 
+    //現在のバックバッファのインデックス (トリプルバッファリングのため、0～2が返される。フレームの描画が終われば次のインデックスに移行)
     UINT bufferIndex = g_Engine->CurrentBackBufferIndex();
 
     //コマンドリストに送信
-
     pCommandList->SetGraphicsRootSignature(m_pRootSignature->GetRootSignature());                                   //ルートシグネチャを設定
     pCommandList->SetPipelineState(m_pPipelineState->GetPipelineState());                                           //パイプラインステートを設定
     pCommandList->SetGraphicsRootConstantBufferView(0, m_modelConstantBuffer[bufferIndex]->GetGPUVirtualAddress()); //モデルの位置関係を送信

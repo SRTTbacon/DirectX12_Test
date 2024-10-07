@@ -26,6 +26,11 @@ bool Scene::Init()
 float x = 0.0f;
 float y = 0.0f;
 float z = 0.0f;
+float w = 0.0f;
+float x2 = 0.0f;
+float y2 = 0.0f;
+float z2 = 0.0f;
+float w2 = 0.0f;
 
 void Scene::Update()
 {
@@ -46,47 +51,71 @@ void Scene::Update()
 	m_camera.Update();
 
 	if (g_Engine->GetKeyState(DIK_X) && g_Engine->GetKeyState(DIK_J)) {
-		x -= 0.5f;
+		x -= 0.005f;
 	}
 	if (g_Engine->GetKeyState(DIK_X) && g_Engine->GetKeyState(DIK_L)) {
-		x += 0.5f;
+		x += 0.005f;
 	}
 	if (g_Engine->GetKeyState(DIK_R) && g_Engine->GetKeyState(DIK_J)) {
-		y -= 0.5f;
+		y -= 0.005f;
 	}
 	if (g_Engine->GetKeyState(DIK_R) && g_Engine->GetKeyState(DIK_L)) {
-		y += 0.5f;
+		y += 0.005f;
 	}
 	if (g_Engine->GetKeyState(DIK_P) && g_Engine->GetKeyState(DIK_J)) {
-		z -= 0.5f;
+		z -= 0.005f;
 	}
 	if (g_Engine->GetKeyState(DIK_P) && g_Engine->GetKeyState(DIK_L)) {
-		z += 0.5f;
+		z += 0.005f;
+	}
+
+	if (g_Engine->GetKeyState(DIK_Y) && g_Engine->GetKeyState(DIK_J)) {
+		x2 -= 0.005f;
+	}
+	if (g_Engine->GetKeyState(DIK_Y) && g_Engine->GetKeyState(DIK_L)) {
+		x2 += 0.005f;
+	}
+	if (g_Engine->GetKeyState(DIK_U) && g_Engine->GetKeyState(DIK_J)) {
+		y2 -= 0.005f;
+	}
+	if (g_Engine->GetKeyState(DIK_U) && g_Engine->GetKeyState(DIK_L)) {
+		y2 += 0.005f;
+	}
+	if (g_Engine->GetKeyState(DIK_I) && g_Engine->GetKeyState(DIK_J)) {
+		z2 -= 0.005f;
+	}
+	if (g_Engine->GetKeyState(DIK_I) && g_Engine->GetKeyState(DIK_L)) {
+		z2 += 0.005f;
+	}
+	if (g_Engine->GetKeyState(DIK_O) && g_Engine->GetKeyState(DIK_J)) {
+		w2 -= 0.005f;
+	}
+	if (g_Engine->GetKeyState(DIK_O) && g_Engine->GetKeyState(DIK_L)) {
+		w2 += 0.005f;
 	}
 	if (g_Engine->GetMouseStateSync(0x00)) {
 		m_model1.m_rotation.x += -90.0f;
 	}
-	XMFLOAT3 a = { x, y, z };
-	m_model1.UpdateBoneRotation("Left arm", a);
+
+	XMFLOAT4 a = { x, y, z, w };
+	//m_model1.UpdateBoneRotation("Hips", a);
+	a = { x2, y2, z2, w2 };
+	//m_model1.UpdateBoneRotation("Spine", a);
 
 	printf("x=%f, y=%f, z=%f\n", x, y, z);
+	printf("x1=%f, y1=%f, z1=%f\n", x2, y2, z2);
 
-	for (BoneAnimation& bone : m_anim.m_boneAnim) {
-		/*if (bone.boneName == "Left leg") {
-			m_model1.UpdateBoneRotation(bone.boneName, bone.rotation);
+	std::vector<BoneAnimation> boneAnim = m_anim.Update();
+
+	for (UINT i = 0; i < boneAnim.size(); i++) {
+		std::string boneName = m_anim.boneMapping[i];
+		if (boneName[0] == 'T' && boneName[1] == 'h' && boneName[2] == 'u' && boneName[3] == 'm' && boneName[4] == 'b') {
+
 		}
-		if (bone.boneName == "Left knee") {
-			m_model1.UpdateBoneRotation(bone.boneName, bone.rotation);
-			printf("rotationX = %f, rotationY = %f, rotationZ = %f\n", bone.rotation.x, bone.rotation.y, bone.rotation.z);
+		else {
+			m_model1.UpdateBonePosition(boneName, boneAnim[i].position);
+			m_model1.UpdateBoneRotation(boneName, boneAnim[i].rotation);
 		}
-		if (bone.boneName == "Right leg") {
-			m_model1.UpdateBoneRotation(bone.boneName, bone.rotation);
-		}
-		if (bone.boneName == "Right knee") {
-			m_model1.UpdateBoneRotation(bone.boneName, bone.rotation);
-		}*/
-		//m_model1.UpdateBonePosition(bone.boneName, bone.position);
-		//m_model1.UpdateBoneRotation(bone.boneName, bone.rotation);
 	}
 
 	m_model1.Update();
@@ -107,7 +136,8 @@ Scene::Scene()
 	: m_model1(Character(modelFile1, &m_camera))
 	, m_anim("Resource\\Test.hcs")
 {
-	XMFLOAT3 a = { -10.0f, 13.5f, 0.58f };
+	XMFLOAT4 a = {0.0f, 0.0f, 0.0f, 0.0f};
+	/*XMFLOAT3 a = {-10.0f, 13.5f, 0.58f};
 	m_model1.UpdateBoneRotation("Left leg", a);
 	a = { 6.9f, -7.4f, -1.9f };
 	m_model1.UpdateBoneRotation("Left knee", a);
@@ -119,23 +149,71 @@ Scene::Scene()
 	m_model1.UpdateBoneRotation("Right ankle", a);
 	//a = { -76.0f, -9.8f, 0.0f };
 	a = { -7.0f, -9.8f, 0.0f };
-	m_model1.UpdateBoneRotation("Left arm", a);
-
-	for (BoneAnimation& bone : m_anim.m_boneAnim) {
-		Bone* boneInfo = m_model1.GetBone(bone.boneName);
-		boneInfo->m_boneOffset = XMMatrixTranslation(bone.initPosition.x, -bone.initPosition.z, bone.initPosition.y);
-	}
+	m_model1.UpdateBoneRotation("Left arm", a);*/
 
 	//m_model1.m_position.x = 2.0f;
 
 	//m_model2.LoadModel(Primitive_Sphere);
 	for (std::string name : m_model1.GetBoneNames()) {
-		if (name == "Chest" || name == "Left arm" || name == "Left elbow") {
+		if (name[0] == 'L' || name[0] == 'R') {
+		//if (name == "Left leg") {
 			Model model(&m_camera);
 			model.LoadModel(modelFile2);
 			model.m_position = m_model1.GetBoneOffset(name);
+			//x = model.m_position.x;
+			//y = model.m_position.y;
+			//z = model.m_position.z;
 			model.m_scale = XMFLOAT3(0.05f, 0.05f, 0.05f);
 			m_spheres.push_back(model);
+			printf("name = %s\n", name.c_str());
 		}
 	}
+
+	x = 0.13954f;
+	y = -0.00043f;
+	z = -0.00517f;
+	w = 0.99020f;
+
+	x2 = -0.00701f;
+	y2 = 0.00789f;
+	z2 = 0.01992f;
+	w2 = 0.99975f;
+
+	a.x = 0.13954f;
+	a.y = -0.00043f;
+	a.z = -0.00517f;
+	a.w = 0.99020f;
+	m_model1.UpdateBoneRotation("Hips", a);
+	a.x = -0.00701f;
+	a.y = 0.00789f;
+	a.z = 0.01992f;
+	a.w = 0.99975f;
+	m_model1.UpdateBoneRotation("Spine", a);
+	a.x = -0.11221f;
+	a.y = -0.01104f;
+	a.z = -0.01690f;
+	a.w = 0.99348f;
+	m_model1.UpdateBoneRotation("Chest", a);
+	a.x = 0.01304f;
+	a.z = -0.05511f;
+	a.w = 0.99840f;
+	m_model1.UpdateBoneRotation("Left shoulder", a);
+	a.x = 0.42431f;
+	a.y = 0.04335f;
+	a.z = -0.18853f;
+	a.w = 0.88461f;
+	m_model1.UpdateBoneRotation("Left arm", a);
+	a.x = 0.26410f;
+	a.y = -0.22520f;
+	a.z = -0.70089f;
+	a.w = 0.62313f;
+	m_model1.UpdateBoneRotation("Left elbow", a);
+	a.x = 0.22555f;
+	a.y = -0.33024f;
+	a.z = 0.03830f;
+	a.w = 0.91575f;
+	m_model1.UpdateBoneRotation("Left wrist", a);
+
+	m_model1.m_rotation.x = -90.0f;
+	m_model1.m_rotation.y = 180.0f;
 }

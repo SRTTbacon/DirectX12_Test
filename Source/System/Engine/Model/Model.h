@@ -77,7 +77,7 @@ protected:
 
     std::vector<Mesh> meshes;                           //メッシュの配列 (キャラクターなど、FBX内に複数のメッシュが存在するものに対応)
     std::vector<XMMATRIX> boneInfos;                    //シェーダーに送信するボーンのマトリックス
-    std::vector<Bone> bones;                        //ボーン情報
+    std::vector<Bone> bones;                            //ボーン情報
     std::unordered_map<std::string, UINT> boneMapping;  //ボーン名からインデックスを取得
 
     XMMATRIX m_modelMatrix;         //位置、回転、スケールをMatrixで保持

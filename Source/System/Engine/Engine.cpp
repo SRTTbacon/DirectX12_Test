@@ -58,6 +58,11 @@ bool Engine::Init(HWND hwnd, UINT windowWidth, UINT windowHeight)
 
 	m_keyInput = new Input(m_hWnd);
 
+	//FrameTime計測用
+	m_initTime = timeGetTime();
+	m_sceneTimeMS = 0;
+	m_frameTime = 0.0f;
+
 	printf("描画エンジンの初期化に成功\n");
 	return true;
 }
@@ -394,6 +399,15 @@ BYTE Engine::GetMouseStateSync(const BYTE keyCode)
 
 void Engine::Update()
 {
+	//現在の時間
+	DWORD timeNow = timeGetTime();
+	//前のフレームから何ミリ秒経過したか
+	DWORD nowFrameTimeMS = timeNow - m_sceneTimeMS - m_initTime;
+	//フレーム時間を秒に直す
+	m_frameTime = nowFrameTimeMS / 1000.0f;
+	//シーンが切り替わってからの時間(ミリ秒と秒)
+	m_sceneTimeMS = timeNow - m_initTime;
+
 	m_keyInput->UpdateMouseState();
 }
 
