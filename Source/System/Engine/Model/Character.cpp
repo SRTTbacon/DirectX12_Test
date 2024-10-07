@@ -423,6 +423,11 @@ void Character::LoadBoneFamily(const aiNode* node)
     }
 }
 
+void Character::LoadShapeKey(const aiMesh* node)
+{
+
+}
+
 void Character::UpdateBonePosition(std::string boneName, XMFLOAT3& position)
 {
     if (boneMapping.find(boneName) == boneMapping.end()) {

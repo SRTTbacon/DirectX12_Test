@@ -48,6 +48,7 @@ private:
     Mesh ProcessMesh(const aiScene* scene, aiMesh* mesh);   //メッシュ情報を読み込み
     void LoadBones(const aiScene* scene, Mesh& meshStruct, aiMesh* mesh, std::vector<Vertex>& vertices);    //ボーン情報を取得
     void LoadBoneFamily(const aiNode* node);                //ボーンの親子関係を取得
+    void LoadShapeKey(const aiMesh* node);
     void UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix);   //シェーダーに渡すボーンの座標を計算
     void UpdateBoneTransform();                                         //シェーダーに渡すボーンの座標を計算
 };
