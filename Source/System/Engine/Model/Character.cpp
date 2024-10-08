@@ -35,7 +35,6 @@ void Character::LoadFBX(const std::string& fbxFile)
         printf("FBXファイルをロードできませんでした。\n");
         return;
     }
-
     ProcessNode(scene, scene->mRootNode);
 
     //ボーンに親子関係を付ける
@@ -445,25 +444,29 @@ void Character::LoadBoneFamily(const aiNode* node)
     }
 }
 
-void Character::LoadShapeKey(const aiMesh* node, std::vector<Vertex>& vertices)
+void Character::LoadShapeKey(const aiMesh* mesh, std::vector<Vertex>& vertices)
 {
-    for (UINT i = 0; i < node->mNumAnimMeshes; i++) {
-        aiAnimMesh* animMesh = node->mAnimMeshes[i];
+    for (UINT i = 0; i < mesh->mNumAnimMeshes; i++) {
+        aiAnimMesh* animMesh = mesh->mAnimMeshes[i];
 
-        const char* shapeName = animMesh->mName.C_Str();
+        std::string shapeName = animMesh->mName.C_Str();
 
         UINT shapeIndex = 0;
         if (shapeMapping.find(shapeName) == shapeMapping.end()) {
             shapeIndex = static_cast<UINT>(shapeWeights.size());
 
             shapeWeights.push_back(0.0f);
-            shapeMapping[shapeName] = i;
+            shapeMapping[shapeName] = shapeIndex;
+            printf("ShapeName = %s, Index = %d\n", shapeName.c_str(), shapeIndex);
         }
         else {
             shapeIndex = shapeMapping[shapeName];
+            printf("Already Index = %d\n", shapeIndex);
         }
 
-        if (std::string(animMesh->mName.C_Str()) == "vrc.v_aa") {
+        if (shapeName == "Blinking") {
+            printf("---Blinking---\n");
+            printf("Index = %d\n", shapeIndex);
             for (UINT j = 0; j < animMesh->mNumVertices; j++) {
                 aiVector3D& vec = animMesh->mVertices[j];
                 vertices[j].ShapePosition = XMFLOAT3(vec.x, vec.y, vec.z);
@@ -471,6 +474,7 @@ void Character::LoadShapeKey(const aiMesh* node, std::vector<Vertex>& vertices)
                 vertices[j].ShapePosition.y -= vertices[j].Position.y;
                 vertices[j].ShapePosition.z -= vertices[j].Position.z;
                 vertices[j].ShapeID = shapeIndex;
+                //printf("VertexID = %d, ShapeID=%d\n", j, shapeIndex);
             }
         }
     }
@@ -533,7 +537,11 @@ void Character::SetShapeWeight(const std::string shapeName, float weight)
     }
 
     UINT shapeIndex = shapeMapping[shapeName];
+    printf("ShapeIndex = %d\n", shapeIndex);
     SetShapeWeight(shapeIndex, weight);
+    for (UINT i = 0; i < shapeWeights.size(); i++) {
+        SetShapeWeight(i, weight);
+    }
 }
 
 //すべてのボーン名を取得
