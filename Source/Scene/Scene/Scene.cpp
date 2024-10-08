@@ -102,8 +102,12 @@ void Scene::Update()
 	a = { x2, y2, z2, w2 };
 	//m_model1.UpdateBoneRotation("Spine", a);
 
-	printf("x=%f, y=%f, z=%f\n", x, y, z);
-	printf("x1=%f, y1=%f, z1=%f\n", x2, y2, z2);
+	m_model1.SetShapeWeight("vrc.v_aa", x);
+
+	printf("vrc.v_aa = %f\n", m_model1.GetShapeWeight("vrc.v_aa"));
+
+	//printf("x=%f, y=%f, z=%f\n", x, y, z);
+	//printf("x1=%f, y1=%f, z1=%f\n", x2, y2, z2);
 
 	std::vector<BoneAnimation> boneAnim = m_anim.Update();
 

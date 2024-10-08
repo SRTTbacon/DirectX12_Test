@@ -16,6 +16,9 @@ void Character::Update()
     //ボーンのマトリックスを更新
     UpdateBoneTransform();
 
+    //シェイプキーのウェイトを更新
+    UpdateShapeKeys();
+
     Model::Update();
 }
 
@@ -106,6 +109,8 @@ Model::Mesh Character::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
 
         vertex.BoneWeights = { 0.0f, 0.0f, 0.0f, 0.0f };
         vertex.BoneIDs[0] = vertex.BoneIDs[1] = vertex.BoneIDs[2] = vertex.BoneIDs[3] = 0;
+        vertex.ShapePosition = XMFLOAT3(0.0f, 0.0f, 0.0f);
+        vertex.ShapeID = 0;
 
         vertices.push_back(vertex);
     }
@@ -123,6 +128,9 @@ Model::Mesh Character::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
 
     //ボーンの処理
     LoadBones(scene, meshData, mesh, vertices);
+
+    //シェイプキーの処理
+    LoadShapeKey(mesh, vertices);
 
     //頂点バッファを設定
     const UINT vertexBufferSize = static_cast<UINT>(sizeof(Vertex) * vertices.size());
@@ -218,6 +226,20 @@ Model::Mesh Character::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
         IID_PPV_ARGS(&m_boneMatricesBuffer));
     if (FAILED(hr)) {
         printf("ボーンバッファの生成に失敗しました。%1x\n", hr);
+    }
+
+    //シェイプ情報のリソースを作成
+    CD3DX12_RESOURCE_DESC shapeBuffer = CD3DX12_RESOURCE_DESC::Buffer(sizeof(float) * shapeWeights.size());
+
+    hr = m_pDevice->CreateCommittedResource(
+        &heapProps,
+        D3D12_HEAP_FLAG_NONE,
+        &d,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&m_shapeKeyWeightBuffer));
+    if (FAILED(hr)) {
+        printf("シェイプキーバッファの生成に失敗しました。%1x\n", hr);
     }
 
     return meshData;
@@ -423,11 +445,38 @@ void Character::LoadBoneFamily(const aiNode* node)
     }
 }
 
-void Character::LoadShapeKey(const aiMesh* node)
+void Character::LoadShapeKey(const aiMesh* node, std::vector<Vertex>& vertices)
 {
+    for (UINT i = 0; i < node->mNumAnimMeshes; i++) {
+        aiAnimMesh* animMesh = node->mAnimMeshes[i];
 
+        const char* shapeName = animMesh->mName.C_Str();
+
+        UINT shapeIndex = 0;
+        if (shapeMapping.find(shapeName) == shapeMapping.end()) {
+            shapeIndex = static_cast<UINT>(shapeWeights.size());
+
+            shapeWeights.push_back(0.0f);
+            shapeMapping[shapeName] = i;
+        }
+        else {
+            shapeIndex = shapeMapping[shapeName];
+        }
+
+        if (std::string(animMesh->mName.C_Str()) == "vrc.v_aa") {
+            for (UINT j = 0; j < animMesh->mNumVertices; j++) {
+                aiVector3D& vec = animMesh->mVertices[j];
+                vertices[j].ShapePosition = XMFLOAT3(vec.x, vec.y, vec.z);
+                vertices[j].ShapePosition.x -= vertices[j].Position.x;
+                vertices[j].ShapePosition.y -= vertices[j].Position.y;
+                vertices[j].ShapePosition.z -= vertices[j].Position.z;
+                vertices[j].ShapeID = shapeIndex;
+            }
+        }
+    }
 }
 
+//ボーンの位置を更新
 void Character::UpdateBonePosition(std::string boneName, XMFLOAT3& position)
 {
     if (boneMapping.find(boneName) == boneMapping.end()) {
@@ -438,6 +487,8 @@ void Character::UpdateBonePosition(std::string boneName, XMFLOAT3& position)
 
     bones[boneIndex].m_position = position;
 }
+
+//ボーンの回転を変更
 void Character::UpdateBoneRotation(std::string boneName, XMFLOAT4& rotation)
 {
     if (boneMapping.find(boneName) == boneMapping.end()) {
@@ -448,6 +499,8 @@ void Character::UpdateBoneRotation(std::string boneName, XMFLOAT4& rotation)
 
     bones[boneIndex].m_rotation = rotation;
 }
+
+//ボーンのスケールを変更
 void Character::UpdateBoneScale(std::string boneName, XMFLOAT3& scale)
 {
     if (boneMapping.find(boneName) == boneMapping.end()) {
@@ -459,6 +512,31 @@ void Character::UpdateBoneScale(std::string boneName, XMFLOAT3& scale)
     bones[boneIndex].m_scale = scale;
 }
 
+//シェイプキーのウェイトを更新
+void Character::SetShapeWeight(UINT shapeIndex, float weight)
+{
+    if (shapeIndex < 0 || shapeWeights.size() <= shapeIndex)
+        return;
+
+    if (weight < 0.0f)
+        weight = 0.0f;
+    else if (weight > 1.0f)
+        weight = 1.0f;
+
+    shapeWeights[shapeIndex] = weight;
+}
+//シェイプキーのウェイトを更新
+void Character::SetShapeWeight(const std::string shapeName, float weight)
+{
+    if (shapeMapping.find(shapeName) == shapeMapping.end()) {
+        return;
+    }
+
+    UINT shapeIndex = shapeMapping[shapeName];
+    SetShapeWeight(shapeIndex, weight);
+}
+
+//すべてのボーン名を取得
 std::vector<std::string> Character::GetBoneNames()
 {
     std::vector<std::string> boneNames;
@@ -496,9 +574,6 @@ void Character::UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix)
         rotVec = XMVectorSet(bone.m_rotation.x, bone.m_rotation.z, bone.m_rotation.y, bone.m_rotation.w);
     }
     XMMATRIX rot = XMMatrixRotationQuaternion(rotVec);
-    if (bone.GetBoneName() == "Left elbow") {
-        printf("x = %f, y = %f, z = %f, w = %f\n", rotVec.m128_f32[0], rotVec.m128_f32[1], rotVec.m128_f32[2], rotVec.m128_f32[3]);
-    }
 
     XMMATRIX pos = XMMatrixTranslation(bone.m_position.x, bone.m_position.y, bone.m_position.z);
     //XMMATRIX offsetBack = XMMatrixTranslation(bone.GetBoneOffset().r[3].m128_f32[0], bone.GetBoneOffset().r[3].m128_f32[1], bone.GetBoneOffset().r[3].m128_f32[2]);
@@ -532,5 +607,17 @@ void Character::UpdateBoneTransform()
     {
         memcpy(pData, boneInfos.data(), sizeof(XMMATRIX) * boneInfos.size()); // ボーンマトリックスをコピー
         m_boneMatricesBuffer->Unmap(0, nullptr);
+    }
+}
+
+void Character::UpdateShapeKeys()
+{
+    //シェイプバッファに送信
+    void* pData;
+    HRESULT hr = m_shapeKeyWeightBuffer->Map(0, nullptr, &pData);
+    if (SUCCEEDED(hr))
+    {
+        memcpy(pData, shapeWeights.data(), sizeof(float) * shapeWeights.size()); // ボーンマトリックスをコピー
+        m_shapeKeyWeightBuffer->Unmap(0, nullptr);
     }
 }

@@ -233,7 +233,10 @@ void Model::Draw()
     pCommandList->SetGraphicsRootConstantBufferView(0, m_modelConstantBuffer[bufferIndex]->GetGPUVirtualAddress()); //モデルの位置関係を送信
 
     if (m_boneMatricesBuffer) {
-        pCommandList->SetGraphicsRootConstantBufferView(1, m_boneMatricesBuffer->GetGPUVirtualAddress());               //ボーンを送信
+        pCommandList->SetGraphicsRootConstantBufferView(1, m_boneMatricesBuffer->GetGPUVirtualAddress());           //ボーンを送信
+    }
+    if (m_shapeKeyWeightBuffer) {
+        pCommandList->SetGraphicsRootConstantBufferView(2, m_shapeKeyWeightBuffer->GetGPUVirtualAddress());         //シェイプキーを送信
     }
 
     if (m_pDescriptorHeap) {
@@ -250,7 +253,7 @@ void Model::Draw()
         pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);   //3角ポリゴンのみ
 
         if (mesh.materialIndex != -1)
-            pCommandList->SetGraphicsRootDescriptorTable(2, g_materials[mesh.materialIndex]->HandleGPU); //マテリアルを送信
+            pCommandList->SetGraphicsRootDescriptorTable(3, g_materials[mesh.materialIndex]->HandleGPU); //マテリアルを送信
 
         pCommandList->DrawIndexedInstanced(mesh.indexCount, 1, 0, 0, 0);             //描画
     }

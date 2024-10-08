@@ -62,14 +62,15 @@ CD3DX12_ROOT_PARAMETER* RootSignature::GetRootParameter()
 {
 	//ボーンが存在するシェーダーの場合
 	if (m_shaderKind == ShaderKinds::BoneShader) {
-		m_rootParamSize = 3;
+		m_rootParamSize = 4;
 		CD3DX12_ROOT_PARAMETER* rootParam = new CD3DX12_ROOT_PARAMETER[m_rootParamSize];
 		rootParam[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL); // b0の定数バッファを設定、全てのシェーダーから見えるようにする
 		rootParam[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL); // b1の定数バッファを設定、全てのシェーダーから見えるようにする
+		rootParam[2].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_ALL); // b2の定数バッファを設定、全てのシェーダーから見えるようにする
 
 		m_pTableRange = new CD3DX12_DESCRIPTOR_RANGE[1];				//ディスクリプタテーブル
 		m_pTableRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);	//シェーダーリソースビュー
-		rootParam[2].InitAsDescriptorTable(1, m_pTableRange, D3D12_SHADER_VISIBILITY_ALL);
+		rootParam[3].InitAsDescriptorTable(1, m_pTableRange, D3D12_SHADER_VISIBILITY_ALL);
 
 		return rootParam;
 	}

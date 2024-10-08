@@ -72,13 +72,13 @@ protected:
     DescriptorHeap* m_pDescriptorHeap;                                  //マテリアル
     ComPtr<ID3D12Resource> m_modelConstantBuffer[FRAME_BUFFER_COUNT];   //コンスタントバッファ。画面のちらつきを防止するためトリプルバッファリング (2個でも十分なのかな?)
     ComPtr<ID3D12Resource> m_boneMatricesBuffer;                        //ボーン情報をシェーダーに送信する用
+    ComPtr<ID3D12Resource> m_shapeKeyWeightBuffer;
 
     const Camera* m_pCamera;        //カメラ情報
 
     std::vector<Mesh> meshes;                           //メッシュの配列 (キャラクターなど、FBX内に複数のメッシュが存在するものに対応)
     std::vector<XMMATRIX> boneInfos;                    //シェーダーに送信するボーンのマトリックス
-    std::vector<Bone> bones;                            //ボーン情報
-    std::unordered_map<std::string, UINT> boneMapping;  //ボーン名からインデックスを取得
+    std::vector<float> shapeWeights;                    //シェイプキーのウェイト一覧
 
     XMMATRIX m_modelMatrix;         //位置、回転、スケールをMatrixで保持
 
