@@ -446,12 +446,15 @@ void Character::LoadBoneFamily(const aiNode* node)
 
 void Character::LoadShapeKey(const aiMesh* mesh, std::vector<Vertex>& vertices)
 {
+    //メッシュに含まれるシェイプキー一覧
     for (UINT i = 0; i < mesh->mNumAnimMeshes; i++) {
         aiAnimMesh* animMesh = mesh->mAnimMeshes[i];
 
         std::string shapeName = animMesh->mName.C_Str();
 
         UINT shapeIndex = 0;
+
+        //同名のシェイプキーがなければ追加
         if (shapeMapping.find(shapeName) == shapeMapping.end()) {
             shapeIndex = static_cast<UINT>(shapeWeights.size());
 
@@ -459,6 +462,7 @@ void Character::LoadShapeKey(const aiMesh* mesh, std::vector<Vertex>& vertices)
             shapeMapping[shapeName] = shapeIndex;
             printf("ShapeName = %s, Index = %d\n", shapeName.c_str(), shapeIndex);
         }
+        //同名のシェイプキーが存在すればそのインデックスを入れる
         else {
             shapeIndex = shapeMapping[shapeName];
             printf("Already Index = %d\n", shapeIndex);
@@ -467,9 +471,11 @@ void Character::LoadShapeKey(const aiMesh* mesh, std::vector<Vertex>& vertices)
         if (shapeName == "Blinking") {
             printf("---Blinking---\n");
             printf("Index = %d\n", shapeIndex);
+            //頂点ごとにシェイプキーの適応後の位置を設定
             for (UINT j = 0; j < animMesh->mNumVertices; j++) {
                 aiVector3D& vec = animMesh->mVertices[j];
                 vertices[j].ShapePosition = XMFLOAT3(vec.x, vec.y, vec.z);
+                //元の位置を引く
                 vertices[j].ShapePosition.x -= vertices[j].Position.x;
                 vertices[j].ShapePosition.y -= vertices[j].Position.y;
                 vertices[j].ShapePosition.z -= vertices[j].Position.z;
@@ -477,6 +483,10 @@ void Character::LoadShapeKey(const aiMesh* mesh, std::vector<Vertex>& vertices)
                 //printf("VertexID = %d, ShapeID=%d\n", j, shapeIndex);
             }
         }
+    }
+
+    if (shapeMapping.find("Blinking") != shapeMapping.end()) {
+        printf("Blinking Index = %d\n", shapeMapping["Blinking"]);
     }
 }
 
@@ -539,9 +549,9 @@ void Character::SetShapeWeight(const std::string shapeName, float weight)
     UINT shapeIndex = shapeMapping[shapeName];
     printf("ShapeIndex = %d\n", shapeIndex);
     SetShapeWeight(shapeIndex, weight);
-    for (UINT i = 0; i < shapeWeights.size(); i++) {
-        SetShapeWeight(i, weight);
-    }
+    //for (UINT i = 0; i < shapeWeights.size(); i++) {
+        //SetShapeWeight(i, weight);
+    //}
 }
 
 //すべてのボーン名を取得

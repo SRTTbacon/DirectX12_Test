@@ -102,9 +102,9 @@ void Scene::Update()
 	a = { x2, y2, z2, w2 };
 	//m_model1.UpdateBoneRotation("Spine", a);
 
-	m_model1.SetShapeWeight("vrc.v_aa", x);
+	m_model1.SetShapeWeight("Blinking", x);
 
-	printf("Blinking = %f\n", m_model1.GetShapeWeight("vrc.v_aa"));
+	printf("Blinking = %f\n", m_model1.GetShapeWeight("Blinking"));
 
 	//printf("x=%f, y=%f, z=%f\n", x, y, z);
 	//printf("x1=%f, y1=%f, z1=%f\n", x2, y2, z2);
