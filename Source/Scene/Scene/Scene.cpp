@@ -51,10 +51,10 @@ void Scene::Update()
 	m_camera.Update();
 
 	if (g_Engine->GetKeyState(DIK_X) && g_Engine->GetKeyState(DIK_J)) {
-		x -= 0.005f;
+		x -= 0.025f;
 	}
 	if (g_Engine->GetKeyState(DIK_X) && g_Engine->GetKeyState(DIK_L)) {
-		x += 0.005f;
+		x += 0.025f;
 	}
 	if (g_Engine->GetKeyState(DIK_R) && g_Engine->GetKeyState(DIK_J)) {
 		y -= 0.005f;
@@ -104,7 +104,9 @@ void Scene::Update()
 
 	m_model1.SetShapeWeight("Blinking", x);
 
-	printf("Blinking = %f\n", m_model1.GetShapeWeight("Blinking"));
+	x = m_model1.GetShapeWeight("Blinking");
+
+	printf("Blinking = %f\n", x);
 
 	//printf("x=%f, y=%f, z=%f\n", x, y, z);
 	//printf("x1=%f, y1=%f, z1=%f\n", x2, y2, z2);
