@@ -1,5 +1,4 @@
 #pragma once
-#include <string>
 #include <unordered_map>
 #include "..\\Core\\RootSignature\\RootSignature.h"
 #include "..\\Core\\PipelineState\\PipelineState.h"

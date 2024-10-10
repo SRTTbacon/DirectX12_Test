@@ -23,6 +23,7 @@ bool Scene::Init()
 	return true;
 }
 
+UINT aaa = 0;
 float x = 0.0f;
 float y = 0.0f;
 float z = 0.0f;
@@ -94,7 +95,16 @@ void Scene::Update()
 		w2 += 0.005f;
 	}
 	if (g_Engine->GetMouseStateSync(0x00)) {
-		m_model1.m_rotation.x += -90.0f;
+		aaa++;
+		printf("aaa = %d\n", aaa);
+	}
+	if (g_Engine->GetMouseStateSync(0x01)) {
+		aaa--;
+		printf("aaa = %d\n", aaa);
+	}
+	if (g_Engine->GetMouseStateSync(0x02)) {
+		aaa += 3;
+		printf("aaa = %d\n", aaa);
 	}
 
 	XMFLOAT4 a = { x, y, z, w };
@@ -102,11 +112,14 @@ void Scene::Update()
 	a = { x2, y2, z2, w2 };
 	//m_model1.UpdateBoneRotation("Spine", a);
 
-	m_model1.SetShapeWeight("Blinking", x);
+	m_model1.SetShapeWeight(50, x);
+	//m_model1.SetShapeWeight(aaa - 1, x);
+	//m_model1.SetShapeWeight(aaa - 2, x);
+	//m_model1.SetShapeWeight("–Ú_‚Ü‚Î‚½‚«", x);
 
-	x = m_model1.GetShapeWeight("Blinking");
+	//x = m_model1.GetShapeWeight("vrc.v_ch");
 
-	printf("Blinking = %f\n", x);
+	//printf("Blinking = %f\n", x);
 
 	//printf("x=%f, y=%f, z=%f\n", x, y, z);
 	//printf("x1=%f, y1=%f, z1=%f\n", x2, y2, z2);
@@ -171,7 +184,7 @@ Scene::Scene()
 			//z = model.m_position.z;
 			model.m_scale = XMFLOAT3(0.05f, 0.05f, 0.05f);
 			m_spheres.push_back(model);
-			printf("name = %s\n", name.c_str());
+			//printf("name = %s\n", name.c_str());
 		}
 	}
 

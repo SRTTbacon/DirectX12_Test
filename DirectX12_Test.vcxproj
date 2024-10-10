@@ -33,6 +33,7 @@
     <ClCompile Include="Source\System\Engine\Model\Character.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Model.cpp" />
     <ClCompile Include="Source\System\Main\Main.cpp" />
+    <ClCompile Include="Source\System\Main\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\GameBase.h" />
@@ -51,6 +52,7 @@
     <ClInclude Include="Source\System\Engine\Model\Character.h" />
     <ClInclude Include="Source\System\Engine\Model\Model.h" />
     <ClInclude Include="Source\System\Main\Main.h" />
+    <ClInclude Include="Source\System\Main\Utility.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Source\System\Shader\PrimitivePS.hlsl">

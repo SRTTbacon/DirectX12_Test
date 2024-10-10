@@ -1,5 +1,6 @@
 #pragma once
 #include "Model.h"
+#include "..\\..\\Main\\Utility.h"
 
 class Character : public Model
 {

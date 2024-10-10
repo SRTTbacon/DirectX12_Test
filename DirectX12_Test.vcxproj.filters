@@ -100,6 +100,9 @@
     <ClCompile Include="Source\System\Engine\Model\Character.cpp">
       <Filter>Source\System\Engine\Model</Filter>
     </ClCompile>
+    <ClCompile Include="Source\System\Main\Utility.cpp">
+      <Filter>Source\System\Main</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\System\Main\Main.h">
@@ -149,6 +152,9 @@
     </ClInclude>
     <ClInclude Include="Source\System\Engine\Model\Character.h">
       <Filter>Source\System\Engine\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Main\Utility.h">
+      <Filter>Source\System\Main</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
