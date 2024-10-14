@@ -24,6 +24,7 @@ enum PrimitiveModel
 class Model
 {
 public:
+    //モデルを初期化
     Model(const Camera* pCamera);
 
     void LoadModel(const PrimitiveModel primitiveModel);
@@ -59,8 +60,12 @@ protected:
     struct Mesh {
         ComPtr<ID3D12Resource> vertexBuffer;            //頂点バッファ(GPUメモリに頂点情報を保存)
         ComPtr<ID3D12Resource> indexBuffer;             //インデックスバッファ(GPUメモリに入っている頂点バッファの各頂点にインデックスを付けて保存)
+        ComPtr<ID3D12Resource> contentsBuffer;          //頂点数やシェイプキーの数など初期化後一度だけ送信する用 (ヒューマノイドモデルのみ設定)
+        ComPtr<ID3D12Resource> shapeWeightsBuffer;      //シェイプキーのウェイト情報                             (ヒューマノイドモデルのみ設定)
+        ComPtr<ID3D12Resource> shapeDeltasBuffer;       //各頂点に対するシェイプキーの位置情報                   (ヒューマノイドモデルのみ設定)
         D3D12_VERTEX_BUFFER_VIEW vertexBufferView;      //頂点バッファのデータ内容とサイズを保持
         D3D12_INDEX_BUFFER_VIEW indexBufferView;        //インデックスバッファのデータ内容とサイズを保持
+        DescriptorHeap* shapeDeltasHandle;
         UINT indexCount;                                //インデックス数 (GPU側で、この数ぶん描画させる)
         char materialIndex;                             //マテリアルが入っているインデックス (同じテクスチャは使いまわす)
     };
@@ -71,20 +76,17 @@ protected:
     DescriptorHeap* m_pDescriptorHeap;                                  //マテリアル
     ComPtr<ID3D12Resource> m_modelConstantBuffer[FRAME_BUFFER_COUNT];   //コンスタントバッファ。画面のちらつきを防止するためトリプルバッファリング (2個でも十分なのかな?)
     ComPtr<ID3D12Resource> m_boneMatricesBuffer;                        //ボーン情報をシェーダーに送信する用
-    ComPtr<ID3D12Resource> m_shapeKeyWeightBuffer;
 
     const Camera* m_pCamera;        //カメラ情報
 
-    std::vector<Mesh> meshes;                           //メッシュの配列 (キャラクターなど、FBX内に複数のメッシュが存在するものに対応)
-    std::vector<XMMATRIX> boneInfos;                    //シェーダーに送信するボーンのマトリックス
-    std::vector<float> shapeWeights;                    //シェイプキーのウェイト一覧
+    std::vector<Mesh*> m_meshes;    //メッシュの配列 (キャラクターなど、FBX内に複数のメッシュが存在するものに対応)
 
     XMMATRIX m_modelMatrix;         //位置、回転、スケールをMatrixで保持
 
 private:
     void LoadSphere(float radius, UINT sliceCount, UINT stackCount, const XMFLOAT4 color);
-    void CretaeBuffer(Mesh& mesh, std::vector<VertexPrimitive>& vertices, std::vector<UINT>& indices);
+    void CreateBuffer(Mesh* pMesh, std::vector<VertexPrimitive>& vertices, std::vector<UINT>& indices);
 
     void ProcessNode(const aiScene* scene, aiNode* node);   //ノードを読み込み
-    Mesh ProcessMesh(const aiScene* scene, aiMesh* mesh);   //メッシュ情報を読み込み
+    Mesh* ProcessMesh(const aiScene* scene, aiMesh* mesh);   //メッシュ情報を読み込み
 };

@@ -27,7 +27,7 @@ Model::Model(const Camera* pCamera)
     heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
 
     CD3DX12_RESOURCE_DESC constantData = CD3DX12_RESOURCE_DESC::Buffer(sizeof(ModelConstantBuffer));
-    // 定数バッファをリソースとして作成
+    //定数バッファをリソースとして作成
     for (int i = 0; i < FRAME_BUFFER_COUNT; i++) {
         m_pDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &constantData,
             D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_modelConstantBuffer[i]));
@@ -70,7 +70,7 @@ void Model::ProcessNode(const aiScene* scene, aiNode* node) {
     // メッシュを処理
     for (UINT i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        meshes.push_back(ProcessMesh(scene, mesh));
+        m_meshes.push_back(ProcessMesh(scene, mesh));
     }
 
     // 子ノードも再帰的に処理
@@ -79,7 +79,7 @@ void Model::ProcessNode(const aiScene* scene, aiNode* node) {
     }
 }
 
-Model::Mesh Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
+Model::Mesh* Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
     std::vector<VertexPrimitive> vertices;
     std::vector<UINT> indices;
 
@@ -108,91 +108,11 @@ Model::Mesh Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
         }
     }
 
-    Mesh meshData;
+    Mesh* meshData = new Mesh();
 
-    //頂点バッファを設定
-    const UINT vertexBufferSize = static_cast<UINT>(sizeof(VertexPrimitive) * vertices.size());
+    CreateBuffer(meshData, vertices, indices);
 
-    //ヒープ設定
-    D3D12_HEAP_PROPERTIES heapProps = {};
-    heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
-
-    //頂点バッファのリソース
-    D3D12_RESOURCE_DESC vertexBufferDesc = {};
-    vertexBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    vertexBufferDesc.Width = vertexBufferSize;
-    vertexBufferDesc.Height = 1;
-    vertexBufferDesc.DepthOrArraySize = 1;
-    vertexBufferDesc.MipLevels = 1;
-    vertexBufferDesc.Format = DXGI_FORMAT_UNKNOWN;
-    vertexBufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    vertexBufferDesc.SampleDesc.Count = 1;
-
-    //デバイスで作成
-    HRESULT result = m_pDevice->CreateCommittedResource(
-        &heapProps,
-        D3D12_HEAP_FLAG_NONE,
-        &vertexBufferDesc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&meshData.vertexBuffer)
-    );
-
-    if (FAILED(result)) {
-        printf("頂点バッファの生成に失敗しました。\n");
-    }
-
-    //頂点データをGPUメモリに記録
-    void* vertexDataBegin;
-    CD3DX12_RANGE readRange(0, 0);
-    meshData.vertexBuffer->Map(0, &readRange, &vertexDataBegin);
-    memcpy(vertexDataBegin, vertices.data(), vertexBufferSize);
-    meshData.vertexBuffer->Unmap(0, nullptr);
-
-    meshData.vertexBufferView.BufferLocation = meshData.vertexBuffer->GetGPUVirtualAddress();
-    meshData.vertexBufferView.StrideInBytes = sizeof(VertexPrimitive);
-    meshData.vertexBufferView.SizeInBytes = vertexBufferSize;
-
-    //インデックスバッファの作成
-    const UINT indexBufferSize = static_cast<UINT>(sizeof(UINT) * indices.size());
-
-    //インデックスバッファのリソース
-    D3D12_RESOURCE_DESC indexBufferDesc = {};
-    indexBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    indexBufferDesc.Width = indexBufferSize;
-    indexBufferDesc.Height = 1;
-    indexBufferDesc.DepthOrArraySize = 1;
-    indexBufferDesc.MipLevels = 1;
-    indexBufferDesc.Format = DXGI_FORMAT_UNKNOWN;
-    indexBufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    indexBufferDesc.SampleDesc.Count = 1;
-
-    result = m_pDevice->CreateCommittedResource(
-        &heapProps,
-        D3D12_HEAP_FLAG_NONE,
-        &indexBufferDesc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&meshData.indexBuffer)
-    );
-
-    if (FAILED(result)) {
-        printf("インデックスバッファの生成に失敗しました。\n");
-    }
-
-    //インデックスデータをGPUに送信
-    void* indexDataBegin;
-    meshData.indexBuffer->Map(0, &readRange, &indexDataBegin);
-    memcpy(indexDataBegin, indices.data(), indexBufferSize);
-    meshData.indexBuffer->Unmap(0, nullptr);
-
-    meshData.indexBufferView.BufferLocation = meshData.indexBuffer->GetGPUVirtualAddress();
-    meshData.indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-    meshData.indexBufferView.SizeInBytes = indexBufferSize;
-
-    meshData.indexCount = static_cast<UINT>(indices.size());
-
-    meshData.materialIndex = -1;
+    meshData->materialIndex = -1;
 
     return meshData;
 }
@@ -230,38 +150,49 @@ void Model::Draw()
     //コマンドリストに送信
     pCommandList->SetGraphicsRootSignature(m_pRootSignature->GetRootSignature());                                   //ルートシグネチャを設定
     pCommandList->SetPipelineState(m_pPipelineState->GetPipelineState());                                           //パイプラインステートを設定
+
     pCommandList->SetGraphicsRootConstantBufferView(0, m_modelConstantBuffer[bufferIndex]->GetGPUVirtualAddress()); //モデルの位置関係を送信
 
     if (m_boneMatricesBuffer) {
         pCommandList->SetGraphicsRootConstantBufferView(1, m_boneMatricesBuffer->GetGPUVirtualAddress());           //ボーンを送信
     }
-    if (m_shapeKeyWeightBuffer) {
-        pCommandList->SetGraphicsRootConstantBufferView(2, m_shapeKeyWeightBuffer->GetGPUVirtualAddress());         //シェイプキーを送信
-    }
 
     if (m_pDescriptorHeap) {
-        ID3D12DescriptorHeap* materialHeap = m_pDescriptorHeap->GetHeap();
-        pCommandList->SetDescriptorHeaps(1, &materialHeap);                          //ディスクリプタヒープを送信
+        ID3D12DescriptorHeap* materialHeap = m_pDescriptorHeap->GetHeap();  //ディスクリプタヒープを取得
+        pCommandList->SetDescriptorHeaps(1, &materialHeap);                 //ディスクリプタヒープを送信
     }
 
+
     //メッシュの数だけ繰り返す
-    for (size_t i = 0; i < meshes.size(); i++) {
-        Mesh& mesh = meshes[i];
+    for (size_t i = 0; i < m_meshes.size(); i++) {
+        Mesh* pMesh = m_meshes[i];
 
-        pCommandList->IASetVertexBuffers(0, 1, &mesh.vertexBufferView);              //頂点情報を送信
-        pCommandList->IASetIndexBuffer(&mesh.indexBufferView);                       //インデックス情報を送信
-        pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);   //3角ポリゴンのみ
+        if (pMesh->contentsBuffer) {
+            pCommandList->SetGraphicsRootConstantBufferView(2, pMesh->contentsBuffer->GetGPUVirtualAddress());      //頂点数を送信
+        }
 
-        if (mesh.materialIndex != -1)
-            pCommandList->SetGraphicsRootDescriptorTable(3, g_materials[mesh.materialIndex]->HandleGPU); //マテリアルを送信
+        if (pMesh->shapeDeltasBuffer) {
+            pCommandList->SetGraphicsRootShaderResourceView(3, pMesh->shapeDeltasBuffer->GetGPUVirtualAddress());   //シェイプキーの位置情報を送信
+        }
 
-        pCommandList->DrawIndexedInstanced(mesh.indexCount, 1, 0, 0, 0);             //描画
+        if (pMesh->shapeWeightsBuffer) {
+            pCommandList->SetGraphicsRootShaderResourceView(4, pMesh->shapeWeightsBuffer->GetGPUVirtualAddress());  //シェイプキーのウェイト情報を送信
+        }
+
+        pCommandList->IASetVertexBuffers(0, 1, &pMesh->vertexBufferView);           //頂点情報を送信
+        pCommandList->IASetIndexBuffer(&pMesh->indexBufferView);                    //インデックス情報を送信
+        pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);  //3角ポリゴンのみ
+
+        if (pMesh->materialIndex != -1)
+            pCommandList->SetGraphicsRootDescriptorTable(5, g_materials[pMesh->materialIndex]->HandleGPU); //マテリアルを送信
+
+        pCommandList->DrawIndexedInstanced(pMesh->indexCount, 1, 0, 0, 0);          //描画
     }
 }
 
 void Model::LoadSphere(float radius, UINT sliceCount, UINT stackCount, const XMFLOAT4 color)
 {
-    Mesh meshData;
+    Mesh* meshData = new Mesh();
 
     std::vector<VertexPrimitive> vertices;
     std::vector<UINT> indices;
@@ -322,11 +253,11 @@ void Model::LoadSphere(float radius, UINT sliceCount, UINT stackCount, const XMF
         indices.push_back(baseIndex + (stackCount - 2) * ringVertexCount + i + 1);
     }
 
-    CretaeBuffer(meshData, vertices, indices);
-    meshData.materialIndex = -1;
+    CreateBuffer(meshData, vertices, indices);
+    meshData->materialIndex = -1;
 }
 
-void Model::CretaeBuffer(Mesh& mesh, std::vector<VertexPrimitive>& vertices, std::vector<UINT>& indices)
+void Model::CreateBuffer(Mesh* pMesh, std::vector<VertexPrimitive>& vertices, std::vector<UINT>& indices)
 {
     //頂点バッファを設定
     const UINT vertexBufferSize = static_cast<UINT>(sizeof(VertexPrimitive) * vertices.size());
@@ -353,7 +284,7 @@ void Model::CretaeBuffer(Mesh& mesh, std::vector<VertexPrimitive>& vertices, std
         &vertexBufferDesc,
         D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
-        IID_PPV_ARGS(&mesh.vertexBuffer)
+        IID_PPV_ARGS(&pMesh->vertexBuffer)
     );
 
     if (FAILED(result)) {
@@ -364,13 +295,13 @@ void Model::CretaeBuffer(Mesh& mesh, std::vector<VertexPrimitive>& vertices, std
     //頂点データをGPUに送信
     void* vertexDataBegin;
     CD3DX12_RANGE readRange(0, 0);
-    mesh.vertexBuffer->Map(0, &readRange, &vertexDataBegin);
+    pMesh->vertexBuffer->Map(0, &readRange, &vertexDataBegin);
     memcpy(vertexDataBegin, vertices.data(), vertexBufferSize);
-    mesh.vertexBuffer->Unmap(0, nullptr);
+    pMesh->vertexBuffer->Unmap(0, nullptr);
 
-    mesh.vertexBufferView.BufferLocation = mesh.vertexBuffer->GetGPUVirtualAddress();
-    mesh.vertexBufferView.StrideInBytes = sizeof(VertexPrimitive);
-    mesh.vertexBufferView.SizeInBytes = vertexBufferSize;
+    pMesh->vertexBufferView.BufferLocation = pMesh->vertexBuffer->GetGPUVirtualAddress();
+    pMesh->vertexBufferView.StrideInBytes = sizeof(VertexPrimitive);
+    pMesh->vertexBufferView.SizeInBytes = vertexBufferSize;
 
     //インデックスバッファの作成
     const UINT indexBufferSize = static_cast<UINT>(sizeof(UINT) * indices.size());
@@ -392,7 +323,7 @@ void Model::CretaeBuffer(Mesh& mesh, std::vector<VertexPrimitive>& vertices, std
         &indexBufferDesc,
         D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
-        IID_PPV_ARGS(&mesh.indexBuffer)
+        IID_PPV_ARGS(&pMesh->indexBuffer)
     );
 
     if (FAILED(result)) {
@@ -401,13 +332,13 @@ void Model::CretaeBuffer(Mesh& mesh, std::vector<VertexPrimitive>& vertices, std
 
     //インデックスデータをGPUに送信
     void* indexDataBegin;
-    mesh.indexBuffer->Map(0, &readRange, &indexDataBegin);
+    pMesh->indexBuffer->Map(0, &readRange, &indexDataBegin);
     memcpy(indexDataBegin, indices.data(), indexBufferSize);
-    mesh.indexBuffer->Unmap(0, nullptr);
+    pMesh->indexBuffer->Unmap(0, nullptr);
 
-    mesh.indexBufferView.BufferLocation = mesh.indexBuffer->GetGPUVirtualAddress();
-    mesh.indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-    mesh.indexBufferView.SizeInBytes = indexBufferSize;
+    pMesh->indexBufferView.BufferLocation = pMesh->indexBuffer->GetGPUVirtualAddress();
+    pMesh->indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+    pMesh->indexBufferView.SizeInBytes = indexBufferSize;
 
-    mesh.indexCount = static_cast<UINT>(indices.size());
+    pMesh->indexCount = static_cast<UINT>(indices.size());
 }

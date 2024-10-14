@@ -20,7 +20,8 @@ public:
 private:
     ComPtr<ID3D12RootSignature> rootSignature;
 
-    CD3DX12_DESCRIPTOR_RANGE* m_pTableRange;
+    CD3DX12_DESCRIPTOR_RANGE* m_pTableRange1;
+    CD3DX12_DESCRIPTOR_RANGE* m_pTableRange2;
     UINT m_rootParamSize;
 
     CD3DX12_ROOT_PARAMETER* GetRootParameter();

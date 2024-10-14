@@ -311,7 +311,7 @@ void Engine::BeginRender()
 
 	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
 	auto currentRtvHandle = m_pRtvHeap->GetCPUDescriptorHandleForHeapStart();
-	currentRtvHandle.ptr += m_CurrentBackBufferIndex * m_RtvDescriptorSize;
+	currentRtvHandle.ptr += static_cast<SIZE_T>(m_CurrentBackBufferIndex * m_RtvDescriptorSize);
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
 	auto currentDsvHandle = m_pDsvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -337,20 +337,20 @@ void Engine::WaitRender()
 	const UINT64 currentFanceValue = m_fenceValue[m_CurrentBackBufferIndex];
 	m_pQueue->Signal(m_pFence.Get(), currentFanceValue);
 
-	// バックバッファ番号更新
+	//バックバッファ番号更新
 	m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
-	// 次のフレームの描画準備がまだであれば待機する.
+	//次のフレームの描画準備がまだであれば待機する.
 	if (m_pFence->GetCompletedValue() < currentFanceValue)
 	{
-		// 完了時にイベントを設定.
+		//完了時にイベントを設定.
 		auto hr = m_pFence->SetEventOnCompletion(currentFanceValue, m_fenceEvent);
 		if (FAILED(hr))
 		{
 			return;
 		}
 
-		// 待機処理.
+		//待機処理.
 		if (WAIT_OBJECT_0 != WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE))
 		{
 			return;
@@ -378,16 +378,9 @@ void Engine::EndRender()
 
 	// 描画完了を待つ
 	WaitRender();
-
-	//m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 }
 
-bool Engine::GetKeyState(UINT key)
-{
-	return m_keyInput->CheckKey(key);
-}
-
-BYTE Engine::GetMouseState(const BYTE keyCode) const
+BYTE Engine::GetMouseState(const BYTE keyCode)
 {
 	return m_keyInput->GetMouseState(keyCode);
 }
@@ -395,6 +388,11 @@ BYTE Engine::GetMouseState(const BYTE keyCode) const
 BYTE Engine::GetMouseStateSync(const BYTE keyCode)
 {
 	return m_keyInput->GetMouseStateSync(keyCode);
+}
+
+bool Engine::GetKeyState(const UINT key)
+{
+	return m_keyInput->CheckKey(key);
 }
 
 void Engine::Update()
@@ -409,19 +407,4 @@ void Engine::Update()
 	m_sceneTimeMS = timeNow - m_initTime;
 
 	m_keyInput->UpdateMouseState();
-}
-
-ID3D12Device6* Engine::Device()
-{
-	return m_pDevice.Get();
-}
-
-ID3D12GraphicsCommandList* Engine::CommandList()
-{
-	return m_pCommandList.Get();
-}
-
-UINT Engine::CurrentBackBufferIndex() const
-{
-	return m_CurrentBackBufferIndex;
 }

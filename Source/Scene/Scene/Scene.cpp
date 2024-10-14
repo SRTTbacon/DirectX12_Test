@@ -58,16 +58,16 @@ void Scene::Update()
 		x += 0.025f;
 	}
 	if (g_Engine->GetKeyState(DIK_R) && g_Engine->GetKeyState(DIK_J)) {
-		y -= 0.005f;
+		y -= 0.025f;
 	}
 	if (g_Engine->GetKeyState(DIK_R) && g_Engine->GetKeyState(DIK_L)) {
-		y += 0.005f;
+		y += 0.025f;
 	}
 	if (g_Engine->GetKeyState(DIK_P) && g_Engine->GetKeyState(DIK_J)) {
-		z -= 0.005f;
+		z -= 0.025f;
 	}
 	if (g_Engine->GetKeyState(DIK_P) && g_Engine->GetKeyState(DIK_L)) {
-		z += 0.005f;
+		z += 0.025f;
 	}
 
 	if (g_Engine->GetKeyState(DIK_Y) && g_Engine->GetKeyState(DIK_J)) {
@@ -112,14 +112,18 @@ void Scene::Update()
 	a = { x2, y2, z2, w2 };
 	//m_model1.UpdateBoneRotation("Spine", a);
 
-	m_model1.SetShapeWeight(50, x);
+	m_model1.SetShapeWeight("ñ⁄_èŒÇ¢", x);
+	m_model1.SetShapeWeight("Ç†", y);
+	m_model1.SetShapeWeight("UP ear.UP ear", z);
 	//m_model1.SetShapeWeight(aaa - 1, x);
 	//m_model1.SetShapeWeight(aaa - 2, x);
-	//m_model1.SetShapeWeight("ñ⁄_Ç‹ÇŒÇΩÇ´", x);
+	x = m_model1.GetShapeWeight("ñ⁄_èŒÇ¢");
+	y = m_model1.GetShapeWeight("Ç†");
+	z = m_model1.GetShapeWeight("UP ear.UP ear");
 
 	//x = m_model1.GetShapeWeight("vrc.v_ch");
 
-	//printf("Blinking = %f\n", x);
+	printf("Blinking = %f\n", x);
 
 	//printf("x=%f, y=%f, z=%f\n", x, y, z);
 	//printf("x1=%f, y1=%f, z1=%f\n", x2, y2, z2);

@@ -29,22 +29,33 @@ public:
 	void Update();
 
 public: //ゲッター関数
-	//エンジンのデバイス
-	ID3D12Device6* Device();
-
-	//コマンドリスト
-	ID3D12GraphicsCommandList* CommandList();
-
-	//トリプルバッファリングの現在のインデックス
-	UINT CurrentBackBufferIndex() const;
-
 	//マウスの状態を取得
-	BYTE GetMouseState(const BYTE keyCode) const;
+	BYTE GetMouseState(const BYTE keyCode);
 	//マウスのボタン状態を取得 (押した瞬間のみ)
 	BYTE GetMouseStateSync(const BYTE keyCode);
 	//キーの状態を取得
-	bool GetKeyState(UINT key);
+	bool GetKeyState(const UINT key);
 
+
+	//エンジンのデバイス
+	inline ID3D12Device6* Device()
+	{
+		return m_pDevice.Get();
+	}
+
+	//コマンドリスト
+	inline ID3D12GraphicsCommandList* CommandList()
+	{
+		return m_pCommandList.Get();
+	}
+
+	//トリプルバッファリングの現在のインデックス
+	inline UINT CurrentBackBufferIndex() const
+	{
+		return m_CurrentBackBufferIndex;
+	}
+
+	//前回のフレームから何ミリ秒経過したかを取得
 	inline float GetFrameTime() const
 	{
 		return m_frameTime;
@@ -72,17 +83,17 @@ private: //描画に使うDirectX12のオブジェクト
 	UINT m_FrameBufferHeight = 0;
 	UINT m_CurrentBackBufferIndex = 0;
 
-	ComPtr<ID3D12Device6> m_pDevice = nullptr; // デバイス
-	ComPtr<ID3D12CommandQueue> m_pQueue = nullptr; // コマンドキュー
-	ComPtr<IDXGISwapChain3> m_pSwapChain = nullptr; // スワップチェイン
-	ComPtr<ID3D12CommandAllocator> m_pAllocator[FRAME_BUFFER_COUNT] = { nullptr }; // コマンドアロケーたー
-	ComPtr<ID3D12GraphicsCommandList> m_pCommandList = nullptr; // コマンドリスト
-	HANDLE m_fenceEvent = nullptr; // フェンスで使うイベント
-	ComPtr<ID3D12Fence> m_pFence = nullptr; // フェンス
-	UINT64 m_fenceValue[FRAME_BUFFER_COUNT]; // フェンスの値（トリプルバッファリング用に3個）
-	D3D12_VIEWPORT m_Viewport; // ビューポート
-	D3D12_RECT m_Scissor; // シザー矩形
-	Input* m_keyInput;	//キー状態
+	ComPtr<ID3D12Device6> m_pDevice = nullptr;		//デバイス
+	ComPtr<ID3D12CommandQueue> m_pQueue = nullptr;	//コマンドキュー
+	ComPtr<IDXGISwapChain3> m_pSwapChain = nullptr; //スワップチェイン
+	ComPtr<ID3D12CommandAllocator> m_pAllocator[FRAME_BUFFER_COUNT] = { nullptr };	//コマンドアロケーター
+	ComPtr<ID3D12GraphicsCommandList> m_pCommandList = nullptr;						//コマンドリスト
+	HANDLE m_fenceEvent = nullptr;				//フェンスで使うイベント
+	ComPtr<ID3D12Fence> m_pFence = nullptr;		//フェンス
+	UINT64 m_fenceValue[FRAME_BUFFER_COUNT];	//フェンスの値（トリプルバッファリング用に3個）
+	D3D12_VIEWPORT m_Viewport;					//ビューポート
+	D3D12_RECT m_Scissor;						//シザー矩形
+	Input* m_keyInput;							//キー状態
 
 private: //描画に使うオブジェクト
 	//レンダーターゲットを生成
@@ -117,7 +128,6 @@ private:
 	unsigned long m_sceneTimeMS;
 	float m_frameTime;
 };
-
 
 //どこからでも参照するためグローバル変数
 extern Engine* g_Engine;
