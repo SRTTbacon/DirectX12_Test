@@ -29,6 +29,7 @@
     <ClCompile Include="Source\System\Engine\Core\Texture2D\Texture2D.cpp" />
     <ClCompile Include="Source\System\Engine\Input\Input.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Animation\Animation.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\Animation\AnimationManager.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Bone\Bone.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Character.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Model.cpp" />
@@ -48,6 +49,7 @@
     <ClInclude Include="Source\System\Engine\Core\Texture2D\Texture2D.h" />
     <ClInclude Include="Source\System\Engine\Input\Input.h" />
     <ClInclude Include="Source\System\Engine\Model\Animation\Animation.h" />
+    <ClInclude Include="Source\System\Engine\Model\Animation\AnimationManager.h" />
     <ClInclude Include="Source\System\Engine\Model\Bone\Bone.h" />
     <ClInclude Include="Source\System\Engine\Model\Character.h" />
     <ClInclude Include="Source\System\Engine\Model\Model.h" />

@@ -1,7 +1,6 @@
 #include "Animation.h"
 
-Animation::Animation(std::string animFilePath)
-	: m_nowAnimTime(0.0f)
+void Animation::Load(std::string animFilePath)
 {
 	BinaryReader br(animFilePath);
 	USHORT boneCount = br.ReadUInt16();
@@ -25,20 +24,18 @@ Animation::Animation(std::string animFilePath)
 			float posY = br.ReadFloat();
 			float posZ = br.ReadFloat();
 			BoneAnimation bone{ DirectX::XMFLOAT3(posX, posY, posZ), DirectX::XMFLOAT4(rotX, rotY, rotZ, rotW) };
-			frame.anim.push_back(bone);
+			frame.animations.push_back(bone);
 		}
 		m_frames.push_back(frame);
 	}
 	//br.Close();
 }
 
-std::vector<BoneAnimation>& Animation::Update()
+AnimationFrame* Animation::GetFrame(float nowAnimTime)
 {
-	m_nowAnimTime += g_Engine->GetFrameTime();
-
 	AnimationFrame* currentFrame = nullptr;
 	for (AnimationFrame& frame : m_frames) {
-		if (frame.time <= m_nowAnimTime) {
+		if (frame.time <= nowAnimTime) {
 			currentFrame = &frame;
 		}
 		else {
@@ -47,13 +44,15 @@ std::vector<BoneAnimation>& Animation::Update()
 	}
 
 	if (currentFrame == nullptr) {
-		std::vector<BoneAnimation> temp;
-		return temp;
+		return nullptr;
 	}
 
-	if (currentFrame == &m_frames[m_frames.size() - 1]) {
-		m_nowAnimTime = 0.0f;
-	}
+	return currentFrame;
+}
 
-	return currentFrame->anim;
+bool Animation::IsLastFrame(AnimationFrame* pAnimFrame)
+{
+	if (!pAnimFrame)
+		return false;
+	return pAnimFrame == &m_frames[m_frames.size() - 1];
 }

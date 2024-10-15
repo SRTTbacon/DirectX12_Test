@@ -128,19 +128,6 @@ void Scene::Update()
 	//printf("x=%f, y=%f, z=%f\n", x, y, z);
 	//printf("x1=%f, y1=%f, z1=%f\n", x2, y2, z2);
 
-	std::vector<BoneAnimation> boneAnim = m_anim.Update();
-
-	for (UINT i = 0; i < boneAnim.size(); i++) {
-		std::string boneName = m_anim.boneMapping[i];
-		if (boneName[0] == 'T' && boneName[1] == 'h' && boneName[2] == 'u' && boneName[3] == 'm' && boneName[4] == 'b') {
-
-		}
-		else {
-			m_model1.UpdateBonePosition(boneName, boneAnim[i].position);
-			m_model1.UpdateBoneRotation(boneName, boneAnim[i].rotation);
-		}
-	}
-
 	m_model1.Update();
 	for (Model& model : m_spheres) {
 		model.Update();
@@ -157,8 +144,9 @@ void Scene::Draw()
 
 Scene::Scene() 
 	: m_model1(Character(modelFile1, &m_camera))
-	, m_anim("Resource\\Test.hcs")
 {
+	m_model1.LoadAnimation("Resource\\Test.hcs");
+
 	XMFLOAT4 a = {0.0f, 0.0f, 0.0f, 0.0f};
 	/*XMFLOAT3 a = {-10.0f, 13.5f, 0.58f};
 	m_model1.UpdateBoneRotation("Left leg", a);
@@ -179,16 +167,11 @@ Scene::Scene()
 	//m_model2.LoadModel(Primitive_Sphere);
 	for (std::string name : m_model1.GetBoneNames()) {
 		if (name[0] == 'L' || name[0] == 'R') {
-		//if (name == "Left leg") {
 			Model model(&m_camera);
 			model.LoadModel(modelFile2);
 			model.m_position = m_model1.GetBoneOffset(name);
-			//x = model.m_position.x;
-			//y = model.m_position.y;
-			//z = model.m_position.z;
 			model.m_scale = XMFLOAT3(0.05f, 0.05f, 0.05f);
 			m_spheres.push_back(model);
-			//printf("name = %s\n", name.c_str());
 		}
 	}
 

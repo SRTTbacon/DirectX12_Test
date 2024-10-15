@@ -342,3 +342,16 @@ void Model::CreateBuffer(Mesh* pMesh, std::vector<VertexPrimitive>& vertices, st
 
     pMesh->indexCount = static_cast<UINT>(indices.size());
 }
+
+Model::Mesh::Mesh()
+    : vertexBuffer(nullptr)
+    , indexBuffer(nullptr)
+    , contentsBuffer(nullptr)
+    , shapeWeightsBuffer(nullptr)
+    , shapeDeltasBuffer(nullptr)
+    , vertexBufferView(D3D12_VERTEX_BUFFER_VIEW())
+    , indexBufferView(D3D12_INDEX_BUFFER_VIEW())
+    , indexCount(0)
+    , materialIndex(-1)
+{
+}

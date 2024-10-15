@@ -9,6 +9,8 @@
 #include <DirectXMath.h>
 #include <timeapi.h>
 
+#include "Model\\Animation\\AnimationManager.h"
+
 #pragma comment(lib, "d3d12.lib") // d3d12ライブラリをリンクする
 #pragma comment(lib, "dxgi.lib") // dxgiライブラリをリンクする
 
@@ -28,6 +30,8 @@ public:
 	//エンジンの更新
 	void Update();
 
+	Animation* GetAnimation(std::string animFilePath);
+
 public: //ゲッター関数
 	//マウスの状態を取得
 	BYTE GetMouseState(const BYTE keyCode);
@@ -35,7 +39,6 @@ public: //ゲッター関数
 	BYTE GetMouseStateSync(const BYTE keyCode);
 	//キーの状態を取得
 	bool GetKeyState(const UINT key);
-
 
 	//エンジンのデバイス
 	inline ID3D12Device6* Device()
@@ -122,11 +125,12 @@ private: //描画ループで使用するもの
 	//描画完了を待つ処理
 	void WaitRender();
 
-private:
-	//時間計測用変数
+private: //プライベート変数
 	unsigned long m_initTime;
 	unsigned long m_sceneTimeMS;
 	float m_frameTime;
+
+	AnimationManager animManager;
 };
 
 //どこからでも参照するためグローバル変数

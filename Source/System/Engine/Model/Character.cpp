@@ -2,6 +2,8 @@
 
 Character::Character(const std::string fbxFile, const Camera* pCamera)
 	: Model(pCamera)
+    , m_animationSpeed(1.0f)
+    , m_nowAnimationTime(0.0f)
 {
 	LoadFBX(fbxFile);
 
@@ -11,6 +13,11 @@ Character::Character(const std::string fbxFile, const Camera* pCamera)
 	printf("モデル:%sをロードしました。\n", fbxFile.c_str());
 }
 
+void Character::LoadAnimation(std::string animFile)
+{
+    g_Engine->GetAnimation(animFile);
+}
+
 void Character::Update()
 {
     //ボーンのマトリックスを更新
@@ -18,6 +25,8 @@ void Character::Update()
 
     //シェイプキーのウェイトを更新
     UpdateShapeKeys();
+
+    UpdateAnimation();
 
     Model::Update();
 }
@@ -261,7 +270,7 @@ void Character::CreateShapeDeltasTexture(HumanoidMesh& humanoidMesh)
         printf("shapeDeltasBufferの作成に失敗しました。\n");
     }
 
-    //一時アップロードバッファを作成し、データをコピー
+    //一時アップロードバッファを作成
     ComPtr<ID3D12Resource> uploadBuffer;
     CD3DX12_HEAP_PROPERTIES uploadHeapProps(D3D12_HEAP_TYPE_UPLOAD);
     hr = m_pDevice->CreateCommittedResource(&uploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadBuffer));
@@ -275,7 +284,7 @@ void Character::CreateShapeDeltasTexture(HumanoidMesh& humanoidMesh)
     memcpy(mappedData, humanoidMesh.shapeDeltas.data(), bufferSize);
     uploadBuffer->Unmap(0, nullptr);
 
-    //コマンドリストに転送コマンドを記録し、リソース状態を変更
+    //コマンドリストにコピーコマンドを送る (アップロードバッファをshapeDeltasBufferにコピー)
     g_Engine->CommandList()->CopyResource(humanoidMesh.pMesh->shapeDeltasBuffer.Get(), uploadBuffer.Get());
 
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -285,7 +294,7 @@ void Character::CreateShapeDeltasTexture(HumanoidMesh& humanoidMesh)
     );
     g_Engine->CommandList()->ResourceBarrier(1, &barrier);
 
-    //データのコピー及び転送は一度レンダーキューを終了させなければならない。
+    //コマンドラインを用いたデータの転送は一度レンダーキューを終了させなければならない。 (そのため読み込む際、数フレーム描画に遅延が生じる可能性あり)
     g_Engine->EndRender();
     g_Engine->BeginRender();
 
@@ -671,5 +680,28 @@ void Character::UpdateShapeKeys()
                 mesh.pMesh->shapeWeightsBuffer->Unmap(0, nullptr);
             }
         }
+    }
+}
+
+void Character::UpdateAnimation()
+{
+    m_nowAnimationTime += g_Engine->GetFrameTime();
+
+    AnimationFrame* pFrame = m_pAnimation->GetFrame(m_nowAnimationTime);
+
+    for (UINT i = 0; i < pFrame->animations.size(); i++) {
+        std::string boneName = m_pAnimation->boneMapping[i];
+        if (boneName[0] == 'T' && boneName[1] == 'h' && boneName[2] == 'u' && boneName[3] == 'm' && boneName[4] == 'b') {
+
+        }
+        else {
+            UpdateBonePosition(boneName, pFrame->animations[i].position);
+            UpdateBoneRotation(boneName, pFrame->animations[i].rotation);
+        }
+    }
+
+    //再生中のフレームが最後のフレームだった場合最初に戻す
+    if (m_pAnimation->IsLastFrame(pFrame)) {
+        m_nowAnimationTime = 0.0f;
     }
 }

@@ -408,3 +408,10 @@ void Engine::Update()
 
 	m_keyInput->UpdateMouseState();
 }
+
+Animation* Engine::GetAnimation(std::string animFilePath)
+{
+	animManager.LoadAnimation(animFilePath);
+
+	return &animManager.m_animations[animFilePath];
+}

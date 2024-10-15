@@ -103,6 +103,9 @@
     <ClCompile Include="Source\System\Main\Utility.cpp">
       <Filter>Source\System\Main</Filter>
     </ClCompile>
+    <ClCompile Include="Source\System\Engine\Model\Animation\AnimationManager.cpp">
+      <Filter>Source\System\Engine\Model\Animation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\System\Main\Main.h">
@@ -155,6 +158,9 @@
     </ClInclude>
     <ClInclude Include="Source\System\Main\Utility.h">
       <Filter>Source\System\Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\Animation\AnimationManager.h">
+      <Filter>Source\System\Engine\Model\Animation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

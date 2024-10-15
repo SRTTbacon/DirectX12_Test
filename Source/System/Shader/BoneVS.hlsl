@@ -12,13 +12,12 @@ cbuffer BoneMatrices : register(b1)
 
 cbuffer Constants : register(b2)	//初期化時に1度だけしか実行しないもの
 {
-    uint vertexCount;						//頂点数を保存
-    uint shapeCount;
+    uint vertexCount;				//頂点数
+    uint shapeCount;				//シェイプキーの数
 };
 
-StructuredBuffer<float3> ShapeDeltasTexture : register(t1);
-//StructuredBuffer<float3> ShapeDeltas : register(t1); // シェイプキーごとの位置変位データ
-StructuredBuffer<float> ShapeWeights : register(t2); // シェイプキーごとの位置変位データ
+StructuredBuffer<float3> ShapeDeltasTexture : register(t1);		//シェイプキーごとの位置変位データ
+StructuredBuffer<float> ShapeWeights : register(t2);			//各シェイプキーのウェイト
 
 struct VSInput
 {
@@ -38,10 +37,10 @@ struct VSOutput
 	float2 uv : TEXCOORD;		//UV
 };
 
+//頂点IDとシェイプキーのIDから相対位置を取得
 float3 GetShapeDelta(uint vertexID, uint shapeID)
 {
-    //return ShapeDeltasTexture.Load(int3(vertexID, shapeID, 0)); //テクスチャからシェイプデータを取得
-    return ShapeDeltasTexture[vertexID + shapeID * vertexCount];
+    return ShapeDeltasTexture[vertexID + shapeID * vertexCount] * ShapeWeights[shapeID];
 }
 
 VSOutput vert(VSInput input)
@@ -53,14 +52,14 @@ VSOutput vert(VSInput input)
 		input.boneWeights.z * boneMatrices[input.boneIDs.z] + input.boneWeights.w * boneMatrices[input.boneIDs.w];
 
     float3 shapePos = input.pos;
+
 	// シェイプキーの影響を加算
     for (uint i = 0; i < shapeCount; i++)
     {
-        shapePos += GetShapeDelta(input.vertexID, i) * ShapeWeights[i];
+        shapePos += GetShapeDelta(input.vertexID, i);
     }
 	
-    float4 localPos = mul(float4(shapePos, 1.0f), skinMatrix); //頂点座標
-	//float4 localPos = float4(input.pos, 1.0f);				//頂点座標
+    float4 localPos = mul(float4(shapePos, 1.0f), skinMatrix);	//頂点座標
 	float4 worldPos = mul(modelMatrix, localPos);				//ワールド座標に変換
 	float4 viewPos = mul(viewMatrix, worldPos);					//ビュー座標に変換
 	float4 projPos = mul(projectionMatrix, viewPos);			//投影変換

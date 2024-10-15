@@ -7,6 +7,8 @@ class Character : public Model
 public:
 	Character(const std::string fbxFile, const Camera* pCamera);
 
+    void LoadAnimation(std::string animFile);
+
     void Update();
 
     //ボーンの位置を更新
@@ -57,6 +59,9 @@ public: //ゲッター関数 (頻繁に呼び出すものはinline)
         return 0.0f;
     }
 
+public: //パブリック変数
+    float m_animationSpeed;
+
 private:
     //シェーダーに渡す頂点情報
     struct Vertex {
@@ -92,14 +97,17 @@ private:
     void LoadShapeKey(const aiMesh* mesh, std::vector<Vertex>& vertices, HumanoidMesh& humanoidMesh);       //シェイプキーと頂点の関係を取得
     void UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix);   //シェーダーに渡すボーンの座標を計算
     void UpdateBoneTransform();                                         //シェーダーに渡すボーンの座標を計算
-    void UpdateShapeKeys();
+    void UpdateShapeKeys();     //シェイプキーのウェイトを更新
+    void UpdateAnimation();     //アニメーションを更新
     void CreateBuffer(Mesh* pMesh, std::vector<Vertex>& vertices, std::vector<UINT>& indices, HumanoidMesh& humanoidMesh);
     void CreateShapeDeltasTexture(HumanoidMesh& humanoidMesh);
 
-private:
-    //プライベート変数
+private:  //プライベート変数
     std::vector<Bone> m_bones;                              //ボーン情報
     std::vector<XMMATRIX> m_boneInfos;                      //シェーダーに送信するボーンのマトリックス
     std::unordered_map<std::string, UINT> m_boneMapping;    //ボーン名からインデックスを取得
-    std::vector<HumanoidMesh> m_humanoidMeshes;               //ヒューマノイド用のメッシュ情報
+    std::vector<HumanoidMesh> m_humanoidMeshes;             //ヒューマノイド用のメッシュ情報
+
+    Animation* m_pAnimation;                                //アニメーション情報
+    float m_nowAnimationTime;                               //現在のアニメーション時間
 };

@@ -65,9 +65,10 @@ protected:
         ComPtr<ID3D12Resource> shapeDeltasBuffer;       //各頂点に対するシェイプキーの位置情報                   (ヒューマノイドモデルのみ設定)
         D3D12_VERTEX_BUFFER_VIEW vertexBufferView;      //頂点バッファのデータ内容とサイズを保持
         D3D12_INDEX_BUFFER_VIEW indexBufferView;        //インデックスバッファのデータ内容とサイズを保持
-        DescriptorHeap* shapeDeltasHandle;
         UINT indexCount;                                //インデックス数 (GPU側で、この数ぶん描画させる)
         char materialIndex;                             //マテリアルが入っているインデックス (同じテクスチャは使いまわす)
+
+        Mesh();
     };
 
     ID3D12Device* m_pDevice;                                            //エンジンのデバイス
