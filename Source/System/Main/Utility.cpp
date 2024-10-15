@@ -52,3 +52,24 @@
      else
          return (hash >> 30) ^ (hash & mask);
  }
+
+ DirectX::XMFLOAT3 Lerp(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b, float t)
+ {
+     DirectX::XMFLOAT3 temp{};
+     temp.x = std::lerp(a.x, b.x, t);
+     temp.y = std::lerp(a.y, b.y, t);
+     temp.z = std::lerp(a.z, b.z, t);
+
+     return temp;
+ }
+
+ DirectX::XMFLOAT4 Lerp(const DirectX::XMFLOAT4& a, const DirectX::XMFLOAT4& b, float t)
+ {
+     DirectX::XMFLOAT4 temp{};
+     temp.x = std::lerp(a.x, b.x, t);
+     temp.y = std::lerp(a.y, b.y, t);
+     temp.z = std::lerp(a.z, b.z, t);
+     temp.w = std::lerp(a.w, b.w, t);
+
+     return temp;
+ }

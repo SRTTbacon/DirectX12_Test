@@ -68,7 +68,7 @@ protected:
         UINT indexCount;                                //インデックス数 (GPU側で、この数ぶん描画させる)
         char materialIndex;                             //マテリアルが入っているインデックス (同じテクスチャは使いまわす)
 
-        Mesh();
+        //Mesh();
     };
 
     ID3D12Device* m_pDevice;                                            //エンジンのデバイス

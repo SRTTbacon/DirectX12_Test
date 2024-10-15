@@ -8,7 +8,9 @@
 #include "Input\\Input.h"
 #include <DirectXMath.h>
 #include <timeapi.h>
+#include <filesystem>
 
+#include "..\\Main\\Utility.h"
 #include "Model\\Animation\\AnimationManager.h"
 
 #pragma comment(lib, "d3d12.lib") // d3d12ライブラリをリンクする
@@ -30,7 +32,9 @@ public:
 	//エンジンの更新
 	void Update();
 
-	Animation* GetAnimation(std::string animFilePath);
+	//ファイルからアニメーションをロード
+	//既にロード済み
+	Animation GetAnimation(std::string animFilePath);
 
 public: //ゲッター関数
 	//マウスの状態を取得

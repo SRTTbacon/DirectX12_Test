@@ -343,7 +343,7 @@ void Model::CreateBuffer(Mesh* pMesh, std::vector<VertexPrimitive>& vertices, st
     pMesh->indexCount = static_cast<UINT>(indices.size());
 }
 
-Model::Mesh::Mesh()
+/*Model::Mesh::Mesh()
     : vertexBuffer(nullptr)
     , indexBuffer(nullptr)
     , contentsBuffer(nullptr)
@@ -354,4 +354,4 @@ Model::Mesh::Mesh()
     , indexCount(0)
     , materialIndex(-1)
 {
-}
+}*/

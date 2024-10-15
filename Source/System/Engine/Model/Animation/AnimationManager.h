@@ -5,7 +5,8 @@
 class AnimationManager
 {
 public:
-	void LoadAnimation(std::string animFilePath);
+	Animation LoadAnimation(std::string animFilePath);
 
+private:
 	std::unordered_map<std::string, Animation> m_animations;
 };

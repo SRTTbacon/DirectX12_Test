@@ -2,7 +2,7 @@
 
 Character::Character(const std::string fbxFile, const Camera* pCamera)
 	: Model(pCamera)
-    , m_animationSpeed(1.0f)
+    , m_animationSpeed(0.77f)
     , m_nowAnimationTime(0.0f)
 {
 	LoadFBX(fbxFile);
@@ -15,7 +15,7 @@ Character::Character(const std::string fbxFile, const Camera* pCamera)
 
 void Character::LoadAnimation(std::string animFile)
 {
-    g_Engine->GetAnimation(animFile);
+    m_pAnimation = g_Engine->GetAnimation(animFile);
 }
 
 void Character::Update()
@@ -26,6 +26,7 @@ void Character::Update()
     //シェイプキーのウェイトを更新
     UpdateShapeKeys();
 
+    //アニメーションの更新
     UpdateAnimation();
 
     Model::Update();
@@ -169,7 +170,7 @@ void Character::CreateBuffer(Mesh* pMesh, std::vector<Vertex>& vertices, std::ve
     HRESULT hr = m_pDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &vertexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&pMesh->vertexBuffer));
 
     if (FAILED(hr)) {
-        printf("頂点バッファの生成に失敗しました。\n");
+        printf("頂点バッファの生成に失敗しました。%1xl\n", hr);
     }
 
     //頂点データをGPUに送信
@@ -685,7 +686,11 @@ void Character::UpdateShapeKeys()
 
 void Character::UpdateAnimation()
 {
-    m_nowAnimationTime += g_Engine->GetFrameTime();
+    if (!m_pAnimation) {
+        return;
+    }
+
+    m_nowAnimationTime += g_Engine->GetFrameTime() * m_animationSpeed;
 
     AnimationFrame* pFrame = m_pAnimation->GetFrame(m_nowAnimationTime);
 
