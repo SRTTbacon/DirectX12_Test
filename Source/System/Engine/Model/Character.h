@@ -108,6 +108,6 @@ private:  //プライベート変数
     std::unordered_map<std::string, UINT> m_boneMapping;    //ボーン名からインデックスを取得
     std::vector<HumanoidMesh> m_humanoidMeshes;             //ヒューマノイド用のメッシュ情報
 
-    Animation* m_pAnimation;                                //アニメーション情報
+    Animation m_animation;                                //アニメーション情報
     float m_nowAnimationTime;                               //現在のアニメーション時間
 };

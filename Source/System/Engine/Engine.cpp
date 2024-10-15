@@ -414,7 +414,5 @@ Animation Engine::GetAnimation(std::string animFilePath)
 	if (!std::filesystem::exists(animFilePath))
 		return Animation();
 
-	animManager.LoadAnimation(animFilePath);
-
-	return animManager.GetAnimation(animFilePath);
+	return animManager.LoadAnimation(animFilePath);
 }

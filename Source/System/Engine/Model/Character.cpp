@@ -2,7 +2,7 @@
 
 Character::Character(const std::string fbxFile, const Camera* pCamera)
 	: Model(pCamera)
-    , m_animationSpeed(0.77f)
+    , m_animationSpeed(1.0f)
     , m_nowAnimationTime(0.0f)
 {
 	LoadFBX(fbxFile);
@@ -15,7 +15,7 @@ Character::Character(const std::string fbxFile, const Camera* pCamera)
 
 void Character::LoadAnimation(std::string animFile)
 {
-    m_pAnimation = g_Engine->GetAnimation(animFile);
+    m_animation = g_Engine->GetAnimation(animFile);
 }
 
 void Character::Update()
@@ -686,16 +686,16 @@ void Character::UpdateShapeKeys()
 
 void Character::UpdateAnimation()
 {
-    if (!m_pAnimation) {
+    if (m_animation.m_frames.size() <= 0) {
         return;
     }
 
     m_nowAnimationTime += g_Engine->GetFrameTime() * m_animationSpeed;
 
-    AnimationFrame* pFrame = m_pAnimation->GetFrame(m_nowAnimationTime);
+    AnimationFrame* pFrame = m_animation.GetFrame(m_nowAnimationTime);
 
     for (UINT i = 0; i < pFrame->animations.size(); i++) {
-        std::string boneName = m_pAnimation->boneMapping[i];
+        std::string boneName = m_animation.boneMapping[i];
         if (boneName[0] == 'T' && boneName[1] == 'h' && boneName[2] == 'u' && boneName[3] == 'm' && boneName[4] == 'b') {
 
         }
@@ -706,7 +706,7 @@ void Character::UpdateAnimation()
     }
 
     //再生中のフレームが最後のフレームだった場合最初に戻す
-    if (m_pAnimation->IsLastFrame(pFrame)) {
+    if (m_animation.IsLastFrame(pFrame)) {
         m_nowAnimationTime = 0.0f;
     }
 }
