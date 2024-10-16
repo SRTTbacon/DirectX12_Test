@@ -15,6 +15,7 @@ using namespace DirectX;
 
 const std::string modelFile1 = "Resource/Model/FBX_Moe.fbx";
 const std::string modelFile2 = "Resource/Model/Sphere.fbx";
+const std::string modelFile3 = "Resource/Model/IS7.fbx";
 
 bool Scene::Init()
 {
@@ -23,7 +24,9 @@ bool Scene::Init()
 	return true;
 }
 
-UINT aaa = 0;
+bool bAnim = true;
+bool bVisible = false;
+bool bBoneMode = false;
 float x = 0.0f;
 float y = 0.0f;
 float z = 0.0f;
@@ -95,22 +98,25 @@ void Scene::Update()
 		w2 += 0.005f;
 	}
 	if (g_Engine->GetMouseStateSync(0x00)) {
-		aaa++;
-		printf("aaa = %d\n", aaa);
+		bAnim = !bAnim;
+		if (bAnim) {
+			m_model1.m_animationSpeed = 0.4f;
+		}
+		else {
+			m_model1.m_animationSpeed = 0.0f;
+		}
 	}
 	if (g_Engine->GetMouseStateSync(0x01)) {
-		aaa--;
-		printf("aaa = %d\n", aaa);
+		bVisible = !bVisible;
 	}
 	if (g_Engine->GetMouseStateSync(0x02)) {
-		aaa += 3;
-		printf("aaa = %d\n", aaa);
+		bBoneMode = !bBoneMode;
 	}
 
 	XMFLOAT4 a = { x, y, z, w };
 	//m_model1.UpdateBoneRotation("Hips", a);
 	a = { x2, y2, z2, w2 };
-	//m_model1.UpdateBoneRotation("Spine", a);
+	m_model1.UpdateBoneRotation("Left arm", a);
 
 	m_model1.SetShapeWeight("ñ⁄_èŒÇ¢", x);
 	m_model1.SetShapeWeight("Ç†", y);
@@ -128,7 +134,22 @@ void Scene::Update()
 	//printf("x=%f, y=%f, z=%f\n", x, y, z);
 	//printf("x1=%f, y1=%f, z1=%f\n", x2, y2, z2);
 
+	if (bBoneMode) {
+		for (std::string boneName : m_model1.GetBoneNames()) {
+			XMFLOAT3 a = XMFLOAT3(0.0f, 0.0f, 0.0f);
+			XMFLOAT4 b = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+			m_model1.UpdateBonePosition(boneName, a);
+			m_model1.UpdateBoneRotation(boneName, b);
+		}
+		m_model1.m_rotation = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	}
+	else {
+		m_model1.m_rotation.x = -90.0f;
+		m_model1.m_rotation.y = 180.0f;
+	}
+
 	m_model1.Update();
+	m_model2.Update();
 	for (Model& model : m_spheres) {
 		model.Update();
 	}
@@ -137,6 +158,8 @@ void Scene::Update()
 void Scene::Draw()
 {
 	m_model1.Draw();
+	if (bVisible)
+		m_model2.Draw();
 	for (Model& model : m_spheres) {
 		model.Draw();
 	}
@@ -144,6 +167,7 @@ void Scene::Draw()
 
 Scene::Scene() 
 	: m_model1(Character(modelFile1, &m_camera))
+	, m_model2(Model(&m_camera))
 {
 	m_model1.LoadAnimation("Resource\\Test.hcs");
 
@@ -166,14 +190,21 @@ Scene::Scene()
 
 	//m_model2.LoadModel(Primitive_Sphere);
 	for (std::string name : m_model1.GetBoneNames()) {
-		if (name[0] == 'L' || name[0] == 'R') {
+		//if (name[0] == 'L' || name[0] == 'R') {
 			Model model(&m_camera);
 			model.LoadModel(modelFile2);
-			model.m_position = m_model1.GetBoneOffset(name);
+			XMMATRIX mat = m_model1.finalBoneTransforms[name];
+			model.m_position.x = mat.r[3].m128_f32[0];
+			model.m_position.y = mat.r[3].m128_f32[1];
+			model.m_position.z = mat.r[3].m128_f32[2];
+			printf("Name = %s, x=%f, y=%f, z=%f\n", name.c_str(), model.m_position.x, model.m_position.y, model.m_position.z);
 			model.m_scale = XMFLOAT3(0.05f, 0.05f, 0.05f);
 			m_spheres.push_back(model);
-		}
+		//}
 	}
+
+	m_model2.LoadModel(modelFile3);
+	m_model2.m_scale = XMFLOAT3(0.01f, 0.01f, 0.01f);
 
 	x = 0.13954f;
 	y = -0.00043f;

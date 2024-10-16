@@ -16,6 +16,7 @@ private:
 	Camera m_camera;
 
 	Character m_model1;
+	Model m_model2;
 	std::vector<Model> m_spheres;
 };
 

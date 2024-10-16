@@ -2,21 +2,21 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>d:\Users\5231058\Desktop\C++Projects\DirectX12_Test\x64\Debug\DirectX12_Test.exe</FullPath>
+      <FullPath>D:\Users\5231058\Desktop\Projects\DirectX12_Test\x64\Debug\DirectX12_Test.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles>
     <ContentFile>
-      <FullPath>d:\Users\5231058\Desktop\C++Projects\DirectX12_Test\x64\Debug\PrimitivePS.cso</FullPath>
+      <FullPath>D:\Users\5231058\Desktop\Projects\DirectX12_Test\x64\Debug\PrimitivePS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>d:\Users\5231058\Desktop\C++Projects\DirectX12_Test\x64\Debug\PrimitiveVS.cso</FullPath>
+      <FullPath>D:\Users\5231058\Desktop\Projects\DirectX12_Test\x64\Debug\PrimitiveVS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>d:\Users\5231058\Desktop\C++Projects\DirectX12_Test\x64\Debug\TexturePS.cso</FullPath>
+      <FullPath>D:\Users\5231058\Desktop\Projects\DirectX12_Test\x64\Debug\TexturePS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>d:\Users\5231058\Desktop\C++Projects\DirectX12_Test\x64\Debug\BoneVS.cso</FullPath>
+      <FullPath>D:\Users\5231058\Desktop\Projects\DirectX12_Test\x64\Debug\BoneVS.cso</FullPath>
     </ContentFile>
   </ContentFiles>
   <SatelliteDlls />

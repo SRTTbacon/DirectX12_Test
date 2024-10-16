@@ -1,6 +1,7 @@
 #pragma once
 #include "Model.h"
 #include "..\\..\\Main\\Utility.h"
+#include <unordered_map>
 
 class Character : public Model
 {
@@ -61,6 +62,9 @@ public: //ゲッター関数 (頻繁に呼び出すものはinline)
 
 public: //パブリック変数
     float m_animationSpeed;
+
+    void CalculateBoneTransforms(const aiNode* node, const XMMATRIX& parentTransform);
+    std::unordered_map<std::string, XMMATRIX> finalBoneTransforms;
 
 private:
     //シェーダーに渡す頂点情報

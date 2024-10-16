@@ -2,7 +2,7 @@
 
 Character::Character(const std::string fbxFile, const Camera* pCamera)
 	: Model(pCamera)
-    , m_animationSpeed(0.1f)
+    , m_animationSpeed(0.35f)
     , m_nowAnimationTime(0.0f)
 {
 	LoadFBX(fbxFile);
@@ -32,6 +32,35 @@ void Character::Update()
     Model::Update();
 }
 
+void Character::CalculateBoneTransforms(const aiNode* node, const XMMATRIX& parentTransform)
+{
+    // ボーンがboneMapに存在するかチェック
+    auto it = finalBoneTransforms.find(node->mName.C_Str());
+    XMMATRIX nodeTransform = XMMatrixIdentity();
+
+    if (it != finalBoneTransforms.end())
+    {
+        // ボーンのローカル変換行列を取得（Assimpから）
+        nodeTransform = XMMatrixTranspose(XMLoadFloat4x4(reinterpret_cast<const XMFLOAT4X4*>(&node->mTransformation)));
+        //printf("NodeName = %s, x=%f, y=%f, z=%f\n", node->mName.C_Str(), nodeTransform.r[3].m128_f32[0], nodeTransform.r[3].m128_f32[1], nodeTransform.r[3].m128_f32[2]);
+    }
+
+    // 親ボーンの変換行列との合成（親から子への変換）
+    XMMATRIX globalTransform = nodeTransform * parentTransform;
+
+    // ボーンのワールド空間での変換行列を保存（Sphereを置くための位置として使用）
+    if (it != finalBoneTransforms.end())
+    {
+        it->second = globalTransform;
+    }
+
+    // 子ノードに対して再帰的に処理を実行
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
+    {
+        CalculateBoneTransforms(node->mChildren[i], globalTransform);
+    }
+}
+
 void Character::LoadFBX(const std::string& fbxFile)
 {
     Assimp::Importer importer;
@@ -50,6 +79,9 @@ void Character::LoadFBX(const std::string& fbxFile)
 
     //ボーンに親子関係を付ける
     LoadBoneFamily(scene->mRootNode);
+
+    XMMATRIX mat = XMMatrixIdentity();
+    CalculateBoneTransforms(scene->mRootNode, mat);
 
     //マテリアルの読み込み
     m_pDescriptorHeap = new DescriptorHeap();
@@ -299,6 +331,8 @@ void Character::CreateShapeDeltasTexture(HumanoidMesh& humanoidMesh)
     g_Engine->EndRender();
     g_Engine->BeginRender();
 
+    Sleep(100);
+
     //一度設定したら変更しないためクリア
     humanoidMesh.shapeDeltas.clear();
 }
@@ -323,6 +357,26 @@ static XMVECTOR ExtractEulerAngles(const XMMATRIX& matrix) {
     return XMVectorSet(pitch, yaw, roll, 0.0f); // ラジアン角で出力
 }
 
+static XMMATRIX ExtractOffset(const XMMATRIX& mWorld) {
+    return XMMatrixTranslation(mWorld.r[3].m128_f32[0], mWorld.r[3].m128_f32[1], mWorld.r[3].m128_f32[2]);
+}
+static XMMATRIX ExtractScaling(const XMMATRIX& mWorld) {
+    return XMMatrixScaling(
+        XMVector3Length(XMVECTOR{ mWorld.r[0].m128_f32[0],mWorld.r[0].m128_f32[1],mWorld.r[0].m128_f32[2] }).m128_f32[0],
+        XMVector3Length(XMVECTOR{ mWorld.r[1].m128_f32[0],mWorld.r[1].m128_f32[1],mWorld.r[1].m128_f32[2] }).m128_f32[0],
+        XMVector3Length(XMVECTOR{ mWorld.r[2].m128_f32[0],mWorld.r[2].m128_f32[1],mWorld.r[2].m128_f32[2] }).m128_f32[0]
+    );
+}
+// ワールド行列から回転成分のみを抽出する
+static XMMATRIX ExtractRotation(const XMMATRIX& mWorld) {
+    XMMATRIX mOffset = ExtractOffset(mWorld);
+    XMMATRIX mScaling = ExtractScaling(mWorld);
+
+    XMVECTOR det;
+    // 左からScaling、右からOffsetの逆行列をそれぞれかける。
+    return XMMatrixInverse(&det, mScaling) * mWorld * XMMatrixInverse(&det, mOffset);
+}
+
 void Character::LoadBones(const aiScene* scene, aiMesh* mesh, std::vector<Vertex>& vertices)
 {
     for (UINT i = 0; i < mesh->mNumBones; i++) {
@@ -336,6 +390,8 @@ void Character::LoadBones(const aiScene* scene, aiMesh* mesh, std::vector<Vertex
 
             //原点から見て、ボーンが存在する位置(オフセット)を取得
             XMMATRIX boneOffset = XMMatrixTranspose(XMLoadFloat4x4(reinterpret_cast<XMFLOAT4X4*>(&bone->mOffsetMatrix)));
+
+            finalBoneTransforms[bone->mName.C_Str()] = XMMatrixIdentity();
 
             //ボーンを作成
             Bone boneChild(bone->mName.C_Str(), boneOffset);
@@ -631,14 +687,22 @@ void Character::UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix)
     else {
         rotVec = XMVectorSet(bone.m_rotation.x, bone.m_rotation.z, bone.m_rotation.y, bone.m_rotation.w);
     }
+    rotVec = XMVectorSet(-bone.m_rotation.x, bone.m_rotation.z, -bone.m_rotation.y, bone.m_rotation.w);
+    //rotVec = XMVectorSet(-bone.m_rotation.x, -bone.m_rotation.y, -bone.m_rotation.z, bone.m_rotation.w);
     XMMATRIX rot = XMMatrixRotationQuaternion(rotVec);
 
     XMMATRIX pos = XMMatrixTranslation(bone.m_position.x, bone.m_position.y, bone.m_position.z);
     //XMMATRIX offsetBack = XMMatrixTranslation(bone.GetBoneOffset().r[3].m128_f32[0], bone.GetBoneOffset().r[3].m128_f32[1], bone.GetBoneOffset().r[3].m128_f32[2]);
     //XMMATRIX offsetOrigin = XMMatrixTranslation(-bone.GetBoneOffset().r[3].m128_f32[0], -bone.GetBoneOffset().r[3].m128_f32[1], -bone.GetBoneOffset().r[3].m128_f32[2]);
-    XMMATRIX offsetBack = XMMatrixInverse(nullptr, bone.GetBoneOffset());
+    //XMMATRIX offsetBack = XMMatrixInverse(nullptr, bone.GetBoneOffset());
+    XMMATRIX offsetBack = finalBoneTransforms[bone.GetBoneName()];
+    //XMMATRIX offsetBack = XMMatrixIdentity();
+    //offsetBack.r[3].m128_f32[0] = offsetBack2.r[3].m128_f32[0];
+    //offsetBack.r[3].m128_f32[1] = offsetBack2.r[3].m128_f32[1];
+    //offsetBack.r[3].m128_f32[2] = offsetBack2.r[3].m128_f32[2];
 
-    XMMATRIX boneTransform = scale * offsetBack * rot * bone.GetBoneOffset() * pos;
+    //XMMATRIX boneTransform = scale * offsetBack * rot * bone.GetBoneOffset() * pos;
+    XMMATRIX boneTransform = scale * XMMatrixInverse(nullptr, offsetBack) * rot * offsetBack * pos;
 
     //親のワールド変換とローカル変換を合成
     XMMATRIX finalTransform = parentTransform * XMMatrixTranspose(boneTransform);
