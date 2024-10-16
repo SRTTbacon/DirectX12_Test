@@ -7,8 +7,13 @@
 
 extern std::string UTF8ToShiftJIS(std::string utf8Str);
 
-extern UINT HashString(const std::string& str);
-extern UINT FnvHash(const std::vector<uint8_t>& input, bool use32bits);
+//指定した文字列特有のIDを生成
+//超極まれに別の文字列から同じIDが生成される (数億分の1)
+extern UINT HashString(const std::string& str, bool use32bits = true);
 
+//XMFLOAT3の線形補間
+//引数 : 補間元のXMFLOAT3, 補間先のXMFLOAT3, 補間地点(0.0f～1.0f)
 extern DirectX::XMFLOAT3 Lerp(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b, float t);
+//XMFLOAT4の線形補間
+//引数 : 補間元のXMFLOAT4, 補間先のXMFLOAT4, 補間地点(0.0f～1.0f)
 extern DirectX::XMFLOAT4 Lerp(const DirectX::XMFLOAT4& a, const DirectX::XMFLOAT4& b, float t);

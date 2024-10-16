@@ -92,7 +92,7 @@ AnimationFrame* Animation::GetFrame(float nowAnimTime)
 		return currentFrame;
 	}
 
-	//Lerp用 (0.0f～1.0f)
+	//Lerp用t (0.0f～1.0f)
 	float t = (nowAnimTime - currentFrame->time) / (nextFrame->time - currentFrame->time);
 
 	//現在のフレームと次のフレームの間を補間

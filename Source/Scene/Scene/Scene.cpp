@@ -123,7 +123,7 @@ void Scene::Update()
 
 	//x = m_model1.GetShapeWeight("vrc.v_ch");
 
-	printf("Blinking = %f\n", x);
+	//printf("Blinking = %f\n", x);
 
 	//printf("x=%f, y=%f, z=%f\n", x, y, z);
 	//printf("x1=%f, y1=%f, z1=%f\n", x2, y2, z2);

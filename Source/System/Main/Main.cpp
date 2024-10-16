@@ -34,7 +34,7 @@ static void InitWindow(const TCHAR* appName)
 		return;
 	}
 
-	// ウィンドウの設定
+	//ウィンドウの設定
 	WNDCLASSEX wc = {};
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.style = CS_HREDRAW | CS_VREDRAW;
@@ -46,15 +46,15 @@ static void InitWindow(const TCHAR* appName)
 	wc.lpszClassName = appName;
 	wc.hIconSm = LoadIcon(g_hInst, IDI_APPLICATION);
 
-	// ウィンドウクラスの登録。
+	//ウィンドウクラスの登録。
 	RegisterClassEx(&wc);
 
-	// ウィンドウサイズの設定
+	//ウィンドウサイズの設定
 	RECT rect = {};
 	rect.right = static_cast<LONG>(WINDOW_WIDTH);
 	rect.bottom = static_cast<LONG>(WINDOW_HEIGHT);
 
-	// ウィンドウサイズを調整
+	//ウィンドウサイズを調整
 	auto style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU;
 	AdjustWindowRect(&rect, style, FALSE);
 
@@ -77,7 +77,7 @@ static void InitWindow(const TCHAR* appName)
 	// ウィンドウを表示
 	ShowWindow(g_hWnd, SW_SHOW);
 
-	// ウィンドウにフォーカスする
+	//ウィンドウにフォーカスする
 	SetFocus(g_hWnd);
 }
 
@@ -128,17 +128,17 @@ static void MainLoop()
 
 void StartApp(const TCHAR* appName)
 {
-	// ウィンドウ生成
+	//ウィンドウ生成
 	InitWindow(appName);
 
-	// 描画エンジンの初期化を行う
+	//描画エンジンの初期化を行う
 	g_Engine = new Engine();
 	if (!g_Engine->Init(g_hWnd, WINDOW_WIDTH, WINDOW_HEIGHT))
 	{
 		return;
 	}
 
-	// シーン初期化
+	//シーン初期化
 	g_Scene = new Scene();
 	if (!g_Scene->Init())
 	{

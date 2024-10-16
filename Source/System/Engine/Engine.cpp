@@ -52,7 +52,7 @@ bool Engine::Init(HWND hwnd, UINT windowWidth, UINT windowHeight)
 		return false;
 	}
 
-	// ビューポートとシザー矩形を生成
+	//ビューポートとシザー矩形を生成
 	CreateViewPort();
 	CreateScissorRect();
 
@@ -88,7 +88,7 @@ bool Engine::CreateCommandQueue()
 
 bool Engine::CreateSwapChain()
 {
-	// DXGIファクトリーの生成
+	//DXGIファクトリーの生成
 	IDXGIFactory4* pFactory = nullptr;
 	HRESULT hr = CreateDXGIFactory1(IID_PPV_ARGS(&pFactory));
 	if (FAILED(hr))
@@ -96,7 +96,7 @@ bool Engine::CreateSwapChain()
 		return false;
 	}
 
-	// スワップチェインの生成
+	//スワップチェインの生成
 	DXGI_SWAP_CHAIN_DESC desc = {};
 	desc.BufferDesc.Width = m_FrameBufferWidth;
 	desc.BufferDesc.Height = m_FrameBufferHeight;
@@ -114,7 +114,7 @@ bool Engine::CreateSwapChain()
 	desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-	// スワップチェインの生成
+	//スワップチェインの生成
 	IDXGISwapChain* pSwapChain = nullptr;
 	hr = pFactory->CreateSwapChain(m_pQueue.Get(), &desc, &pSwapChain);
 	if (FAILED(hr))
@@ -123,7 +123,7 @@ bool Engine::CreateSwapChain()
 		return false;
 	}
 
-	// IDXGISwapChain3を取得
+	//IDXGISwapChain3を取得
 	hr = pSwapChain->QueryInterface(IID_PPV_ARGS(m_pSwapChain.ReleaseAndGetAddressOf()));
 	if (FAILED(hr))
 	{
@@ -132,7 +132,7 @@ bool Engine::CreateSwapChain()
 		return false;
 	}
 
-	// バックバッファ番号を取得
+	//バックバッファ番号を取得
 	m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
 	pFactory->Release();
@@ -142,7 +142,7 @@ bool Engine::CreateSwapChain()
 
 bool Engine::CreateCommandList()
 {
-	// コマンドアロケーターの作成
+	//コマンドアロケーターの作成
 	HRESULT hr;
 	for (size_t i = 0; i < FRAME_BUFFER_COUNT; i++)
 	{
@@ -156,7 +156,7 @@ bool Engine::CreateCommandList()
 		return false;
 	}
 
-	// コマンドリストの生成
+	//コマンドリストの生成
 	hr = m_pDevice->CreateCommandList(
 		0,
 		D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -216,7 +216,7 @@ void Engine::CreateScissorRect()
 
 bool Engine::CreateRenderTarget()
 {
-	// RTV用のディスクリプタヒープを作成する
+	//RTV用のディスクリプタヒープを作成する
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 	desc.NumDescriptors = FRAME_BUFFER_COUNT;
 	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -227,7 +227,7 @@ bool Engine::CreateRenderTarget()
 		return false;
 	}
 
-	// ディスクリプタのサイズを取得。
+	//ディスクリプタのサイズを取得。
 	m_RtvDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRtvHeap->GetCPUDescriptorHandleForHeapStart();
 
@@ -298,36 +298,36 @@ bool Engine::CreateDepthStencil()
 
 void Engine::BeginRender()
 {
-	// 現在のレンダーターゲットを更新
+	//現在のレンダーターゲットを更新
 	m_currentRenderTarget = m_pRenderTargets[m_CurrentBackBufferIndex].Get();
 
-	// コマンドを初期化してためる準備をする
+	//コマンドを初期化してためる準備をする
 	m_pAllocator[m_CurrentBackBufferIndex]->Reset();
 	m_pCommandList->Reset(m_pAllocator[m_CurrentBackBufferIndex].Get(), nullptr);
 
-	// ビューポートとシザー矩形を設定
+	//ビューポートとシザー矩形を設定
 	m_pCommandList->RSSetViewports(1, &m_Viewport);
 	m_pCommandList->RSSetScissorRects(1, &m_Scissor);
 
-	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
+	//現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
 	auto currentRtvHandle = m_pRtvHeap->GetCPUDescriptorHandleForHeapStart();
 	currentRtvHandle.ptr += static_cast<SIZE_T>(m_CurrentBackBufferIndex * m_RtvDescriptorSize);
 
-	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
+	//深度ステンシルのディスクリプタヒープの開始アドレス取得
 	auto currentDsvHandle = m_pDsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-	// レンダーターゲットが使用可能になるまで待つ
+	//レンダーターゲットが使用可能になるまで待つ
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_currentRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_pCommandList->ResourceBarrier(1, &barrier);
 
-	// レンダーターゲットを設定
+	//レンダーターゲットを設定
 	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
 
-	// レンダーターゲットをクリア
+	//レンダーターゲットをクリア
 	const float clearColor[] = { 0.25f, 0.25f, 0.25f, 1.0f };
 	m_pCommandList->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
 
-	// 深度ステンシルビューをクリア
+	//深度ステンシルビューをクリア
 	m_pCommandList->ClearDepthStencilView(currentDsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
@@ -362,21 +362,21 @@ void Engine::WaitRender()
 
 void Engine::EndRender()
 {
-	// レンダーターゲットに書き込み終わるまで待つ
+	//レンダーターゲットに書き込み終わるまで待つ
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_currentRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	m_pCommandList->ResourceBarrier(1, &barrier);
 
-	// コマンドの記録を終了
+	//コマンドの記録を終了
 	m_pCommandList->Close();
 
-	// コマンドを実行
+	//コマンドを実行
 	ID3D12CommandList* ppCmdLists[] = { m_pCommandList.Get() };
 	m_pQueue->ExecuteCommandLists(1, ppCmdLists);
 
-	// スワップチェーンを切り替え
+	//スワップチェーンを切り替え
 	m_pSwapChain->Present(0, 0);
 
-	// 描画完了を待つ
+	//描画完了を待つ
 	WaitRender();
 }
 
