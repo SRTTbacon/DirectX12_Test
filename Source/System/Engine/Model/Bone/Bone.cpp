@@ -7,7 +7,7 @@ Bone::Bone(std::string boneName, DirectX::XMMATRIX offset)
 	, m_parentBoneIndex(UINT32_MAX)
 	, m_boneName(boneName)
 	, m_boneOffset(offset)
-	, m_bFlipRot(false)
+	, m_bType(BONETYPE_DEFAULT)
 {
 }
 

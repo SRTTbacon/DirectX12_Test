@@ -11,7 +11,6 @@ BinaryReader::BinaryReader(std::string filePath)
 	hFile = CreateFileA(filePath.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 
 	if (hFile == INVALID_HANDLE_VALUE) {
-		printf("aaaaa\n");
 		return;
 	}
 }

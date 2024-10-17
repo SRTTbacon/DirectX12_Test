@@ -2,7 +2,7 @@
 
 Character::Character(const std::string fbxFile, const Camera* pCamera)
 	: Model(pCamera)
-    , m_animationSpeed(0.35f)
+    , m_animationSpeed(0.65f)
     , m_nowAnimationTime(0.0f)
 {
 	LoadFBX(fbxFile);
@@ -331,7 +331,7 @@ void Character::CreateShapeDeltasTexture(HumanoidMesh& humanoidMesh)
     g_Engine->EndRender();
     g_Engine->BeginRender();
 
-    Sleep(100);
+    Sleep(10);
 
     //一度設定したら変更しないためクリア
     humanoidMesh.shapeDeltas.clear();
@@ -383,18 +383,20 @@ void Character::LoadBones(const aiScene* scene, aiMesh* mesh, std::vector<Vertex
         aiBone* bone = mesh->mBones[i];
         UINT boneIndex = 0;
 
+        std::string boneName = bone->mName.C_Str();
+
         // ボーンがまだ登録されていない場合、マッピングを追加
-        if (m_boneMapping.find(bone->mName.C_Str()) == m_boneMapping.end()) {
+        if (m_boneMapping.find(boneName) == m_boneMapping.end()) {
             //追加するボーンのインデックスを取得
             boneIndex = static_cast<UINT>(m_boneInfos.size());
 
             //原点から見て、ボーンが存在する位置(オフセット)を取得
             XMMATRIX boneOffset = XMMatrixTranspose(XMLoadFloat4x4(reinterpret_cast<XMFLOAT4X4*>(&bone->mOffsetMatrix)));
 
-            finalBoneTransforms[bone->mName.C_Str()] = XMMatrixIdentity();
+            finalBoneTransforms[boneName] = XMMatrixIdentity();
 
             //ボーンを作成
-            Bone boneChild(bone->mName.C_Str(), boneOffset);
+            Bone boneChild(boneName, boneOffset);
 
             XMMATRIX& m = boneChild.GetBoneOffset();
 
@@ -409,7 +411,7 @@ void Character::LoadBones(const aiScene* scene, aiMesh* mesh, std::vector<Vertex
                 float boneOffsetZ = m.r[3].m128_f32[2];
                 m.r[3].m128_f32[2] = m.r[3].m128_f32[1];
                 m.r[3].m128_f32[1] = boneOffsetZ;
-                boneChild.m_bFlipRot = true;
+                //boneChild.m_bFlipRot = true;
             }
             else {
                 if (m.r[3].m128_f32[0] < 0.0f) {
@@ -429,6 +431,12 @@ void Character::LoadBones(const aiScene* scene, aiMesh* mesh, std::vector<Vertex
                 m.r[3].m128_f32[1] = -m.r[3].m128_f32[1];
             }
 
+            if (boneName[0] == 'L' || boneName.at(boneName.size() - 1) == 'L') {
+                boneChild.m_bType = BONETYPE_LEFT;
+            }
+            if (boneName[0] == 'R' || boneName.at(boneName.size() - 1) == 'R') {
+                boneChild.m_bType = BONETYPE_RIGHT;
+            }
             //float boneOffsetZ = boneOffset.r[3].m128_f32[1];
             //boneOffset.r[3].m128_f32[1] = boneOffset.r[3].m128_f32[0];
             //boneOffset.r[3].m128_f32[0] = boneOffsetZ;
@@ -549,6 +557,10 @@ void Character::LoadBoneFamily(const aiNode* node)
                 //子ボーンと親ボーンを設定
                 m_bones[boneIndex].AddChildBone(&m_bones[childIndex], childIndex);
                 m_bones[childIndex].SetParentBone(boneIndex);
+                if (m_bones[m_bones[childIndex].GetParentBoneIndex()].GetBoneName()[0] == 'L') {
+                    //m_bones[childIndex].m_bType = BONETYPE_DEFAULT;
+                    //printf("Replace - %s\n", m_bones[childIndex].GetBoneName().c_str());
+                }
             }
         }
     }
@@ -681,25 +693,27 @@ void Character::UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix)
     //XMVECTOR rotVec = XMQuaternionRotationRollPitchYaw(bone.m_rotation.x, bone.m_rotation.z, bone.m_rotation.y);
     XMVECTOR rotVec;
     //rotVec = XMVectorSet(bone.m_rotation.x, bone.m_rotation.z, bone.m_rotation.y, bone.m_rotation.w);
-    if (bone.m_bFlipRot) {
-        rotVec = XMVectorSet(-bone.m_rotation.x, -bone.m_rotation.z, bone.m_rotation.y, bone.m_rotation.w);
+    if (bone.m_bType == BONETYPE_LEFT) {
+        rotVec = XMVectorSet(-bone.m_rotation.x, bone.m_rotation.z, -bone.m_rotation.y, bone.m_rotation.w);
+    }
+    else if (bone.m_bType == BONETYPE_RIGHT) {
+        rotVec = XMVectorSet(bone.m_rotation.x, -bone.m_rotation.z, bone.m_rotation.y, -bone.m_rotation.w);
     }
     else {
-        rotVec = XMVectorSet(bone.m_rotation.x, bone.m_rotation.z, bone.m_rotation.y, bone.m_rotation.w);
+        rotVec = XMVectorSet(-bone.m_rotation.x, -bone.m_rotation.z, bone.m_rotation.y, bone.m_rotation.w);
     }
-    rotVec = XMVectorSet(-bone.m_rotation.x, bone.m_rotation.z, -bone.m_rotation.y, bone.m_rotation.w);
-    //rotVec = XMVectorSet(-bone.m_rotation.x, -bone.m_rotation.y, -bone.m_rotation.z, bone.m_rotation.w);
+
     XMMATRIX rot = XMMatrixRotationQuaternion(rotVec);
 
-    XMMATRIX pos = XMMatrixTranslation(bone.m_position.x, bone.m_position.y, bone.m_position.z);
+    XMMATRIX pos = XMMatrixTranslation(bone.m_position.x, bone.m_position.z, bone.m_position.y);
     //XMMATRIX offsetBack = XMMatrixTranslation(bone.GetBoneOffset().r[3].m128_f32[0], bone.GetBoneOffset().r[3].m128_f32[1], bone.GetBoneOffset().r[3].m128_f32[2]);
     //XMMATRIX offsetOrigin = XMMatrixTranslation(-bone.GetBoneOffset().r[3].m128_f32[0], -bone.GetBoneOffset().r[3].m128_f32[1], -bone.GetBoneOffset().r[3].m128_f32[2]);
     //XMMATRIX offsetBack = XMMatrixInverse(nullptr, bone.GetBoneOffset());
-    XMMATRIX offsetBack = finalBoneTransforms[bone.GetBoneName()];
-    //XMMATRIX offsetBack = XMMatrixIdentity();
-    //offsetBack.r[3].m128_f32[0] = offsetBack2.r[3].m128_f32[0];
-    //offsetBack.r[3].m128_f32[1] = offsetBack2.r[3].m128_f32[1];
-    //offsetBack.r[3].m128_f32[2] = offsetBack2.r[3].m128_f32[2];
+    XMMATRIX offsetBack2 = finalBoneTransforms[bone.GetBoneName()];
+    XMMATRIX offsetBack = XMMatrixIdentity();
+    offsetBack.r[3].m128_f32[0] = offsetBack2.r[3].m128_f32[0];
+    offsetBack.r[3].m128_f32[1] = offsetBack2.r[3].m128_f32[1];
+    offsetBack.r[3].m128_f32[2] = offsetBack2.r[3].m128_f32[2];
 
     //XMMATRIX boneTransform = scale * offsetBack * rot * bone.GetBoneOffset() * pos;
     XMMATRIX boneTransform = scale * XMMatrixInverse(nullptr, offsetBack) * rot * offsetBack * pos;

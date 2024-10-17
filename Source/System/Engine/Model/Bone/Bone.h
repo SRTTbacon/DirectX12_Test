@@ -3,6 +3,13 @@
 #include <string>
 #include <vector>
 
+enum BoneType
+{
+    BONETYPE_DEFAULT,
+    BONETYPE_LEFT,
+    BONETYPE_RIGHT
+};
+
 class Bone
 {
 public:
@@ -47,7 +54,7 @@ public:
     DirectX::XMFLOAT3 m_scale;              //ボーンのスケール
     DirectX::XMMATRIX m_boneOffset;         //Tポーズ時から見て原点との差
 
-    bool m_bFlipRot;
+    BoneType m_bType;
 
 private:
     struct ChildBone
