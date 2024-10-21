@@ -5,8 +5,10 @@ Character::Character(const std::string fbxFile, const Camera* pCamera)
     , m_animationSpeed(1.0f)
     , m_nowAnimationTime(0.0f)
 {
+    //FBXをロード (今後独自フォーマットに変更予定)
 	LoadFBX(fbxFile);
 
+    //ルートシグネチャとパイプラインステートを初期化
 	m_pRootSignature = new RootSignature(m_pDevice, ShaderKinds::BoneShader);
 	m_pPipelineState = new PipelineState(m_pDevice, m_pRootSignature);
 
@@ -29,6 +31,7 @@ void Character::Update()
     //アニメーションの更新
     UpdateAnimation();
 
+    //親クラスの更新
     Model::Update();
 }
 
@@ -38,25 +41,22 @@ void Character::CalculateBoneTransforms(const aiNode* node, const XMMATRIX& pare
     auto it = finalBoneTransforms.find(node->mName.C_Str());
     XMMATRIX nodeTransform = XMMatrixIdentity();
 
-    if (it != finalBoneTransforms.end())
-    {
-        // ボーンのローカル変換行列を取得（Assimpから）
+    if (it != finalBoneTransforms.end()) {
+        //ボーンのローカル変換行列を取得
         nodeTransform = XMMatrixTranspose(XMLoadFloat4x4(reinterpret_cast<const XMFLOAT4X4*>(&node->mTransformation)));
         //printf("NodeName = %s, x=%f, y=%f, z=%f\n", node->mName.C_Str(), nodeTransform.r[3].m128_f32[0], nodeTransform.r[3].m128_f32[1], nodeTransform.r[3].m128_f32[2]);
     }
 
-    // 親ボーンの変換行列との合成（親から子への変換）
+    //親ボーンの変換行列との合成（親から子への変換）
     XMMATRIX globalTransform = nodeTransform * parentTransform;
 
-    // ボーンのワールド空間での変換行列を保存（Sphereを置くための位置として使用）
-    if (it != finalBoneTransforms.end())
-    {
+    //ボーンのワールド空間での変換行列を保存（Sphereを置くための位置として使用）
+    if (it != finalBoneTransforms.end()) {
         it->second = globalTransform;
     }
 
-    // 子ノードに対して再帰的に処理を実行
-    for (unsigned int i = 0; i < node->mNumChildren; i++)
-    {
+    //子ノードに対して再帰的に処理を実行
+    for (unsigned int i = 0; i < node->mNumChildren; i++) {
         CalculateBoneTransforms(node->mChildren[i], globalTransform);
     }
 }
@@ -91,7 +91,7 @@ void Character::LoadFBX(const std::string& fbxFile)
     {
         aiMesh* mesh = scene->mMeshes[i];
         std::string nameOnly = "";
-        // メッシュのマテリアルを取得する
+        //メッシュのマテリアルを取得する
         if (mesh->mMaterialIndex >= 0) {
             aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
             //ファイル名 = マテリアル名 + .png
@@ -277,15 +277,6 @@ void Character::CreateBuffer(Mesh* pMesh, std::vector<Vertex>& vertices, std::ve
         pMesh->shapeWeightsBuffer->Unmap(0, nullptr);
 
         //シェイプキーの位置情報を保持するリソースを作成
-        /*UINT64 shapeDeltaBufferSize = sizeof(XMFLOAT3) * humanoidMesh.shapeWeights.size() * humanoidMesh.vertexCount;
-        D3D12_RESOURCE_DESC shapeDeltasBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(shapeDeltaBufferSize);
-        hr = m_pDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &shapeDeltasBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&pMesh->shapeDeltasBuffer));
-
-        void* pShapeDeltaBuffer;
-        pMesh->shapeDeltasBuffer->Map(0, nullptr, &pShapeDeltaBuffer);
-        memcpy(pShapeDeltaBuffer, humanoidMesh.shapeDeltas.data(), shapeDeltaBufferSize);
-        pMesh->shapeDeltasBuffer->Unmap(0, nullptr);*/
-        //printf("--------------------------%zu-----------------------\n", humanoidMesh.shapeDeltas.size());
         CreateShapeDeltasTexture(humanoidMesh);
     }
 }
@@ -296,6 +287,7 @@ void Character::CreateShapeDeltasTexture(HumanoidMesh& humanoidMesh)
     size_t bufferSize = sizeof(XMFLOAT3) * humanoidMesh.shapeWeights.size() * humanoidMesh.vertexCount; //必要なバッファサイズを計算
     D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
 
+    //CPUからの変更を受け付けないシェイプキー用のリソースを作成
     CD3DX12_HEAP_PROPERTIES defaultHeapProps(D3D12_HEAP_TYPE_DEFAULT);
     HRESULT hr = m_pDevice->CreateCommittedResource(&defaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, 
         D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&humanoidMesh.pMesh->shapeDeltasBuffer));
@@ -367,7 +359,7 @@ static XMMATRIX ExtractScaling(const XMMATRIX& mWorld) {
         XMVector3Length(XMVECTOR{ mWorld.r[2].m128_f32[0],mWorld.r[2].m128_f32[1],mWorld.r[2].m128_f32[2] }).m128_f32[0]
     );
 }
-// ワールド行列から回転成分のみを抽出する
+//ワールド行列から回転成分のみを抽出する
 static XMMATRIX ExtractRotation(const XMMATRIX& mWorld) {
     XMMATRIX mOffset = ExtractOffset(mWorld);
     XMMATRIX mScaling = ExtractScaling(mWorld);
