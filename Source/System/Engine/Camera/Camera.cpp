@@ -65,7 +65,7 @@ void Camera::Update()
 
     m_pitch = max(-XM_PIDIV2 + 0.01f, min(XM_PIDIV2 - 0.01f, m_pitch));
 
-    XMVECTOR direction;
+    XMVECTOR direction{};
     direction.m128_f32[0] = cosf(m_pitch) * sinf(m_yaw);
     direction.m128_f32[1] = sinf(m_pitch);
     direction.m128_f32[2] = cosf(m_pitch) * cosf(m_yaw);

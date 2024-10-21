@@ -10,13 +10,14 @@ class Window;
 class Input
 {
 public:
-	// コンストラクタ
+	//コンストラクタ
 	Input(HWND win);
-	// デストラクタ
+	//デストラクタ
 	~Input();
-	// キー入力
+
+	//キー入力
 	bool CheckKey(UINT index);
-	// トリガーの入力
+	//トリガーの入力
 	bool TriggerKey(UINT index);
 
 	//=============================================================================

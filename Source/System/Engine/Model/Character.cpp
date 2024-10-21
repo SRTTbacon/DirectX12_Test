@@ -2,7 +2,7 @@
 
 Character::Character(const std::string fbxFile, const Camera* pCamera)
 	: Model(pCamera)
-    , m_animationSpeed(0.65f)
+    , m_animationSpeed(1.0f)
     , m_nowAnimationTime(0.0f)
 {
 	LoadFBX(fbxFile);
@@ -430,13 +430,24 @@ void Character::LoadBones(const aiScene* scene, aiMesh* mesh, std::vector<Vertex
             if (m.r[3].m128_f32[1] > 0.0f) {
                 m.r[3].m128_f32[1] = -m.r[3].m128_f32[1];
             }
-
+            //手や足は左右を判定 (一旦手の判定をし、足の場合はLoadBoneFamily内で変更)
             if (boneName[0] == 'L' || boneName.at(boneName.size() - 1) == 'L') {
-                boneChild.m_bType = BONETYPE_LEFT;
+                boneChild.m_bType = BONETYPE_LEFT_ARM;
             }
             if (boneName[0] == 'R' || boneName.at(boneName.size() - 1) == 'R') {
-                boneChild.m_bType = BONETYPE_RIGHT;
+                boneChild.m_bType = BONETYPE_RIGHT_ARM;
             }
+
+            //目のボーンは左右の区別をしない
+            if (boneName.find("Eye") != std::string::npos || boneName.find("eye") != std::string::npos) {
+                boneChild.m_bType = BONETYPE_DEFAULT;
+            }
+
+            /*if (boneName.find("shoulder") != std::string::npos) {
+                if (boneChild.m_bType == BONETYPE_LEFT_ARM) {
+                    boneChild.m_bType = BONETYPE_LEFT_SHOULDER;
+                }
+            }*/
             //float boneOffsetZ = boneOffset.r[3].m128_f32[1];
             //boneOffset.r[3].m128_f32[1] = boneOffset.r[3].m128_f32[0];
             //boneOffset.r[3].m128_f32[0] = boneOffsetZ;
@@ -557,9 +568,24 @@ void Character::LoadBoneFamily(const aiNode* node)
                 //子ボーンと親ボーンを設定
                 m_bones[boneIndex].AddChildBone(&m_bones[childIndex], childIndex);
                 m_bones[childIndex].SetParentBone(boneIndex);
-                if (m_bones[m_bones[childIndex].GetParentBoneIndex()].GetBoneName()[0] == 'L') {
-                    //m_bones[childIndex].m_bType = BONETYPE_DEFAULT;
-                    //printf("Replace - %s\n", m_bones[childIndex].GetBoneName().c_str());
+
+                std::string boneName = m_bones[childIndex].GetBoneName();
+                bool bExchanged = false;
+                if (boneName.find("Leg") != std::string::npos || boneName.find("leg") != std::string::npos) {
+                    if (m_bones[childIndex].m_bType == BONETYPE_LEFT_ARM) {
+                        m_bones[childIndex].m_bType = BONETYPE_LEFT_LEG;
+                    }
+                    else if (m_bones[childIndex].m_bType == BONETYPE_RIGHT_ARM) {
+                        m_bones[childIndex].m_bType = BONETYPE_RIGHT_LEG;
+                    }
+                    bExchanged = true;
+                }
+                if (m_bones[boneIndex].GetBoneName().find("shoulder") != std::string::npos) {
+                    bExchanged = true;
+                }
+
+                if (!bExchanged && m_bones[boneIndex].m_bType != BONETYPE_DEFAULT) {
+                    m_bones[childIndex].m_bType = m_bones[boneIndex].m_bType;
                 }
             }
         }
@@ -662,6 +688,23 @@ void Character::SetShapeWeight(const std::string shapeName, float weight)
     }
 }
 
+void Character::SetAnimationTime(float animTime)
+{
+    m_nowAnimationTime = animTime;
+}
+
+void Character::Test()
+{
+    //ボーンバッファに送信
+    void* pData;
+    HRESULT hr = m_boneMatricesBuffer->Map(0, nullptr, &pData);
+    if (SUCCEEDED(hr))
+    {
+        memcpy(pData, m_boneInfos.data(), sizeof(XMMATRIX) * m_boneInfos.size()); // ボーンマトリックスをコピー
+        m_boneMatricesBuffer->Unmap(0, nullptr);
+    }
+}
+
 //すべてのボーン名を取得
 std::vector<std::string> Character::GetBoneNames()
 {
@@ -691,16 +734,31 @@ void Character::UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix)
     //XMMATRIX rotZ = XMMatrixRotationZ(XMConvertToRadians(bone.m_rotation.y));  //Unity基準にするため、Y軸とZ軸を入れ替え
     //XMMATRIX rot = rotX * rotY * rotZ;
     //XMVECTOR rotVec = XMQuaternionRotationRollPitchYaw(bone.m_rotation.x, bone.m_rotation.z, bone.m_rotation.y);
-    XMVECTOR rotVec;
+    XMVECTOR rotVec = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
     //rotVec = XMVectorSet(bone.m_rotation.x, bone.m_rotation.z, bone.m_rotation.y, bone.m_rotation.w);
-    if (bone.m_bType == BONETYPE_LEFT) {
-        rotVec = XMVectorSet(-bone.m_rotation.x, bone.m_rotation.z, -bone.m_rotation.y, bone.m_rotation.w);
-    }
-    else if (bone.m_bType == BONETYPE_RIGHT) {
-        rotVec = XMVectorSet(bone.m_rotation.x, -bone.m_rotation.z, bone.m_rotation.y, -bone.m_rotation.w);
-    }
-    else {
+
+    //Unityとの座標系の違いを修正 (導き出すのにめっっっちゃ時間かかった。なんで手と足と胴体で仕様違うの。)
+    switch (bone.m_bType)
+    {
+    case BONETYPE_DEFAULT:
         rotVec = XMVectorSet(-bone.m_rotation.x, -bone.m_rotation.z, bone.m_rotation.y, bone.m_rotation.w);
+        break;
+
+    case BONETYPE_LEFT_ARM:
+        rotVec = XMVectorSet(bone.m_rotation.y, bone.m_rotation.x, bone.m_rotation.z, bone.m_rotation.w);
+        break;
+
+    case BONETYPE_LEFT_LEG:
+        rotVec = XMVectorSet(-bone.m_rotation.x, bone.m_rotation.z, -bone.m_rotation.y, bone.m_rotation.w);
+        break;
+
+    case BONETYPE_RIGHT_ARM:
+        rotVec = XMVectorSet(-bone.m_rotation.y, -bone.m_rotation.x, bone.m_rotation.z, bone.m_rotation.w);
+        break;
+
+    case BONETYPE_RIGHT_LEG:
+        rotVec = XMVectorSet(bone.m_rotation.x, -bone.m_rotation.z, bone.m_rotation.y, -bone.m_rotation.w);
+        break;
     }
 
     XMMATRIX rot = XMMatrixRotationQuaternion(rotVec);
@@ -768,19 +826,33 @@ void Character::UpdateAnimation()
         return;
     }
 
+    //アニメーション時間を更新
     m_nowAnimationTime += g_Engine->GetFrameTime() * m_animationSpeed;
 
+    //現在のアニメーション時間のフレームを取得
     AnimationFrame* pFrame = m_animation.GetFrame(m_nowAnimationTime);
 
-    for (UINT i = 0; i < pFrame->animations.size(); i++) {
-        std::string boneName = m_animation.boneMapping[i];
+    //フレームが存在しなければ処理を終了 (主にアニメーションが読み込まれていない場合)
+    if (!pFrame) {
+        return;
+    }
+
+    //ボーンアニメーション
+    for (UINT i = 0; i < pFrame->boneAnimations.size(); i++) {
+        std::string boneName = m_animation.m_boneMapping[i];
         if (boneName[0] == 'T' && boneName[1] == 'h' && boneName[2] == 'u' && boneName[3] == 'm' && boneName[4] == 'b') {
 
         }
         else {
-            UpdateBonePosition(boneName, pFrame->animations[i].position);
-            UpdateBoneRotation(boneName, pFrame->animations[i].rotation);
+            UpdateBonePosition(boneName, pFrame->boneAnimations[i].position);
+            UpdateBoneRotation(boneName, pFrame->boneAnimations[i].rotation);
         }
+    }
+
+    //シェイプキーのアニメーション
+    for (UINT i = 0; i < m_animation.m_shapeNames.size(); i++) {
+        std::string& shapeName = m_animation.m_shapeNames[i];
+        SetShapeWeight(shapeName, pFrame->shapeAnimations[i]);
     }
 
     //再生中のフレームが最後のフレームだった場合最初に戻す

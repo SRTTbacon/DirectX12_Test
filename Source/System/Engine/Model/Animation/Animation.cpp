@@ -19,14 +19,14 @@ void Animation::Load(std::string animFilePath)
 	//バイナリとして開く
 	BinaryReader br(animFilePath);
 	USHORT boneCount = br.ReadUInt16();		//アニメーションするボーン数
-	printf("boneCount = %d\n", boneCount);
+	printf("boneCount = %u\n", boneCount);
 	for (USHORT i = 0; i < boneCount; i++) {
 
 		std::string boneName = br.ReadBytes(br.ReadByte());	//ボーン名
-		boneMapping.push_back(boneName);
+		m_boneMapping.push_back(boneName);
 	}
 	USHORT animCount = br.ReadUInt16();		//アニメーションのフレーム数
-	printf("animCount = %d\n", animCount);
+	printf("animCount = %u\n", animCount);
 
 	for (int i = 0; i < animCount; i++) {
 		float time = br.ReadFloat();			//フレーム時間
@@ -44,10 +44,65 @@ void Animation::Load(std::string animFilePath)
 			BoneAnimation bone{ DirectX::XMFLOAT3(posX, posY, posZ), DirectX::XMFLOAT4(rotX, rotY, rotZ, rotW) };
 
 			//配列に追加
-			frame.animations.push_back(bone);
+			frame.boneAnimations.push_back(bone);
 		}
 
 		m_frames.push_back(frame);
+	}
+
+	USHORT shapeCount = br.ReadUInt16();	//シェイプキーの数
+	printf("shapeCount = %u\n", shapeCount);
+
+	for (int i = 0; i < shapeCount; i++) {
+		std::string shapeName = UTF8ToShiftJIS(br.ReadBytes(br.ReadByte()));
+		m_shapeNames.push_back(shapeName);		//シェイプキーの名前を保存
+		m_shapeAnimations[shapeName] = std::vector<ShapeAnimation>();
+
+		USHORT frameCount = br.ReadUInt16();	//そのシェイプキーのアニメーション数
+
+		for (int j = 0; j < frameCount; j++) {
+			float time = br.ReadFloat();		//キーの時間
+			float value = br.ReadFloat();		//シェイプキーの値
+			m_shapeAnimations[shapeName].push_back(ShapeAnimation(time, value));
+		}
+	}
+
+	//AnimationFrameにシェイプキーの情報を入れる
+	for (AnimationFrame& frame : m_frames) {
+		for (UINT i = 0; i < m_shapeNames.size(); i++) {
+			ShapeAnimation* frameShapeValue = nullptr;
+			ShapeAnimation* nextFrameShapeValue = nullptr;
+
+			//m_shapeAnimationsに保存しているシェイプキーのキーフレームをすべて参照 (フレーム時間順にソートされている)
+			for (UINT j = 0; j < m_shapeAnimations[m_shapeNames[i]].size(); j++) {
+				//シェイプキーのフレーム時間がAnimationFrameより小さい場合は値を更新
+				if (m_shapeAnimations[m_shapeNames[i]][j].time <= frame.time) {
+					frameShapeValue = &m_shapeAnimations[m_shapeNames[i]][j];
+				}
+				else {
+					//frameShapeValueの次のフレームを保存
+					nextFrameShapeValue = &m_shapeAnimations[m_shapeNames[i]][j];
+					break;
+				}
+			}
+
+			if (!frameShapeValue) {
+				continue;
+			}
+
+			float lerp = frameShapeValue->value;
+
+			//次のフレームが存在していれば次のフレームと今のフレームの間を補間
+			if (nextFrameShapeValue) {
+				//Lerp用t (0.0f～1.0f)
+				float t = (frame.time - frameShapeValue->time) / (nextFrameShapeValue->time - frameShapeValue->time);
+
+				lerp = std::lerp(frameShapeValue->value, nextFrameShapeValue->value, t);
+			}
+
+			//補間した値を入れる
+			frame.shapeAnimations.push_back(lerp);
+		}
 	}
 }
 
@@ -98,11 +153,19 @@ AnimationFrame* Animation::GetFrame(float nowAnimTime)
 	//現在のフレームと次のフレームの間を補間
 	m_pTempFrame = new AnimationFrame();
 	m_pTempFrame->time = nowAnimTime;
-	for (UINT i = 0; i < currentFrame->animations.size(); i++) {
+
+	//ボーンの補間
+	for (UINT i = 0; i < currentFrame->boneAnimations.size(); i++) {
 		BoneAnimation lerpBoneAnim{};
-		lerpBoneAnim.position = Lerp(currentFrame->animations[i].position, nextFrame->animations[i].position, t);
-		lerpBoneAnim.rotation = Lerp(currentFrame->animations[i].rotation, nextFrame->animations[i].rotation, t);
-		m_pTempFrame->animations.push_back(lerpBoneAnim);
+		lerpBoneAnim.position = Lerp(currentFrame->boneAnimations[i].position, nextFrame->boneAnimations[i].position, t);
+		lerpBoneAnim.rotation = Lerp(currentFrame->boneAnimations[i].rotation, nextFrame->boneAnimations[i].rotation, t);
+		m_pTempFrame->boneAnimations.push_back(lerpBoneAnim);
+	}
+
+	//シェイプキーの補間
+	for (UINT i = 0; i < currentFrame->shapeAnimations.size(); i++) {
+		float shapeValue = std::lerp(currentFrame->shapeAnimations[i], nextFrame->shapeAnimations[i], t);
+		m_pTempFrame->shapeAnimations.push_back(shapeValue);
 	}
 
 	return m_pTempFrame;

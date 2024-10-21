@@ -11,6 +11,7 @@
 #include <filesystem>
 
 #include "..\\Main\\Utility.h"
+#include "SoundSystem\\SoundSystem.h"
 #include "Model\\Animation\\AnimationManager.h"
 
 #pragma comment(lib, "d3d12.lib") // d3d12ライブラリをリンクする
@@ -21,6 +22,8 @@ constexpr int FRAME_BUFFER_COUNT = 3;
 class Engine
 {
 public:
+	~Engine();
+
 	//エンジン初期化
 	bool Init(HWND hwnd, UINT windowWidth, UINT windowHeight);
 
@@ -38,11 +41,12 @@ public:
 
 public: //ゲッター関数
 	//マウスの状態を取得
-	BYTE GetMouseState(const BYTE keyCode);
+	BYTE GetMouseState(BYTE keyCode);
 	//マウスのボタン状態を取得 (押した瞬間のみ)
-	BYTE GetMouseStateSync(const BYTE keyCode);
+	BYTE GetMouseStateSync(BYTE keyCode);
 	//キーの状態を取得
-	bool GetKeyState(const UINT key);
+	bool GetKeyState(UINT key);
+	bool GetKeyStateSync(UINT key);
 
 	//エンジンのデバイス
 	inline ID3D12Device6* Device()
@@ -67,6 +71,9 @@ public: //ゲッター関数
 	{
 		return m_frameTime;
 	}
+
+public:	//パブリック変数
+	SoundSystem* m_pSoundSystem;
 
 private: //DirectX12の初期化
 	//デバイスを作成
@@ -100,7 +107,7 @@ private: //描画に使うDirectX12のオブジェクト
 	UINT64 m_fenceValue[FRAME_BUFFER_COUNT];	//フェンスの値（トリプルバッファリング用に3個）
 	D3D12_VIEWPORT m_Viewport;					//ビューポート
 	D3D12_RECT m_Scissor;						//シザー矩形
-	Input* m_keyInput;							//キー状態
+	Input* m_pKeyInput;							//キー状態
 
 private: //描画に使うオブジェクト
 	//レンダーターゲットを生成

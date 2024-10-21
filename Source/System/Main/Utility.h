@@ -17,3 +17,6 @@ extern DirectX::XMFLOAT3 Lerp(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT
 //XMFLOAT4の線形補間
 //引数 : 補間元のXMFLOAT4, 補間先のXMFLOAT4, 補間地点(0.0f～1.0f)
 extern DirectX::XMFLOAT4 Lerp(const DirectX::XMFLOAT4& a, const DirectX::XMFLOAT4& b, float t);
+
+//ファイルパスから拡張子を抽出
+extern std::string GetFileExtension(const std::string& filePath);

@@ -17,6 +17,9 @@ private:
 
 	Character m_model1;
 	Model m_model2;
+
+	SoundHandle* pBGMHandle;
+
 	std::vector<Model> m_spheres;
 };
 

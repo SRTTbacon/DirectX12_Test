@@ -3,10 +3,10 @@
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 
-// 解放マクロ
+//解放マクロ
 #define Release(X) { if((X) != nullptr) (X)->Release(); (X) = nullptr; }
 
-// コンストラクタ
+//コンストラクタ
 Input::Input(HWND win) :
     m_hwnd(win), result(S_OK), input(nullptr), key(nullptr)
 {
@@ -19,34 +19,39 @@ Input::Input(HWND win) :
     SetKeyCooperative();
     CreateMouseState();
 }
-// デストラクタ
+
+//デストラクタ
 Input::~Input()
 {
     Release(key);
     Release(input);
 }
-// インプットの生成
+
+//インプットの生成
 HRESULT Input::CreateInput()
 {
     result = DirectInput8Create(GetModuleHandle(0), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)(&input), NULL);
 
     return result;
 }
-// キーデバイスの生成
+//キーデバイスの生成
+
 HRESULT Input::CreateKey()
 {
     result = input->CreateDevice(GUID_SysKeyboard, &key, NULL);
 
     return result;
 }
-// キーフォーマットのセット
+
+//キーフォーマットのセット
 HRESULT Input::SetKeyFormat()
 {
     result = key->SetDataFormat(&c_dfDIKeyboard);
 
     return result;
 }
-// キーの協調レベルのセット
+
+//キーの協調レベルのセット
 HRESULT Input::SetKeyCooperative()
 {
     result = key->SetCooperativeLevel(m_hwnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
@@ -56,6 +61,7 @@ HRESULT Input::SetKeyCooperative()
 
     return result;
 }
+
 bool Input::CreateMouseState()
 {
     //マウスデバイスの作成
@@ -94,7 +100,8 @@ bool Input::CreateMouseState()
 
     return true;
 }
-// キー入力
+
+//キー入力
 bool Input::CheckKey(UINT index)
 {
     //チェックフラグ
@@ -109,7 +116,8 @@ bool Input::CheckKey(UINT index)
 
     return flag;
 }
-// トリガーの入力
+
+//トリガーの入力
 bool Input::TriggerKey(UINT index)
 {
     //チェックフラグ

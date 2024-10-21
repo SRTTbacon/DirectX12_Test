@@ -55,22 +55,28 @@ void Scene::Update()
 	m_camera.Update();
 
 	if (g_Engine->GetKeyState(DIK_X) && g_Engine->GetKeyState(DIK_J)) {
-		x -= 0.025f;
+		x -= 0.005f;
 	}
 	if (g_Engine->GetKeyState(DIK_X) && g_Engine->GetKeyState(DIK_L)) {
-		x += 0.025f;
+		x += 0.005f;
 	}
-	if (g_Engine->GetKeyState(DIK_R) && g_Engine->GetKeyState(DIK_J)) {
-		y -= 0.025f;
+	if (g_Engine->GetKeyState(DIK_C) && g_Engine->GetKeyState(DIK_J)) {
+		y -= 0.005f;
 	}
-	if (g_Engine->GetKeyState(DIK_R) && g_Engine->GetKeyState(DIK_L)) {
-		y += 0.025f;
+	if (g_Engine->GetKeyState(DIK_C) && g_Engine->GetKeyState(DIK_L)) {
+		y += 0.005f;
 	}
-	if (g_Engine->GetKeyState(DIK_P) && g_Engine->GetKeyState(DIK_J)) {
+	if (g_Engine->GetKeyState(DIK_V) && g_Engine->GetKeyState(DIK_J)) {
 		z -= 0.005f;
 	}
-	if (g_Engine->GetKeyState(DIK_P) && g_Engine->GetKeyState(DIK_L)) {
+	if (g_Engine->GetKeyState(DIK_V) && g_Engine->GetKeyState(DIK_L)) {
 		z += 0.005f;
+	}
+	if (g_Engine->GetKeyState(DIK_B) && g_Engine->GetKeyState(DIK_J)) {
+		w -= 0.005f;
+	}
+	if (g_Engine->GetKeyState(DIK_B) && g_Engine->GetKeyState(DIK_L)) {
+		w += 0.005f;
 	}
 
 	if (g_Engine->GetKeyState(DIK_Y) && g_Engine->GetKeyState(DIK_J)) {
@@ -100,10 +106,12 @@ void Scene::Update()
 	if (g_Engine->GetMouseStateSync(0x00)) {
 		bAnim = !bAnim;
 		if (bAnim) {
-			m_model1.m_animationSpeed = 0.4f;
+			m_model1.m_animationSpeed = 1.0f;
+			pBGMHandle->PlaySound(false);
 		}
 		else {
 			m_model1.m_animationSpeed = 0.0f;
+			pBGMHandle->PauseSound();
 		}
 	}
 	if (g_Engine->GetMouseStateSync(0x01)) {
@@ -112,32 +120,25 @@ void Scene::Update()
 		m_model1.yFlip = rand() % 2 == 0 ? -1.0f : 1.0f;
 		m_model1.wFlip = rand() % 2 == 0 ? -1.0f : 1.0f;
 
-		printf("x=%f, z=%f, y=%f, z=%f\n", m_model1.xFlip, m_model1.zFlip, m_model1.yFlip, m_model1.wFlip);
+		//printf("x=%f, z=%f, y=%f, z=%f\n", m_model1.xFlip, m_model1.zFlip, m_model1.yFlip, m_model1.wFlip);
 	}
 	if (g_Engine->GetMouseStateSync(0x02)) {
-		bBoneMode = !bBoneMode;
+		//bBoneMode = !bBoneMode;
+		m_model1.SetAnimationTime(0.0f);
+		pBGMHandle->PlaySound();
 	}
 
-	XMFLOAT4 a = { x, y, z, w };
-	//m_model1.UpdateBoneRotation("Hips", a);
-	a = { x2, y2, z2, z };
-	//m_model1.UpdateBoneRotation("Left arm", a);
+	if (g_Engine->GetKeyStateSync(DIK_J)) {
+		m_model1.m_nowAnimationTime -= 5.0f;
+		pBGMHandle->SetPosition(m_model1.m_nowAnimationTime);
+	}
+	else if (g_Engine->GetKeyStateSync(DIK_K)) {
+		m_model1.m_nowAnimationTime += 5.0f;
+		pBGMHandle->SetPosition(m_model1.m_nowAnimationTime);
+	}
 
-	m_model1.SetShapeWeight("–Ú_Î‚¢", x);
-	m_model1.SetShapeWeight("‚ ", y);
-	m_model1.SetShapeWeight("UP ear.UP ear", z);
-	//m_model1.SetShapeWeight(aaa - 1, x);
-	//m_model1.SetShapeWeight(aaa - 2, x);
-	x = m_model1.GetShapeWeight("–Ú_Î‚¢");
-	y = m_model1.GetShapeWeight("‚ ");
-	z = m_model1.GetShapeWeight("UP ear.UP ear");
-
-	//x = m_model1.GetShapeWeight("vrc.v_ch");
-
-	//printf("Blinking = %f\n", x);
-
-	//printf("x=%f, y=%f, z=%f\n", x, y, z);
-	//printf("x=%f, y=%f, z=%f, w=%f\n", x2, y2, z2, z);
+	//printf("x=%f, y=%f, z=%f, w=%f\n", x, y, z, w);
+	//printf("x2=%f, y2=%f, z2=%f, w2=%f\n", x2, y2, z2, w2);
 
 	if (bBoneMode) {
 		for (std::string boneName : m_model1.GetBoneNames()) {
@@ -155,6 +156,15 @@ void Scene::Update()
 
 	m_model1.Update();
 	m_model2.Update();
+
+	XMFLOAT4 a = { x, y, z, w };
+	//m_model1.UpdateBoneRotation("Hips", a);
+	//m_model1.UpdateBoneRotation("Right arm", a);
+	a = { x2, y2, z2, w2 };
+	//m_model1.UpdateBoneRotation("Right elbow", a);
+
+	//m_model1.Test();
+
 	for (Model& model : m_spheres) {
 		model.Update();
 	}
@@ -259,4 +269,9 @@ Scene::Scene()
 
 	m_model1.m_rotation.x = -90.0f;
 	m_model1.m_rotation.y = 180.0f;
+
+	pBGMHandle = g_Engine->m_pSoundSystem->LoadSound("Resource\\BGM\\Music.wav", true);
+	pBGMHandle->volume = 0.1f;
+	pBGMHandle->speed = 1.0f;
+	pBGMHandle->UpdateProperty();
 }

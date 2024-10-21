@@ -1,7 +1,6 @@
 #pragma once
 #include "Model.h"
 #include "..\\..\\Main\\Utility.h"
-#include <unordered_map>
 
 class Character : public Model
 {
@@ -21,6 +20,10 @@ public:
 
     //シェイプキーのウェイトを更新
     void SetShapeWeight(const std::string shapeName, float weight);
+
+    void SetAnimationTime(float animTime);
+
+    void Test();
 
 public: //ゲッター関数 (頻繁に呼び出すものはinline)
 
@@ -62,6 +65,7 @@ public: //ゲッター関数 (頻繁に呼び出すものはinline)
 
 public: //パブリック変数
     float m_animationSpeed;
+    float m_nowAnimationTime;                               //現在のアニメーション時間
 
     float xFlip = 1.0f;
     float zFlip = 1.0f;
@@ -118,5 +122,4 @@ private:  //プライベート変数
     std::vector<HumanoidMesh> m_humanoidMeshes;             //ヒューマノイド用のメッシュ情報
 
     Animation m_animation;                                //アニメーション情報
-    float m_nowAnimationTime;                               //現在のアニメーション時間
 };

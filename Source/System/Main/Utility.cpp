@@ -74,3 +74,16 @@
 
      return temp;
  }
+
+ std::string GetFileExtension(const std::string& filePath)
+ {
+     //ファイルパス内で最後のドットを検索
+     size_t dotPos = filePath.find_last_of(".");
+
+     //ドットが見つからない場合、または最後にない場合は空文字を返す
+     if (dotPos == std::string::npos || dotPos == filePath.length() - 1) {
+         return "";
+     }
+
+     return filePath.substr(dotPos);
+ }

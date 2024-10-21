@@ -79,6 +79,12 @@ static void InitWindow(const TCHAR* appName)
 
 	//ウィンドウにフォーカスする
 	SetFocus(g_hWnd);
+
+	//dllの参照場所を指定
+	if (!SetDllDirectory(TEXT("Resource\\dll"))) {
+		printf("dllディレクトリの指定に失敗しました。");
+		return;
+	}
 }
 
 //#include <time.h>
@@ -105,6 +111,8 @@ static void MainLoop()
 		{
 			//終了処理(QUITﾒｯｾｰｼﾞで終了)
 			if (msg.message == WM_QUIT) {
+				delete g_Scene;
+				delete g_Engine;
 				break;
 			}
 

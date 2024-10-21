@@ -33,6 +33,7 @@
     <ClCompile Include="Source\System\Engine\Model\Bone\Bone.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Character.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Model.cpp" />
+    <ClCompile Include="Source\System\Engine\SoundSystem\SoundSystem.cpp" />
     <ClCompile Include="Source\System\Main\Main.cpp" />
     <ClCompile Include="Source\System\Main\Utility.cpp" />
   </ItemGroup>
@@ -53,6 +54,7 @@
     <ClInclude Include="Source\System\Engine\Model\Bone\Bone.h" />
     <ClInclude Include="Source\System\Engine\Model\Character.h" />
     <ClInclude Include="Source\System\Engine\Model\Model.h" />
+    <ClInclude Include="Source\System\Engine\SoundSystem\SoundSystem.h" />
     <ClInclude Include="Source\System\Main\Main.h" />
     <ClInclude Include="Source\System\Main\Utility.h" />
   </ItemGroup>
@@ -186,15 +188,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>Library\DirectXTex\Include;Library\assimp\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>F:\Projects\DirectX12_Test\Library\Bass\Include;Library\DirectXTex\Include;Library\assimp\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Library\DirectXTex\$(Configuration);Library\assimp\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>assimp-vc143-mtd.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>F:\Projects\DirectX12_Test\Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\assimp\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <DelayLoadDLLs>assimp-vc143-mtd.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassenc.dll;bassflac.dll;bassmix.dll</DelayLoadDLLs>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;winmm.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -205,16 +207,16 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>Library\DirectXTex\Include;Library\assimp\Include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>F:\Projects\DirectX12_Test\Library\Bass\Include;Library\DirectXTex\Include;Library\assimp\Include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Library\DirectXTex\$(Configuration);Library\assimp\$(Configuration);</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>assimp-vc143-mt.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
-      <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>F:\Projects\DirectX12_Test\Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\assimp\$(Configuration);</AdditionalLibraryDirectories>
+      <DelayLoadDLLs>assimp-vc143-mt.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassenc.dll;bassflac.dll;bassmix.dll</DelayLoadDLLs>
+      <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

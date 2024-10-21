@@ -5,6 +5,12 @@
 
 Engine* g_Engine;
 
+Engine::~Engine()
+{
+	delete m_pKeyInput;
+	delete m_pSoundSystem;
+}
+
 bool Engine::Init(HWND hwnd, UINT windowWidth, UINT windowHeight)
 {
 	m_FrameBufferWidth = windowWidth;
@@ -56,12 +62,15 @@ bool Engine::Init(HWND hwnd, UINT windowWidth, UINT windowHeight)
 	CreateViewPort();
 	CreateScissorRect();
 
-	m_keyInput = new Input(m_hWnd);
+	m_pKeyInput = new Input(m_hWnd);
 
 	//FrameTime計測用
 	m_initTime = timeGetTime();
 	m_sceneTimeMS = 0;
 	m_frameTime = 0.0f;
+
+	//サウンドシステムを初期化
+	m_pSoundSystem = new SoundSystem(m_hWnd);
 
 	printf("描画エンジンの初期化に成功\n");
 	return true;
@@ -380,19 +389,24 @@ void Engine::EndRender()
 	WaitRender();
 }
 
-BYTE Engine::GetMouseState(const BYTE keyCode)
+BYTE Engine::GetMouseState(BYTE keyCode)
 {
-	return m_keyInput->GetMouseState(keyCode);
+	return m_pKeyInput->GetMouseState(keyCode);
 }
 
-BYTE Engine::GetMouseStateSync(const BYTE keyCode)
+BYTE Engine::GetMouseStateSync(BYTE keyCode)
 {
-	return m_keyInput->GetMouseStateSync(keyCode);
+	return m_pKeyInput->GetMouseStateSync(keyCode);
 }
 
-bool Engine::GetKeyState(const UINT key)
+bool Engine::GetKeyState(UINT key)
 {
-	return m_keyInput->CheckKey(key);
+	return m_pKeyInput->CheckKey(key);
+}
+
+bool Engine::GetKeyStateSync(UINT key)
+{
+	return m_pKeyInput->TriggerKey(key);
 }
 
 void Engine::Update()
@@ -406,7 +420,11 @@ void Engine::Update()
 	//シーンが切り替わってからの時間(ミリ秒と秒)
 	m_sceneTimeMS = timeNow - m_initTime;
 
-	m_keyInput->UpdateMouseState();
+	//マウスの状態を更新
+	m_pKeyInput->UpdateMouseState();
+
+	//サウンドを更新
+	m_pSoundSystem->Update();
 }
 
 Animation Engine::GetAnimation(std::string animFilePath)
