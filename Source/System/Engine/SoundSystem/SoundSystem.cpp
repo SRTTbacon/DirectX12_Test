@@ -27,7 +27,7 @@ SoundSystem::~SoundSystem()
 }
 
 //ファイルからサウンドのハンドルを作成
-//戻り値 : サウンドが入っているハンドル (HSTREAM = unsigned long)
+//戻り値 : サウンド情報が入った構造体
 SoundHandle* SoundSystem::LoadSound(std::string filePath, bool bPlay)
 {
 	UINT soundHandle = 0;

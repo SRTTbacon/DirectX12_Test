@@ -69,9 +69,9 @@ CD3DX12_ROOT_PARAMETER* RootSignature::GetRootParameter()
 		rootParam[2].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_VERTEX); // b2の定数バッファを設定、全てのシェーダーから見えるようにする
 
 		//シェイプキー用をスロットt1に設定
-		rootParam[3].InitAsShaderResourceView(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+		rootParam[3].InitAsShaderResourceView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 		//シェイプキーのウェイト用をスロットt2に設定
-		rootParam[4].InitAsShaderResourceView(2, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+		rootParam[4].InitAsShaderResourceView(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
 		m_pTableRange1 = new CD3DX12_DESCRIPTOR_RANGE[1];				//ディスクリプタテーブル
 		//テクスチャ用をスロットt0に設定

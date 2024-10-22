@@ -11,6 +11,9 @@
 #include <filesystem>
 
 #include "..\\Main\\Utility.h"
+
+#include "Lights\\DirectionalLight.h"
+
 #include "SoundSystem\\SoundSystem.h"
 #include "Model\\Animation\\AnimationManager.h"
 
@@ -60,6 +63,18 @@ public: //ゲッター関数
 		return m_pCommandList.Get();
 	}
 
+	//サウンドシステム
+	inline SoundSystem* GetSoundSystem()
+	{
+		return m_pSoundSystem;
+	}
+
+	//ディレクショナルライト
+	inline DirectionalLight* GetDirectionalLight()
+	{
+		return m_pDirectionalLight;
+	}
+
 	//トリプルバッファリングの現在のインデックス
 	inline UINT CurrentBackBufferIndex() const
 	{
@@ -71,9 +86,6 @@ public: //ゲッター関数
 	{
 		return m_frameTime;
 	}
-
-public:	//パブリック変数
-	SoundSystem* m_pSoundSystem;
 
 private: //DirectX12の初期化
 	//デバイスを作成
@@ -142,6 +154,10 @@ private: //プライベート変数
 	float m_frameTime;
 
 	AnimationManager animManager;
+
+	SoundSystem* m_pSoundSystem;
+
+	DirectionalLight* m_pDirectionalLight;
 };
 
 //どこからでも参照するためグローバル変数

@@ -1,8 +1,10 @@
 cbuffer ModelConstantBuffer : register(b0)
 {
-	matrix modelMatrix;       //モデルマトリックス
-	matrix viewMatrix;        //ビューマトリックス
-	matrix projectionMatrix;  //プロジェクションマトリックス
+	matrix modelMatrix;			//モデルマトリックス
+	matrix viewMatrix;			//ビューマトリックス
+	matrix projectionMatrix;	//プロジェクションマトリックス
+    matrix lightViewProj;		//ディレクショナルライトのマトリックス
+    float3 lightDir;			//ディレクショナルライトの方向
 }
 
 cbuffer BoneMatrices : register(b1)
@@ -16,8 +18,8 @@ cbuffer Constants : register(b2)	//初期化時に1度だけしか実行しないもの
     uint shapeCount;				//シェイプキーの数
 };
 
-StructuredBuffer<float3> ShapeDeltasTexture : register(t1);		//シェイプキーごとの位置変位データ
-StructuredBuffer<float> ShapeWeights : register(t2);			//各シェイプキーのウェイト
+StructuredBuffer<float3> ShapeDeltasTexture : register(t0);		//シェイプキーごとの位置変位データ
+StructuredBuffer<float> ShapeWeights : register(t1);			//各シェイプキーのウェイト
 
 struct VSInput
 {
@@ -33,8 +35,11 @@ struct VSInput
 struct VSOutput
 {
 	float4 svpos : SV_POSITION; //座標
+    float3 normal : NORMAL;		//ノーマルマップ
 	float4 color : COLOR;		//色
 	float2 uv : TEXCOORD;		//UV
+    float4 lightSpacePos : TEXCOORD0;	//ディレクショナルライト
+    float3 lightDir : TEXCOORD1;		//ディレクショナルライトの方向
 };
 
 //頂点IDとシェイプキーのIDから相対位置を取得
@@ -64,8 +69,11 @@ VSOutput vert(VSInput input)
 	float4 viewPos = mul(viewMatrix, worldPos);					//ビュー座標に変換
 	float4 projPos = mul(projectionMatrix, viewPos);			//投影変換
 
-	output.svpos = projPos;		//投影変換された座標
-	output.color = input.color; //頂点色
-	output.uv = input.uv;		//UV
+	output.svpos = projPos;			//投影変換された座標
+    output.normal = input.normal;	//ノーマルマップ
+	output.color = input.color;		//頂点色
+	output.uv = input.uv;			//UV
+    output.lightSpacePos = mul(lightViewProj, float4(shapePos, 1.0f));	//ライト空間への変換
+    output.lightDir = lightDir;
 	return output;				//ピクセルシェーダーに渡す
 }

@@ -184,7 +184,7 @@ Scene::Scene()
 	: m_model1(Character(modelFile1, &m_camera))
 	, m_model2(Model(&m_camera))
 {
-	m_model1.LoadAnimation("Resource\\Test.hcs");
+	m_model1.LoadAnimation("Resource\\Test2.hcs");
 
 	XMFLOAT4 a = {0.0f, 0.0f, 0.0f, 0.0f};
 	/*XMFLOAT3 a = {-10.0f, 13.5f, 0.58f};
@@ -270,7 +270,7 @@ Scene::Scene()
 	m_model1.m_rotation.x = -90.0f;
 	m_model1.m_rotation.y = 180.0f;
 
-	pBGMHandle = g_Engine->m_pSoundSystem->LoadSound("Resource\\BGM\\Music.wav", true);
+	pBGMHandle = g_Engine->GetSoundSystem()->LoadSound("Resource\\BGM\\Music.wav", true);
 	pBGMHandle->volume = 0.1f;
 	pBGMHandle->speed = 1.0f;
 	pBGMHandle->UpdateProperty();

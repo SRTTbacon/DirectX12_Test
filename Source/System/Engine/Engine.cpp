@@ -72,6 +72,11 @@ bool Engine::Init(HWND hwnd, UINT windowWidth, UINT windowHeight)
 	//サウンドシステムを初期化
 	m_pSoundSystem = new SoundSystem(m_hWnd);
 
+	//ディレクショナルライトの初期化
+	m_pDirectionalLight = new DirectionalLight();
+	m_pDirectionalLight->lightDirection = DirectX::XMFLOAT3(1.0f, -1.0f, 0.0f);
+	m_pDirectionalLight->SetPosition(DirectX::XMFLOAT3(0.0f, 100.0f, 0.0f));
+
 	printf("描画エンジンの初期化に成功\n");
 	return true;
 }

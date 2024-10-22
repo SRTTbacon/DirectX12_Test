@@ -598,7 +598,6 @@ void Character::LoadShapeKey(const aiMesh* mesh, std::vector<Vertex>& vertices, 
         std::string shapeName = UTF8ToShiftJIS(animMesh->mName.C_Str());
 
         //同名のシェイプキーが存在すれば無視 (ほぼないけど)
-        //
         if (humanoidMesh.shapeMapping.find(shapeName) == humanoidMesh.shapeMapping.end()) {
             UINT shapeIndex = static_cast<UINT>(humanoidMesh.shapeWeights.size());
 

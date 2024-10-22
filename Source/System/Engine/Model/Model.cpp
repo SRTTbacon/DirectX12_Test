@@ -130,6 +130,8 @@ void Model::Update()
     mcb.modelMatrix = scale * rot * pos;
     mcb.viewMatrix = XMMatrixLookAtRH(m_pCamera->m_eyePos, m_pCamera->m_targetPos, m_pCamera->m_upFoward);
     mcb.projectionMatrix = XMMatrixPerspectiveFovRH(m_pCamera->m_fov, m_pCamera->m_aspect, 0.01f, 1000.0f);
+    mcb.lightViewProjMatrix = g_Engine->GetDirectionalLight()->lightViewProj;
+    mcb.lightDirection = g_Engine->GetDirectionalLight()->lightDirection;
 
     //定数バッファにデータを書き込む
     void* p;

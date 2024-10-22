@@ -54,6 +54,8 @@ protected:
         XMMATRIX modelMatrix;
         XMMATRIX viewMatrix;
         XMMATRIX projectionMatrix;
+        XMMATRIX lightViewProjMatrix;
+        XMFLOAT3 lightDirection;
     };
 
     //メッシュごとに必要な情報
