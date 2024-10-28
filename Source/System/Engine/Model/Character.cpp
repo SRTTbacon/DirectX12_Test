@@ -1,9 +1,11 @@
 #include "Character.h"
 
-Character::Character(const std::string fbxFile, const Camera* pCamera, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight, UINT* pBackBufferIndex)
-	: Model(pCamera, pDevice, pCommandList, pDirectionalLight, pBackBufferIndex)
+Character::Character(const std::string fbxFile, const Camera* pCamera, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight,
+    UINT* pBackBufferIndex)
+    : Model(pCamera, pDevice, pCommandList, pDirectionalLight, pBackBufferIndex)
     , m_animationSpeed(1.0f)
     , m_nowAnimationTime(0.0f)
+    , m_nowAnimationIndex(-1)
 {
     //FBXをロード (今後独自フォーマットに変更予定)
 	LoadFBX(fbxFile);
@@ -15,9 +17,14 @@ Character::Character(const std::string fbxFile, const Camera* pCamera, ID3D12Dev
 	printf("モデル:%sをロードしました。\n", fbxFile.c_str());
 }
 
-void Character::LoadAnimation(std::string animFile)
+UINT Character::AddAnimation(Animation animation)
 {
-    m_animation = g_Engine->GetAnimation(animFile);
+    m_animations.push_back(animation);
+    //アニメーションが1
+    if (m_animations.size() == 1) {
+        m_nowAnimationIndex = 0;
+    }
+    return (unsigned int)m_animations.size() - 1;
 }
 
 void Character::Update()
@@ -102,6 +109,7 @@ void Character::LoadFBX(const std::string& fbxFile)
             //テクスチャがまだロードされていない場合はロードし、ロード済みの場合は入っているインデックスを参照
             if (textures.find(wideTexPath) == textures.end()) {
                 //テクスチャを作成
+                printf("texPath = %s\n", texPath.c_str());
                 Texture2D* mainTex = Texture2D::Get(texPath);
                 //マテリアルを作成
                 //DescriptorHandle* handle = m_pDescriptorHeap->Register(mainTex);
@@ -332,6 +340,8 @@ void Character::CreateShapeDeltasTexture(HumanoidMesh& humanoidMesh)
 
     //一度設定したら変更しないためクリア
     humanoidMesh.shapeDeltas.clear();
+
+    printf("テスト : %u\n", humanoidMesh.vertexCount);
 }
 
 static XMVECTOR ExtractEulerAngles(const XMMATRIX& matrix) {
@@ -818,7 +828,13 @@ void Character::UpdateShapeKeys()
 
 void Character::UpdateAnimation()
 {
-    if (m_animation.m_frames.size() <= 0) {
+    //アニメーションが存在しない
+    if (m_nowAnimationIndex < 0 || m_animations.size() <= m_nowAnimationIndex) {
+        return;
+    }
+
+    //キーフレームが存在しない
+    if (m_animations[m_nowAnimationIndex].m_frames.size() <= 0) {
         return;
     }
 
@@ -826,7 +842,7 @@ void Character::UpdateAnimation()
     m_nowAnimationTime += g_Engine->GetFrameTime() * m_animationSpeed;
 
     //現在のアニメーション時間のフレームを取得
-    AnimationFrame* pFrame = m_animation.GetFrame(m_nowAnimationTime);
+    AnimationFrame* pFrame = m_animations[m_nowAnimationIndex].GetFrame(m_nowAnimationTime);
 
     //フレームが存在しなければ処理を終了 (主にアニメーションが読み込まれていない場合)
     if (!pFrame) {
@@ -835,7 +851,7 @@ void Character::UpdateAnimation()
 
     //ボーンアニメーション
     for (UINT i = 0; i < pFrame->boneAnimations.size(); i++) {
-        std::string boneName = m_animation.m_boneMapping[i];
+        std::string boneName = m_animations[m_nowAnimationIndex].m_boneMapping[i];
         if (boneName[0] == 'T' && boneName[1] == 'h' && boneName[2] == 'u' && boneName[3] == 'm' && boneName[4] == 'b') {
 
         }
@@ -846,13 +862,13 @@ void Character::UpdateAnimation()
     }
 
     //シェイプキーのアニメーション
-    for (UINT i = 0; i < m_animation.m_shapeNames.size(); i++) {
-        std::string& shapeName = m_animation.m_shapeNames[i];
+    for (UINT i = 0; i < m_animations[m_nowAnimationIndex].m_shapeNames.size(); i++) {
+        std::string& shapeName = m_animations[m_nowAnimationIndex].m_shapeNames[i];
         SetShapeWeight(shapeName, pFrame->shapeAnimations[i]);
     }
 
     //再生中のフレームが最後のフレームだった場合最初に戻す
-    if (m_animation.IsLastFrame(pFrame)) {
+    if (m_animations[m_nowAnimationIndex].IsLastFrame(pFrame)) {
         m_nowAnimationTime = 0.0f;
     }
 }

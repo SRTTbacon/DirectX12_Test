@@ -69,10 +69,10 @@ VSOutput vert(VSInput input)
 	float4 projPos = mul(projectionMatrix, viewPos);			//投影変換
 
 	output.svpos = projPos;			//投影変換された座標
-    output.normal = mul(float4(input.normal, 1.0f), normalMatrix).xyz; //ノーマルマップ
+    output.normal = normalize(mul(input.normal, (float3x3)normalMatrix)); //ノーマルマップ
 	output.color = input.color;		//頂点色
 	output.uv = input.uv;			//UV
-    float4 lightSpacePos = mul(lightViewProjMatrix, worldPos);
-    output.lightSpacePos = lightSpacePos / lightSpacePos.w; //ライト空間への変換
+    output.lightSpacePos = mul(worldPos, lightViewProjMatrix);
+
 	return output;				//ピクセルシェーダーに渡す
 }

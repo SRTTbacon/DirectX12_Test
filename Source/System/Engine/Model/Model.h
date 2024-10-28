@@ -43,6 +43,8 @@ public:
     XMFLOAT3 m_rotation;    //モデル全体の回転 (デグリー角)
     XMFLOAT3 m_scale;       //モデル全体のスケール
 
+    bool m_bVisible;        //描画するかどうか
+
 public: //ゲッター関数
     //深度
     inline float GetZBuffer() const

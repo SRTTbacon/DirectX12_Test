@@ -29,8 +29,8 @@ void DescriptorHeap::SetMainTexture(ID3D12Resource* mainTex)
 {
     m_cpuDescriptorHandle = m_descriptorHeap->GetCPUDescriptorHandleForHeapStart();
     m_gpuDescriptorHandle = m_descriptorHeap->GetGPUDescriptorHandleForHeapStart();
-    m_cpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(textureCount) * 2ULL;
-    m_gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(textureCount) * 2ULL;
+    m_cpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(textureCount);
+    m_gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(textureCount);
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -41,11 +41,6 @@ void DescriptorHeap::SetMainTexture(ID3D12Resource* mainTex)
     m_pDevice->CreateShaderResourceView(mainTex, &srvDesc, m_cpuDescriptorHandle);
 
     srvDesc.Format = m_shadowMap->GetDesc().Format;
-
-    m_cpuDescriptorHandle.ptr += m_descriptorSize;
-    m_gpuDescriptorHandle.ptr += m_descriptorSize;
-
-    m_pDevice->CreateShaderResourceView(m_shadowMap.Get(), &srvDesc, m_cpuDescriptorHandle);
 
     textureCount++;
 }
@@ -118,7 +113,7 @@ void DescriptorHeap::CreateShadowMap(const ShadowSize shadowSize)
 D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeap::GetGpuDescriptorHandle(int index)
 {
     D3D12_GPU_DESCRIPTOR_HANDLE  gpuDescriptorHandle = m_descriptorHeap->GetGPUDescriptorHandleForHeapStart();
-    gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(index) * 2ULL;
+    gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(index);
     return gpuDescriptorHandle;
 }
 

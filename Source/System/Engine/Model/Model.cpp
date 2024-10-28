@@ -18,13 +18,8 @@ Model::Model(const Camera* pCamera, ID3D12Device* pDevice, ID3D12GraphicsCommand
     , m_pPipelineState(nullptr)
     , m_pRootSignature(nullptr)
     , m_depth(0.0f)
+    , m_bVisible(true)
 {
-    auto eyePos = XMVectorSet(0.0f, 5.0f, 1.0f, 0.0f); // 視点の位置
-    auto targetPos = XMVectorSet(0.0f, 0.0f, 0.75f, 0.0f); // 視点を向ける座標
-    auto upward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f); // 上方向を表すベクトル
-    constexpr auto fov = XMConvertToRadians(37.5); // 視野角
-    auto aspect = static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT); // アスペクト比
-
     D3D12_HEAP_PROPERTIES heapProps = {};
     heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
 
@@ -199,7 +194,6 @@ void Model::Update()
     memcpy(p0, &mcb, sizeof(ModelConstantBuffer));
     m_modelConstantBuffer[*m_pBackBufferIndex]->Unmap(0, nullptr);
 
-    //ディレクショナルライトの情報を更新
     void* p1;
     m_lightConstantBuffer->Map(0, nullptr, &p1);
     memcpy(p1, &m_pDirectionalLight->lightBuffer, sizeof(LightBuffer));

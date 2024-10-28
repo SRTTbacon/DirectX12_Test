@@ -9,7 +9,14 @@ void ModelManager::Update()
 {
     //各オブジェクトの描画順番を計算
     for (Model* pModel : m_models) {
+        //描画しない場合はスルー
+        if (!pModel->m_bVisible) {
+            continue;
+        }
+
+        //深度を取得
         float depth = pModel->GetZBuffer();
+        //不透明か半透明かで分ける
         if (pModel->GetIsTransparent()) {
             m_transparentModels.push({ depth, pModel });
         }
@@ -17,6 +24,7 @@ void ModelManager::Update()
             m_opaqueModels.push({ depth, pModel });
         }
 
+        //モデルの更新
         pModel->Update();
     }
 }
@@ -48,6 +56,8 @@ void ModelManager::RenderShadowMap()
 
 void ModelManager::RenderModel()
 {
+    //本体を描画
+    //先に不透明のモデルを描画し、次に半透明のモデルを描画
     for (Model* pModel : m_sortedOpaqueModels) {
         pModel->RenderSceneWithShadow();
     }

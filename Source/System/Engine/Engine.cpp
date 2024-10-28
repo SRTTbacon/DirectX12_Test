@@ -410,7 +410,7 @@ void Engine::ModelRender()
 	pCommandList->OMSetRenderTargets(0, nullptr, false, m_pShadowDescriptorHeap->GetShadowMapDSV());
 
 	//ƒ‚ƒfƒ‹‚Ì‰e‚Ì•`‰æ
-
+	m_modelManager.RenderShadowMap();
 
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_pShadowDescriptorHeap->GetShadowMap(),
@@ -419,6 +419,9 @@ void Engine::ModelRender()
 	pCommandList->ResourceBarrier(1, &barrier);
 
 	ResetViewportAndScissor();
+
+	//ƒ‚ƒfƒ‹‚ð•`‰æ
+	m_modelManager.RenderModel();
 }
 
 void Engine::WaitRender()
@@ -511,6 +514,8 @@ void Engine::Update()
 void Engine::LateUpdate()
 {
 	m_camera.Update();
+
+	m_modelManager.Update();
 }
 
 void Engine::ResetViewportAndScissor()

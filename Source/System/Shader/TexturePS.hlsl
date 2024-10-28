@@ -53,7 +53,7 @@ float4 pixel(VSOutput input) : SV_TARGET
         }
     }
     //shadowFactor *= 0.25f;
-    shadowFactor += 1.25f;
+    shadowFactor += 1.0f;
 
     //シャドウがかかっていれば光を減少させる (0.0f なら完全な影、1.0f なら影なし)
     float3 lighting = ambient + shadowFactor * diffuse;

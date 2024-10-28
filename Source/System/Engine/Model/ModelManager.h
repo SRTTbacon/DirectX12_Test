@@ -1,5 +1,5 @@
 #pragma once
-#include "Character.h"
+#include "Model.h"
 #include <queue>
 
 class ModelManager

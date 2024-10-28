@@ -2,6 +2,7 @@
 #include "Model.h"
 #include "..\\..\\Main\\Utility.h"
 #include "Animation\\Animation.h"
+#include "..\\Engine.h"
 
 //ボーンが存在するモデルを読み込む
 //シェイプキー(UnityのBlendShape)に対応
@@ -12,9 +13,14 @@ class Engine;
 class Character : public Model
 {
 public:
-	Character(const std::string fbxFile, const Camera* pCamera, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight, UINT* pBackBufferIndex);
+    //コンストラクタ
+    //基本的にエンジンで実行
+    //引数 : std::string FBXファイルのパス, Camera* カメラクラスのポインタ, ID3D12Device* デバイス, ID3D12GraphicsCommandList* コマンドリスト, DirectionalLight* ディレクショナルライト
+    //       UINT* バックバッファのインデックスのポインタ, float* 1フレームにかかる時間のポインタ
+	Character(const std::string fbxFile, const Camera* pCamera, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight, 
+        UINT* pBackBufferIndex);
 
-    void LoadAnimation(std::string animFile);
+    UINT AddAnimation(Animation animation);
 
     void Update();
 
@@ -128,5 +134,7 @@ private:  //プライベート変数
     std::unordered_map<std::string, UINT> m_boneMapping;    //ボーン名からインデックスを取得
     std::vector<HumanoidMesh> m_humanoidMeshes;             //ヒューマノイド用のメッシュ情報
 
-    Animation m_animation;                                //アニメーション情報
+    std::vector<Animation> m_animations;                                //アニメーション情報
+
+    int m_nowAnimationIndex;
 };

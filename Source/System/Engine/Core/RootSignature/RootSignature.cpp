@@ -16,17 +16,23 @@ RootSignature::RootSignature(ID3D12Device* device, ShaderKinds shaderKind)
 	}
 
 	//スタティックサンプラーの設定
-	CD3DX12_STATIC_SAMPLER_DESC samplers[2]{};
-	samplers[0] = CD3DX12_STATIC_SAMPLER_DESC(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR);
-	samplers[1] = CD3DX12_STATIC_SAMPLER_DESC(1, D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 0.0f, 0, D3D12_COMPARISON_FUNC_LESS_EQUAL);
-	samplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	samplers[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	int samplerCount = 0;
+	CD3DX12_STATIC_SAMPLER_DESC* samplers = nullptr;
+	if (shaderKind != ShaderKinds::ShadowShader) {
+		samplers = new CD3DX12_STATIC_SAMPLER_DESC[2];
+		samplers[0] = CD3DX12_STATIC_SAMPLER_DESC(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR);
+		samplers[1] = CD3DX12_STATIC_SAMPLER_DESC(1, D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+			D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 0.0f, 0, D3D12_COMPARISON_FUNC_LESS_EQUAL);
+		samplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		samplers[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+		samplerCount = 2;
+	}
 
 	//ルートシグニチャの設定（ルートパラメーターとスタティックサンプラーを入れる）
 	D3D12_ROOT_SIGNATURE_DESC desc = {};
 	desc.NumParameters = m_rootParamSize;		//ルートパラメーターの個数をいれる
-	desc.NumStaticSamplers = 2;					//サンプラーの個数をいれる
+	desc.NumStaticSamplers = samplerCount;		//サンプラーの個数をいれる
 	desc.pParameters = rootParam;				//ルートパラメーターのポインタをいれる
 	desc.pStaticSamplers = samplers;			//サンプラーのポインタを入れる
 	desc.Flags = flag;							//フラグを設定
@@ -54,7 +60,7 @@ RootSignature::RootSignature(ID3D12Device* device, ShaderKinds shaderKind)
 		IID_PPV_ARGS(rootSignature.GetAddressOf()));	//ルートシグニチャ格納先のポインタ
 	if (FAILED(hr))
 	{
-		printf("ルートシグネチャの生成に失敗\n");
+		printf("ルートシグネチャの生成に失敗。 シェーダー : %d\n", shaderKind);
 		return;
 	}
 

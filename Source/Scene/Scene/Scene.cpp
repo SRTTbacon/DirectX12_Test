@@ -116,6 +116,7 @@ void Scene::Update()
 		}
 	}
 	if (g_Engine->GetMouseStateSync(0x01)) {
+		m_pModel1->m_rotation.x += 90.0f;
 	}
 	if (g_Engine->GetMouseStateSync(0x02)) {
 		//bBoneMode = !bBoneMode;
@@ -133,6 +134,9 @@ void Scene::Update()
 	}
 	if (g_Engine->GetKeyState(DIK_N)) {
 		m_pModel1->m_rotation.y += 1.0f;
+	}
+	if (g_Engine->GetKeyState(DIK_M)) {
+		m_pModel1->m_rotation.x += 1.0f;
 	}
 
 	//printf("x=%f, y=%f, z=%f, w=%f\n", x, y, z, w);
@@ -163,12 +167,13 @@ void Scene::Update()
 
 void Scene::Draw()
 {
+	g_Engine->ModelRender();
 }
 
 Scene::Scene() 
 {
 	m_pModel1 = g_Engine->AddCharacter(modelFile1);
-	m_pModel1->LoadAnimation("Resource\\Test2.hcs");
+	m_pModel1->AddAnimation(g_Engine->GetAnimation("Resource\\Test2.hcs"));
 
 	XMFLOAT4 a = {0.0f, 0.0f, 0.0f, 0.0f};
 	/*XMFLOAT3 a = {-10.0f, 13.5f, 0.58f};
@@ -204,6 +209,7 @@ Scene::Scene()
 
 	m_pModel2 = g_Engine->AddModel(modelFile3);
 	m_pModel2->m_scale = XMFLOAT3(5.0f, 0.01f, 5.0f);
+	m_pModel2->m_bVisible = false;
 
 	x = 0.13954f;
 	y = -0.00043f;

@@ -156,6 +156,7 @@ ID3D12Resource* Texture2D::GetDefaultResource(size_t width, size_t height)
 	if (FAILED(result))
 	{
 		//assert(SUCCEEDED(result));
+		printf("GetDefaultResource : ErrorCode = %1x\n", result);
 		return nullptr;
 	}
 	return buff;

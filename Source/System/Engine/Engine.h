@@ -20,11 +20,12 @@
 #include "SoundSystem\\SoundSystem.h"
 #include "Model\\Animation\\AnimationManager.h"
 #include "Model\\ModelManager.h"
+#include "Model\\Character.h"
 
 #pragma comment(lib, "d3d12.lib") // d3d12ライブラリをリンクする
 #pragma comment(lib, "dxgi.lib") // dxgiライブラリをリンクする
 
-class ModelManager;
+class Character;
 
 class Engine
 {
