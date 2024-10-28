@@ -3,8 +3,8 @@ cbuffer ModelConstantBuffer : register(b0)
 	matrix modelMatrix;			//モデルマトリックス
 	matrix viewMatrix;			//ビューマトリックス
 	matrix projectionMatrix;	//プロジェクションマトリックス
-    matrix lightViewProj;		//ディレクショナルライトのマトリックス
-    float3 lightDir;			//ディレクショナルライトの方向
+    matrix lightViewProjMatrix;	//ディレクショナルライトの情報
+    matrix normalMatrix;		//モデルのスケール、回転などをinput.normalにも適応する用
 }
 
 cbuffer BoneMatrices : register(b1)
@@ -38,8 +38,7 @@ struct VSOutput
     float3 normal : NORMAL;		//ノーマルマップ
 	float4 color : COLOR;		//色
 	float2 uv : TEXCOORD;		//UV
-    float4 lightSpacePos : TEXCOORD0;	//ディレクショナルライト
-    float3 lightDir : TEXCOORD1;		//ディレクショナルライトの方向
+    float4 lightSpacePos : TEXCOORD1;	//ディレクショナルライト
 };
 
 //頂点IDとシェイプキーのIDから相対位置を取得
@@ -70,10 +69,10 @@ VSOutput vert(VSInput input)
 	float4 projPos = mul(projectionMatrix, viewPos);			//投影変換
 
 	output.svpos = projPos;			//投影変換された座標
-    output.normal = input.normal;	//ノーマルマップ
+    output.normal = mul(float4(input.normal, 1.0f), normalMatrix).xyz; //ノーマルマップ
 	output.color = input.color;		//頂点色
 	output.uv = input.uv;			//UV
-    output.lightSpacePos = mul(lightViewProj, float4(shapePos, 1.0f));	//ライト空間への変換
-    output.lightDir = lightDir;
+    float4 lightSpacePos = mul(lightViewProjMatrix, worldPos);
+    output.lightSpacePos = lightSpacePos / lightSpacePos.w; //ライト空間への変換
 	return output;				//ピクセルシェーダーに渡す
 }

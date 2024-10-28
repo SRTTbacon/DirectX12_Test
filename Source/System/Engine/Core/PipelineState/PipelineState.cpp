@@ -31,25 +31,34 @@ PipelineState::PipelineState(ID3D12Device* device, RootSignature* rootSignature)
     else if (rootSignature->m_shaderKind == ShaderKinds::PrimitiveShader) {
         hr = D3DReadFileToBlob(KeyString::SHADER_PRIMITIVE_VERTEX, pVsBlob.GetAddressOf());
     }
+    else if (rootSignature->m_shaderKind == ShaderKinds::ShadowShader) {
+        hr = D3DReadFileToBlob(KeyString::SHADER_SHADOW_VERTEX, pVsBlob.GetAddressOf());
+    }
     if (FAILED(hr) || !pVsBlob)
     {
         printf("頂点シェーダーの読み込みに失敗。エラーコード:%lx\n", hr);
         return;
     }
+
     if (rootSignature->m_shaderKind == ShaderKinds::BoneShader) {
         hr = D3DReadFileToBlob(KeyString::SHADER_TEXTURE_PIXEL, pPsBlob.GetAddressOf());
     }
     else if (rootSignature->m_shaderKind == ShaderKinds::PrimitiveShader) {
         hr = D3DReadFileToBlob(KeyString::SHADER_PRIMITIVE_PIXEL, pPsBlob.GetAddressOf());
     }
-    if (FAILED(hr) || !pPsBlob)
+    if (rootSignature->m_shaderKind != ShaderKinds::ShadowShader && (FAILED(hr) || !pPsBlob))
     {
         printf("ピクセルシェーダーの読み込みに失敗。エラーコード:%lx\n", hr);
         return;
     }
 
     psoDesc.VS = CD3DX12_SHADER_BYTECODE(pVsBlob.Get());
-    psoDesc.PS = CD3DX12_SHADER_BYTECODE(pPsBlob.Get());
+    if (rootSignature->m_shaderKind == ShaderKinds::ShadowShader) {
+        psoDesc.PS = { nullptr, 0 };
+    }
+    else {
+        psoDesc.PS = CD3DX12_SHADER_BYTECODE(pPsBlob.Get());
+    }
 
     //ラスタライザーステート（デフォルト）
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
@@ -64,9 +73,15 @@ PipelineState::PipelineState(ID3D12Device* device, RootSignature* rootSignature)
     psoDesc.SampleMask = UINT_MAX;
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
-    //レンダーターゲットの設定（1つのレンダーターゲット、RGBA8フォーマット）
-    psoDesc.NumRenderTargets = 1;
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    if (rootSignature->m_shaderKind == ShaderKinds::ShadowShader) {
+        psoDesc.NumRenderTargets = 0;   //影はレンダーターゲット不要
+        psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+    }
+    else {
+        //レンダーターゲットの設定（1つのレンダーターゲット、RGBA8フォーマット）
+        psoDesc.NumRenderTargets = 1;
+        psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    }
 
     //マルチサンプリングの設定
     psoDesc.SampleDesc.Count = 1;
@@ -108,6 +123,13 @@ D3D12_INPUT_ELEMENT_DESC* PipelineState::GetInputElement(ShaderKinds shaderKind)
         pInputLayout[1] = D3D12_INPUT_ELEMENT_DESC{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
         pInputLayout[2] = D3D12_INPUT_ELEMENT_DESC{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
         pInputLayout[3] = D3D12_INPUT_ELEMENT_DESC{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+
+        return pInputLayout;
+    }
+    else if (shaderKind == ShaderKinds::ShadowShader) {
+        m_elementCount = 1;
+        D3D12_INPUT_ELEMENT_DESC* pInputLayout = new D3D12_INPUT_ELEMENT_DESC[m_elementCount];
+        pInputLayout[0] = D3D12_INPUT_ELEMENT_DESC{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 
         return pInputLayout;
     }

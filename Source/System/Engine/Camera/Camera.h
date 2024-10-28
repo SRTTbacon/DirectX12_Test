@@ -1,5 +1,5 @@
 #pragma once
-#include "..\\Engine.h"
+#include <DirectXMath.h>
 #include "..\\..\\Main\\Main.h"
 
 struct Camera

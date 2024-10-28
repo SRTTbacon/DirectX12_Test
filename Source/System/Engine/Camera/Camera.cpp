@@ -9,60 +9,6 @@ void Camera::SetFov(float fovDegree)
 
 void Camera::Update()
 {
-    // カメラの前方ベクトルを計算
-    XMVECTOR forward = XMVector3Normalize(m_targetPos - m_eyePos);
-
-    // カメラの右方向ベクトルを計算
-    XMVECTOR right = XMVector3Normalize(XMVector3Cross(m_upFoward, forward));
-
-    const float cameraSpeed = 0.01f;
-    const float rotationSpeed = 0.01f;
-
-    if (g_Engine->GetKeyState(DIK_SPACE)) {
-        m_eyePos = XMVectorAdd(m_eyePos, XMVectorScale(m_upFoward, cameraSpeed));
-        m_targetPos = XMVectorAdd(m_targetPos, XMVectorScale(m_upFoward, cameraSpeed));
-    }
-    else if (g_Engine->GetKeyState(DIK_LSHIFT)) {
-        m_eyePos = XMVectorSubtract(m_eyePos, XMVectorScale(m_upFoward, cameraSpeed));
-        m_targetPos = XMVectorSubtract(m_targetPos, XMVectorScale(m_upFoward, cameraSpeed));
-    }
-
-    //Move Right and Left
-    if (g_Engine->GetKeyState(DIK_A)) {
-        m_eyePos = XMVectorAdd(m_eyePos, XMVectorScale(right, cameraSpeed));
-        m_targetPos = XMVectorAdd(m_targetPos, XMVectorScale(right, cameraSpeed));
-    }
-    else if (g_Engine->GetKeyState(DIK_D)) {
-        m_eyePos = XMVectorSubtract(m_eyePos, XMVectorScale(right, cameraSpeed));
-        m_targetPos = XMVectorSubtract(m_targetPos, XMVectorScale(right, cameraSpeed));
-    }
-
-    //Move forward/Backward
-    if (g_Engine->GetKeyState(DIK_S)) {
-        m_eyePos = XMVectorSubtract(m_eyePos, XMVectorScale(forward, cameraSpeed));
-        m_targetPos = XMVectorSubtract(m_targetPos, XMVectorScale(forward, cameraSpeed));
-    }
-    else if (g_Engine->GetKeyState(DIK_W)) {
-        m_eyePos = XMVectorAdd(m_eyePos, XMVectorScale(forward, cameraSpeed));
-        m_targetPos = XMVectorAdd(m_targetPos, XMVectorScale(forward, cameraSpeed));
-    }
-
-    //Rotate Y axis
-    if (g_Engine->GetKeyState(DIK_RIGHT)) {
-        m_yaw -= rotationSpeed;
-    }
-    if (g_Engine->GetKeyState(DIK_LEFT)) {
-        m_yaw += rotationSpeed;
-    }
-
-    //Rotate X axis
-    if (g_Engine->GetKeyState(DIK_DOWN)) {
-        m_pitch -= rotationSpeed;
-    }
-    if (g_Engine->GetKeyState(DIK_UP)) {
-        m_pitch += rotationSpeed;
-    }
-
     m_pitch = max(-XM_PIDIV2 + 0.01f, min(XM_PIDIV2 - 0.01f, m_pitch));
 
     XMVECTOR direction{};

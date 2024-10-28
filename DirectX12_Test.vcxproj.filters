@@ -59,6 +59,9 @@
     <Filter Include="Source\System\Engine\SoundSystem">
       <UniqueIdentifier>{c487e3fa-6274-4113-8563-c7f9c47f91db}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\System\Engine\Lights">
+      <UniqueIdentifier>{e39f0946-1bdf-4ca3-8bff-0ce93478eabb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\System\Main\Main.cpp">
@@ -88,9 +91,6 @@
     <ClCompile Include="Source\System\Engine\Camera\Camera.cpp">
       <Filter>Source\System\Camera</Filter>
     </ClCompile>
-    <ClCompile Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.cpp">
-      <Filter>Source\System\Engine\Core\DescriptorHeap</Filter>
-    </ClCompile>
     <ClCompile Include="Source\System\Engine\Model\Animation\Animation.cpp">
       <Filter>Source\System\Engine\Model\Animation</Filter>
     </ClCompile>
@@ -111,6 +111,15 @@
     </ClCompile>
     <ClCompile Include="Source\System\Engine\SoundSystem\SoundSystem.cpp">
       <Filter>Source\System\Engine\SoundSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap2.cpp">
+      <Filter>Source\System\Engine\Core\DescriptorHeap</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Lights\DirectionalLight.cpp">
+      <Filter>Source\System\Engine\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Model\ModelManager.cpp">
+      <Filter>Source\System\Engine\Model</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -144,9 +153,6 @@
     <ClInclude Include="Source\System\Engine\Camera\Camera.h">
       <Filter>Source\System\Camera</Filter>
     </ClInclude>
-    <ClInclude Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.h">
-      <Filter>Source\System\Engine\Core\DescriptorHeap</Filter>
-    </ClInclude>
     <ClInclude Include="Source\System\Engine\Model\Animation\Animation.h">
       <Filter>Source\System\Engine\Model\Animation</Filter>
     </ClInclude>
@@ -171,6 +177,15 @@
     <ClInclude Include="Source\System\Engine\SoundSystem\SoundSystem.h">
       <Filter>Source\System\Engine\SoundSystem</Filter>
     </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap2.h">
+      <Filter>Source\System\Engine\Core\DescriptorHeap</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Lights\DirectionalLight.h">
+      <Filter>Source\System\Engine\Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\ModelManager.h">
+      <Filter>Source\System\Engine\Model</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Source\System\Shader\TexturePS.hlsl">
@@ -183,6 +198,9 @@
       <Filter>リソース ファイル</Filter>
     </FxCompile>
     <FxCompile Include="Source\System\Shader\PrimitivePS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\ShadowVS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
   </ItemGroup>

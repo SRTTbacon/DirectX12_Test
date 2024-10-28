@@ -124,6 +124,7 @@ static void MainLoop()
 			//clock_t start = clock();
 			g_Engine->Update();
 			g_Scene->Update();
+			g_Engine->LateUpdate();
 			g_Engine->BeginRender();
 			g_Scene->Draw();
 			g_Engine->EndRender();

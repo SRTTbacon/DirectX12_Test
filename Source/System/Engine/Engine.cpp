@@ -5,6 +5,22 @@
 
 Engine* g_Engine;
 
+Engine::Engine()
+	: m_modelManager(ModelManager())
+	, m_camera(Camera())
+	, m_Scissor(D3D12_RECT())
+	, m_Viewport(D3D12_VIEWPORT())
+	, m_fenceValue{0, 0, 0}
+	, m_frameTime(0.0f)
+	, m_hWnd(nullptr)
+	, m_initTime(0)
+	, m_pDirectionalLight(nullptr)
+	, m_pKeyInput(nullptr)
+	, m_pSoundSystem(nullptr)
+	, m_sceneTimeMS(0)
+{
+}
+
 Engine::~Engine()
 {
 	delete m_pKeyInput;
@@ -74,11 +90,30 @@ bool Engine::Init(HWND hwnd, UINT windowWidth, UINT windowHeight)
 
 	//ディレクショナルライトの初期化
 	m_pDirectionalLight = new DirectionalLight();
-	m_pDirectionalLight->lightDirection = DirectX::XMFLOAT3(1.0f, -1.0f, 0.0f);
-	m_pDirectionalLight->SetPosition(DirectX::XMFLOAT3(0.0f, 100.0f, 0.0f));
+
+	//影用のルートシグネチャ、パイプラインステートの作成
+	m_pShadowRootSignature = new RootSignature(m_pDevice.Get(), ShaderKinds::ShadowShader);
+	m_pShadowPipelineState = new PipelineState(m_pDevice.Get(), m_pShadowRootSignature);
+
+	m_pShadowDescriptorHeap = new DescriptorHeap(m_pDevice.Get(), 1, ShadowSizeHigh);
 
 	printf("描画エンジンの初期化に成功\n");
 	return true;
+}
+
+Character* Engine::AddCharacter(std::string modelFile)
+{
+	Character* pCharacter = new Character(modelFile, &m_camera, m_pDevice.Get(), m_pCommandList.Get(), m_pDirectionalLight, &m_CurrentBackBufferIndex);
+	m_modelManager.AddModel(pCharacter);
+	return pCharacter;
+}
+
+Model* Engine::AddModel(std::string modelFile)
+{
+	Model* pModel = new Model(&m_camera, m_pDevice.Get(), m_pCommandList.Get(), m_pDirectionalLight, &m_CurrentBackBufferIndex);
+	pModel->LoadModel(modelFile);
+	m_modelManager.AddModel(pModel);
+	return pModel;
 }
 
 bool Engine::CreateDevice()
@@ -345,6 +380,47 @@ void Engine::BeginRender()
 	m_pCommandList->ClearDepthStencilView(currentDsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
+void Engine::ModelRender()
+{
+	ID3D12GraphicsCommandList* pCommandList = m_pCommandList.Get();
+
+	//シャドウマップをレンダーターゲットとして使用する準備
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+		m_pShadowDescriptorHeap->GetShadowMap(),
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	pCommandList->ResourceBarrier(1, &barrier);
+
+	pCommandList->ClearDepthStencilView(
+		*m_pShadowDescriptorHeap->GetShadowMapDSV(),  //シャドウマップのDSV
+		D3D12_CLEAR_FLAG_DEPTH,
+		1.0f,  //深度クリア値 (最大値に設定)
+		0,     //ステンシルクリア値
+		0, nullptr);
+
+	//シャドウマップ用のパイプラインステートとルートシグネチャを設定
+	pCommandList->SetPipelineState(m_pShadowPipelineState->GetPipelineState());
+	pCommandList->SetGraphicsRootSignature(m_pShadowRootSignature->GetRootSignature());
+
+	//ビューポートとシザー矩形の設定
+	pCommandList->RSSetViewports(1, m_pShadowDescriptorHeap->GetShadowViewPort());
+	pCommandList->RSSetScissorRects(1, m_pShadowDescriptorHeap->GetShadowScissor());
+
+	//深度バッファの設定
+	pCommandList->OMSetRenderTargets(0, nullptr, false, m_pShadowDescriptorHeap->GetShadowMapDSV());
+
+	//モデルの影の描画
+
+
+	barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+		m_pShadowDescriptorHeap->GetShadowMap(),
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	pCommandList->ResourceBarrier(1, &barrier);
+
+	ResetViewportAndScissor();
+}
+
 void Engine::WaitRender()
 {
 	//描画終了待ち
@@ -430,6 +506,28 @@ void Engine::Update()
 
 	//サウンドを更新
 	m_pSoundSystem->Update();
+}
+
+void Engine::LateUpdate()
+{
+	m_camera.Update();
+}
+
+void Engine::ResetViewportAndScissor()
+{
+	//ビューポートとシザー矩形を設定
+	m_pCommandList->RSSetViewports(1, &m_Viewport);
+	m_pCommandList->RSSetScissorRects(1, &m_Scissor);
+
+	//現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
+	auto currentRtvHandle = m_pRtvHeap->GetCPUDescriptorHandleForHeapStart();
+	currentRtvHandle.ptr += static_cast<SIZE_T>(m_CurrentBackBufferIndex * m_RtvDescriptorSize);
+
+	//深度ステンシルのディスクリプタヒープの開始アドレス取得
+	auto currentDsvHandle = m_pDsvHeap->GetCPUDescriptorHandleForHeapStart();
+
+	//レンダーターゲットを設定
+	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, false, &currentDsvHandle);
 }
 
 Animation Engine::GetAnimation(std::string animFilePath)

@@ -22,17 +22,19 @@
     <ClCompile Include="Source\Scene\Scene\Scene.cpp" />
     <ClCompile Include="Source\System\Engine\Camera\Camera.cpp" />
     <ClCompile Include="Source\System\Engine\Core\BinaryFile\BinaryReader.cpp" />
-    <ClCompile Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.cpp" />
+    <ClCompile Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap2.cpp" />
     <ClCompile Include="Source\System\Engine\Engine.cpp" />
     <ClCompile Include="Source\System\Engine\Core\PipelineState\PipelineState.cpp" />
     <ClCompile Include="Source\System\Engine\Core\RootSignature\RootSignature.cpp" />
     <ClCompile Include="Source\System\Engine\Core\Texture2D\Texture2D.cpp" />
     <ClCompile Include="Source\System\Engine\Input\Input.cpp" />
+    <ClCompile Include="Source\System\Engine\Lights\DirectionalLight.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Animation\Animation.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Animation\AnimationManager.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Bone\Bone.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Character.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Model.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\ModelManager.cpp" />
     <ClCompile Include="Source\System\Engine\SoundSystem\SoundSystem.cpp" />
     <ClCompile Include="Source\System\Main\Main.cpp" />
     <ClCompile Include="Source\System\Main\Utility.cpp" />
@@ -43,17 +45,19 @@
     <ClInclude Include="Source\System\ComPtr.h" />
     <ClInclude Include="Source\System\Engine\Camera\Camera.h" />
     <ClInclude Include="Source\System\Engine\Core\BinaryFile\BinaryReader.h" />
-    <ClInclude Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap.h" />
+    <ClInclude Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap2.h" />
     <ClInclude Include="Source\System\Engine\Engine.h" />
     <ClInclude Include="Source\System\Engine\Core\PipelineState\PipelineState.h" />
     <ClInclude Include="Source\System\Engine\Core\RootSignature\RootSignature.h" />
     <ClInclude Include="Source\System\Engine\Core\Texture2D\Texture2D.h" />
     <ClInclude Include="Source\System\Engine\Input\Input.h" />
+    <ClInclude Include="Source\System\Engine\Lights\DirectionalLight.h" />
     <ClInclude Include="Source\System\Engine\Model\Animation\Animation.h" />
     <ClInclude Include="Source\System\Engine\Model\Animation\AnimationManager.h" />
     <ClInclude Include="Source\System\Engine\Model\Bone\Bone.h" />
     <ClInclude Include="Source\System\Engine\Model\Character.h" />
     <ClInclude Include="Source\System\Engine\Model\Model.h" />
+    <ClInclude Include="Source\System\Engine\Model\ModelManager.h" />
     <ClInclude Include="Source\System\Engine\SoundSystem\SoundSystem.h" />
     <ClInclude Include="Source\System\Main\Main.h" />
     <ClInclude Include="Source\System\Main\Utility.h" />
@@ -74,6 +78,14 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vert</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\ShadowVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
     </FxCompile>
     <FxCompile Include="Source\System\Shader\TexturePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
@@ -195,7 +207,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\assimp\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>assimp-vc143-mtd.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassenc.dll;bassflac.dll;bassmix.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>assimp-vc143-mtd.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll</DelayLoadDLLs>
       <AdditionalDependencies>assimp-vc143-mtd.lib;winmm.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -215,7 +227,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>F:\Projects\DirectX12_Test\Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\assimp\$(Configuration);</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>assimp-vc143-mt.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassenc.dll;bassflac.dll;bassmix.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>assimp-vc143-mt.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll</DelayLoadDLLs>
       <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

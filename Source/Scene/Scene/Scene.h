@@ -1,5 +1,5 @@
 #pragma once
-#include "..\\..\\System\\Engine\Model\Character.h"
+#include "..\\..\\System\\Engine\\Engine.h"
 #include <DirectXMath.h>
 
 class Scene
@@ -13,14 +13,14 @@ public:
 	Scene();
 
 private:
-	Camera m_camera;
-
-	Character m_model1;
-	Model m_model2;
+	Character* m_pModel1;
+	Model* m_pModel2;
 
 	SoundHandle* pBGMHandle;
 
 	std::vector<Model> m_spheres;
+
+	void UpdateCamera();
 };
 
 extern Scene* g_Scene;

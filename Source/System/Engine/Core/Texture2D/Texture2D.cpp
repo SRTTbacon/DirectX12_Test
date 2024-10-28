@@ -6,8 +6,10 @@
 
 using namespace DirectX;
 
+static ID3D12Resource* g_whiteTexResource = nullptr;
+
 // std::string(マルチバイト文字列)からstd::wstring(ワイド文字列)を得る。AssimpLoaderと同じものだけど、共用にするのがめんどくさかったので許してください
-std::wstring GetWideString(const std::string& str)
+std::wstring Texture2D::GetWideString(const std::string& str)
 {
 	auto num1 = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, nullptr, 0);
 
@@ -63,16 +65,16 @@ bool Texture2D::Load(std::wstring& path)
 		return false;
 	}
 
-	auto img = scratch.GetImage(0, 0, 0);
-	auto prop = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
-	auto desc = CD3DX12_RESOURCE_DESC::Tex2D(meta.format,
+	const Image* img = scratch.GetImage(0, 0, 0);
+	CD3DX12_HEAP_PROPERTIES prop = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
+	CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(meta.format,
 		(UINT)meta.width,
 		(UINT)meta.height,
 		static_cast<UINT16>(meta.arraySize),
 		static_cast<UINT16>(meta.mipLevels));
 
-	// リソースを生成
-	hr = g_Engine->Device()->CreateCommittedResource(
+	//リソースを生成
+	hr = g_Engine->GetDevice()->CreateCommittedResource(
 		&prop,
 		D3D12_HEAP_FLAG_NONE,
 		&desc,
@@ -110,39 +112,32 @@ Texture2D* Texture2D::Get(std::string path)
 
 Texture2D* Texture2D::Get(std::wstring path)
 {
-	auto tex = new Texture2D(path);
+	Texture2D* tex = new Texture2D(path);
 	if (!tex->IsValid())
 	{
 		return GetWhite(); // 読み込みに失敗した時は白単色テクスチャを返す
 	}
-	textures.push_back(path);
+	textures[path] = tex;
 	return tex;
 }
 
 Texture2D* Texture2D::GetWhite()
 {
-	ID3D12Resource* buff = GetDefaultResource(4, 4);
+	if (!g_whiteTexResource) {
+		ID3D12Resource* buff = GetDefaultResource(4, 4);
 
-	std::vector<unsigned char> data(4 * 4 * 4);
-	std::fill(data.begin(), data.end(), 0xff);
+		std::vector<unsigned char> data(4 * 4 * 4);
+		std::fill(data.begin(), data.end(), 0xff);
 
-	auto hr = buff->WriteToSubresource(0, nullptr, data.data(), 4 * 4, (UINT)data.size());
-	if (FAILED(hr))
-	{
-		return nullptr;
-	}
-
-	return new Texture2D(buff);;
-}
-
-int Texture2D::GetTextureIndex(std::string path)
-{
-	for (UINT i = 0; i < textures.size(); i++) {
-		if (textures[i] == GetWideString(path)) {
-			return i;
+		auto hr = buff->WriteToSubresource(0, nullptr, data.data(), 4 * 4, (UINT)data.size());
+		if (FAILED(hr))
+		{
+			return nullptr;
 		}
+		g_whiteTexResource = buff;
 	}
-	return -1;
+
+	return new Texture2D(g_whiteTexResource);
 }
 
 ID3D12Resource* Texture2D::GetDefaultResource(size_t width, size_t height)
@@ -150,7 +145,7 @@ ID3D12Resource* Texture2D::GetDefaultResource(size_t width, size_t height)
 	auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, (UINT)width, (UINT)height);
 	auto texHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
 	ID3D12Resource* buff = nullptr;
-	auto result = g_Engine->Device()->CreateCommittedResource(
+	auto result = g_Engine->GetDevice()->CreateCommittedResource(
 		&texHeapProp,
 		D3D12_HEAP_FLAG_NONE, //特に指定なし
 		&resDesc,
@@ -160,7 +155,7 @@ ID3D12Resource* Texture2D::GetDefaultResource(size_t width, size_t height)
 	);
 	if (FAILED(result))
 	{
-		assert(SUCCEEDED(result));
+		//assert(SUCCEEDED(result));
 		return nullptr;
 	}
 	return buff;

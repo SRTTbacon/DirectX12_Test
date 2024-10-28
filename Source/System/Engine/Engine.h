@@ -12,31 +12,43 @@
 
 #include "..\\Main\\Utility.h"
 
+#include "Core\\PipelineState\\PipelineState.h"
+#include "Core\\DescriptorHeap\\DescriptorHeap2.h"
+
 #include "Lights\\DirectionalLight.h"
 
 #include "SoundSystem\\SoundSystem.h"
 #include "Model\\Animation\\AnimationManager.h"
+#include "Model\\ModelManager.h"
 
 #pragma comment(lib, "d3d12.lib") // d3d12ライブラリをリンクする
 #pragma comment(lib, "dxgi.lib") // dxgiライブラリをリンクする
 
-constexpr int FRAME_BUFFER_COUNT = 3;
+class ModelManager;
 
 class Engine
 {
 public:
+	Engine();
 	~Engine();
 
 	//エンジン初期化
 	bool Init(HWND hwnd, UINT windowWidth, UINT windowHeight);
 
+	Character* AddCharacter(std::string modelFile);
+	Model* AddModel(std::string modelFile);
+
 	//描画の開始処理
 	void BeginRender();
+	void ModelRender();
 	//描画の終了処理
 	void EndRender();
 
 	//エンジンの更新
 	void Update();
+	void LateUpdate();
+
+	void ResetViewportAndScissor();
 
 	//ファイルからアニメーションをロード
 	//既にロード済み
@@ -52,13 +64,13 @@ public: //ゲッター関数
 	bool GetKeyStateSync(UINT key);
 
 	//エンジンのデバイス
-	inline ID3D12Device6* Device()
+	inline ID3D12Device6* GetDevice()
 	{
 		return m_pDevice.Get();
 	}
 
 	//コマンドリスト
-	inline ID3D12GraphicsCommandList* CommandList()
+	inline ID3D12GraphicsCommandList* GetCommandList()
 	{
 		return m_pCommandList.Get();
 	}
@@ -73,6 +85,12 @@ public: //ゲッター関数
 	inline DirectionalLight* GetDirectionalLight()
 	{
 		return m_pDirectionalLight;
+	}
+
+	//カメラを取得
+	inline Camera* GetCamera()
+	{
+		return &m_camera;
 	}
 
 	//トリプルバッファリングの現在のインデックス
@@ -114,6 +132,10 @@ private: //描画に使うDirectX12のオブジェクト
 	ComPtr<IDXGISwapChain3> m_pSwapChain = nullptr; //スワップチェイン
 	ComPtr<ID3D12CommandAllocator> m_pAllocator[FRAME_BUFFER_COUNT] = { nullptr };	//コマンドアロケーター
 	ComPtr<ID3D12GraphicsCommandList> m_pCommandList = nullptr;						//コマンドリスト
+
+	RootSignature* m_pShadowRootSignature = nullptr;		//影用のルートシグネチャ
+	PipelineState* m_pShadowPipelineState = nullptr;		//影用のパイプラインステート
+
 	HANDLE m_fenceEvent = nullptr;				//フェンスで使うイベント
 	ComPtr<ID3D12Fence> m_pFence = nullptr;		//フェンス
 	UINT64 m_fenceValue[FRAME_BUFFER_COUNT];	//フェンスの値（トリプルバッファリング用に3個）
@@ -141,6 +163,10 @@ private: //描画に使うオブジェクト
 	//深度ステンシルバッファ
 	ComPtr<ID3D12Resource> m_pDepthStencilBuffer = nullptr;
 
+	DescriptorHeap* m_pShadowDescriptorHeap = nullptr;
+
+	ModelManager m_modelManager;
+
 private: //描画ループで使用するもの
 	//現在のフレームのレンダーターゲットを一時的に保存
 	ID3D12Resource* m_currentRenderTarget = nullptr;
@@ -158,6 +184,8 @@ private: //プライベート変数
 	SoundSystem* m_pSoundSystem;
 
 	DirectionalLight* m_pDirectionalLight;
+
+	Camera m_camera;
 };
 
 //どこからでも参照するためグローバル変数

@@ -1,11 +1,18 @@
 #pragma once
 #include "Model.h"
 #include "..\\..\\Main\\Utility.h"
+#include "Animation\\Animation.h"
+
+//ボーンが存在するモデルを読み込む
+//シェイプキー(UnityのBlendShape)に対応
+//Unityで動くアニメーションに対応 (エディター拡張で*.anim->*.hscに変換する必要あり)
+
+class Engine;
 
 class Character : public Model
 {
 public:
-	Character(const std::string fbxFile, const Camera* pCamera);
+	Character(const std::string fbxFile, const Camera* pCamera, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight, UINT* pBackBufferIndex);
 
     void LoadAnimation(std::string animFile);
 

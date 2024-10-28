@@ -1,7 +1,7 @@
 #include "Character.h"
 
-Character::Character(const std::string fbxFile, const Camera* pCamera)
-	: Model(pCamera)
+Character::Character(const std::string fbxFile, const Camera* pCamera, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight, UINT* pBackBufferIndex)
+	: Model(pCamera, pDevice, pCommandList, pDirectionalLight, pBackBufferIndex)
     , m_animationSpeed(1.0f)
     , m_nowAnimationTime(0.0f)
 {
@@ -84,7 +84,7 @@ void Character::LoadFBX(const std::string& fbxFile)
     CalculateBoneTransforms(scene->mRootNode, mat);
 
     //マテリアルの読み込み
-    m_pDescriptorHeap = new DescriptorHeap();
+    m_pDescriptorHeap = new DescriptorHeap(m_pDevice, scene->mNumMeshes * 2, ShadowSizeHigh);
 
     std::string dir = "Resource\\Model\\";
     for (size_t i = 0; i < scene->mNumMeshes; i++)
@@ -97,23 +97,28 @@ void Character::LoadFBX(const std::string& fbxFile)
             //ファイル名 = マテリアル名 + .png
             nameOnly = material->GetName().C_Str() + std::string(".png");
             std::string texPath = dir + nameOnly;
+            std::wstring wideTexPath = Texture2D::GetWideString(texPath);
 
             //テクスチャがまだロードされていない場合はロードし、ロード済みの場合は入っているインデックスを参照
-            int index = Texture2D::GetTextureIndex(texPath);
-            if (index == -1) {
+            if (textures.find(wideTexPath) == textures.end()) {
                 //テクスチャを作成
                 Texture2D* mainTex = Texture2D::Get(texPath);
                 //マテリアルを作成
-                DescriptorHandle* handle = m_pDescriptorHeap->Register(mainTex);
+                //DescriptorHandle* handle = m_pDescriptorHeap->Register(mainTex);
+                m_pDescriptorHeap->SetMainTexture(mainTex->Resource());
 
-                g_materials.push_back(handle);
+                //g_materials.push_back(handle);
                 //マテリアルインデックスは最後に追加したものを使用
-                m_meshes[i]->materialIndex = (BYTE)(g_materials.size() - 1);
+                //m_meshes[i]->materialIndex = (BYTE)(g_materials.size() - 1);
             }
             else {
-                m_meshes[i]->materialIndex = (BYTE)index;
-                g_materials[index]->UseCount++;
+                //m_meshes[i]->materialIndex = (BYTE)index;
+                //g_materials[index]->UseCount++;
+                m_pDescriptorHeap->SetMainTexture(textures[wideTexPath]->Resource());
             }
+        }
+        else {
+            m_pDescriptorHeap->SetMainTexture(Texture2D::GetWhite()->Resource());
         }
     }
 }
@@ -310,20 +315,20 @@ void Character::CreateShapeDeltasTexture(HumanoidMesh& humanoidMesh)
     uploadBuffer->Unmap(0, nullptr);
 
     //コマンドリストにコピーコマンドを送る (アップロードバッファをshapeDeltasBufferにコピー)
-    g_Engine->CommandList()->CopyResource(humanoidMesh.pMesh->shapeDeltasBuffer.Get(), uploadBuffer.Get());
+    m_pCommandList->CopyResource(humanoidMesh.pMesh->shapeDeltasBuffer.Get(), uploadBuffer.Get());
 
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
         humanoidMesh.pMesh->shapeDeltasBuffer.Get(),
         D3D12_RESOURCE_STATE_COPY_DEST,
         D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
     );
-    g_Engine->CommandList()->ResourceBarrier(1, &barrier);
+    m_pCommandList->ResourceBarrier(1, &barrier);
 
     //コマンドラインを用いたデータの転送は一度レンダーキューを終了させなければならない。 (そのため読み込む際、数フレーム描画に遅延が生じる可能性あり)
     g_Engine->EndRender();
     g_Engine->BeginRender();
 
-    Sleep(10);
+    Sleep(5);
 
     //一度設定したら変更しないためクリア
     humanoidMesh.shapeDeltas.clear();

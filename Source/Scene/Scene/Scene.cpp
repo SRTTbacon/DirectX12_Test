@@ -15,17 +15,18 @@ using namespace DirectX;
 
 const std::string modelFile1 = "Resource/Model/FBX_Moe.fbx";
 const std::string modelFile2 = "Resource/Model/Sphere.fbx";
-const std::string modelFile3 = "Resource/Model/IS7.fbx";
+const std::string modelFile3 = "Resource/Model/Plane.fbx";
 
 bool Scene::Init()
 {
+	g_Engine->GetCamera()->SetFov(65.0f);
+
 	printf("シーンの初期化に成功\n");
-	m_camera.SetFov(69.0f);
 	return true;
 }
 
 bool bAnim = true;
-bool bVisible = false;
+bool bVisible = true;
 bool bBoneMode = false;
 float x = 0.0f;
 float y = 0.0f;
@@ -52,7 +53,7 @@ void Scene::Update()
 	//auto currentIndex = g_Engine->CurrentBackBufferIndex(); // 現在のフレーム番号を取得
 	//auto currentTransform = m_camera.m_constantBuffer[currentIndex]->GetPtr<Transform>(); // 現在のフレーム番号に対応する定数バッファを取得
 
-	m_camera.Update();
+	UpdateCamera();
 
 	if (g_Engine->GetKeyState(DIK_X) && g_Engine->GetKeyState(DIK_J)) {
 		x -= 0.005f;
@@ -106,56 +107,50 @@ void Scene::Update()
 	if (g_Engine->GetMouseStateSync(0x00)) {
 		bAnim = !bAnim;
 		if (bAnim) {
-			m_model1.m_animationSpeed = 1.0f;
-			pBGMHandle->PlaySound(false);
+			m_pModel1->m_animationSpeed = 1.0f;
+			//pBGMHandle->PlaySound(false);
 		}
 		else {
-			m_model1.m_animationSpeed = 0.0f;
-			pBGMHandle->PauseSound();
+			m_pModel1->m_animationSpeed = 0.0f;
+			//pBGMHandle->PauseSound();
 		}
 	}
 	if (g_Engine->GetMouseStateSync(0x01)) {
-		m_model1.xFlip = rand() % 2 == 0 ? -1.0f : 1.0f;
-		m_model1.zFlip = rand() % 2 == 0 ? -1.0f : 1.0f;
-		m_model1.yFlip = rand() % 2 == 0 ? -1.0f : 1.0f;
-		m_model1.wFlip = rand() % 2 == 0 ? -1.0f : 1.0f;
-
-		//printf("x=%f, z=%f, y=%f, z=%f\n", m_model1.xFlip, m_model1.zFlip, m_model1.yFlip, m_model1.wFlip);
 	}
 	if (g_Engine->GetMouseStateSync(0x02)) {
 		//bBoneMode = !bBoneMode;
-		m_model1.SetAnimationTime(0.0f);
-		pBGMHandle->PlaySound();
+		m_pModel1->SetAnimationTime(0.0f);
+		//pBGMHandle->PlaySound();
 	}
 
 	if (g_Engine->GetKeyStateSync(DIK_J)) {
-		m_model1.m_nowAnimationTime -= 5.0f;
-		pBGMHandle->SetPosition(m_model1.m_nowAnimationTime);
+		m_pModel1->m_nowAnimationTime -= 5.0f;
+		pBGMHandle->SetPosition(m_pModel1->m_nowAnimationTime);
 	}
 	else if (g_Engine->GetKeyStateSync(DIK_K)) {
-		m_model1.m_nowAnimationTime += 5.0f;
-		pBGMHandle->SetPosition(m_model1.m_nowAnimationTime);
+		m_pModel1->m_nowAnimationTime += 5.0f;
+		pBGMHandle->SetPosition(m_pModel1->m_nowAnimationTime);
+	}
+	if (g_Engine->GetKeyState(DIK_N)) {
+		m_pModel1->m_rotation.y += 1.0f;
 	}
 
 	//printf("x=%f, y=%f, z=%f, w=%f\n", x, y, z, w);
 	//printf("x2=%f, y2=%f, z2=%f, w2=%f\n", x2, y2, z2, w2);
 
 	if (bBoneMode) {
-		for (std::string boneName : m_model1.GetBoneNames()) {
+		for (std::string boneName : m_pModel1->GetBoneNames()) {
 			XMFLOAT3 a = XMFLOAT3(0.0f, 0.0f, 0.0f);
 			XMFLOAT4 b = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-			m_model1.UpdateBonePosition(boneName, a);
-			m_model1.UpdateBoneRotation(boneName, b);
+			m_pModel1->UpdateBonePosition(boneName, a);
+			m_pModel1->UpdateBoneRotation(boneName, b);
 		}
-		m_model1.m_rotation = XMFLOAT3(0.0f, 0.0f, 0.0f);
+		m_pModel1->m_rotation = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	}
 	else {
-		m_model1.m_rotation.x = -90.0f;
-		m_model1.m_rotation.y = 180.0f;
+		//m_model1.m_rotation.x = -90.0f;
+		//m_model1.m_rotation.y = 180.0f;
 	}
-
-	m_model1.Update();
-	m_model2.Update();
 
 	XMFLOAT4 a = { x, y, z, w };
 	//m_model1.UpdateBoneRotation("Hips", a);
@@ -164,27 +159,16 @@ void Scene::Update()
 	//m_model1.UpdateBoneRotation("Right elbow", a);
 
 	//m_model1.Test();
-
-	for (Model& model : m_spheres) {
-		model.Update();
-	}
 }
 
 void Scene::Draw()
 {
-	m_model1.Draw();
-	if (bVisible)
-		m_model2.Draw();
-	for (Model& model : m_spheres) {
-		model.Draw();
-	}
 }
 
 Scene::Scene() 
-	: m_model1(Character(modelFile1, &m_camera))
-	, m_model2(Model(&m_camera))
 {
-	m_model1.LoadAnimation("Resource\\Test2.hcs");
+	m_pModel1 = g_Engine->AddCharacter(modelFile1);
+	m_pModel1->LoadAnimation("Resource\\Test2.hcs");
 
 	XMFLOAT4 a = {0.0f, 0.0f, 0.0f, 0.0f};
 	/*XMFLOAT3 a = {-10.0f, 13.5f, 0.58f};
@@ -218,8 +202,8 @@ Scene::Scene()
 		}
 	}*/
 
-	m_model2.LoadModel(modelFile3);
-	m_model2.m_scale = XMFLOAT3(0.01f, 0.01f, 0.01f);
+	m_pModel2 = g_Engine->AddModel(modelFile3);
+	m_pModel2->m_scale = XMFLOAT3(5.0f, 0.01f, 5.0f);
 
 	x = 0.13954f;
 	y = -0.00043f;
@@ -267,11 +251,70 @@ Scene::Scene()
 	a.w = 0.91575f;
 	//m_model1.UpdateBoneRotation("Left wrist", a);*/
 
-	m_model1.m_rotation.x = -90.0f;
-	m_model1.m_rotation.y = 180.0f;
+	m_pModel1->m_rotation.x = -90.0f;
+	m_pModel1->m_rotation.y = 180.0f;
 
-	pBGMHandle = g_Engine->GetSoundSystem()->LoadSound("Resource\\BGM\\Music.wav", true);
+	pBGMHandle = g_Engine->GetSoundSystem()->LoadSound("Resource\\BGM\\Music.wav", false);
 	pBGMHandle->volume = 0.1f;
 	pBGMHandle->speed = 1.0f;
 	pBGMHandle->UpdateProperty();
+}
+
+void Scene::UpdateCamera()
+{
+	Camera* pCamera = g_Engine->GetCamera();
+
+	// カメラの前方ベクトルを計算
+	XMVECTOR forward = XMVector3Normalize(pCamera->m_targetPos - pCamera->m_eyePos);
+
+	// カメラの右方向ベクトルを計算
+	XMVECTOR right = XMVector3Normalize(XMVector3Cross(pCamera->m_upFoward, forward));
+
+	const float cameraSpeed = 0.01f;
+	const float rotationSpeed = 0.01f;
+
+	if (g_Engine->GetKeyState(DIK_SPACE)) {
+		pCamera->m_eyePos = XMVectorAdd(pCamera->m_eyePos, XMVectorScale(pCamera->m_upFoward, cameraSpeed));
+		pCamera->m_targetPos = XMVectorAdd(pCamera->m_targetPos, XMVectorScale(pCamera->m_upFoward, cameraSpeed));
+	}
+	else if (g_Engine->GetKeyState(DIK_LSHIFT)) {
+		pCamera->m_eyePos = XMVectorSubtract(pCamera->m_eyePos, XMVectorScale(pCamera->m_upFoward, cameraSpeed));
+		pCamera->m_targetPos = XMVectorSubtract(pCamera->m_targetPos, XMVectorScale(pCamera->m_upFoward, cameraSpeed));
+	}
+
+	//Move Right and Left
+	if (g_Engine->GetKeyState(DIK_A)) {
+		pCamera->m_eyePos = XMVectorAdd(pCamera->m_eyePos, XMVectorScale(right, cameraSpeed));
+		pCamera->m_targetPos = XMVectorAdd(pCamera->m_targetPos, XMVectorScale(right, cameraSpeed));
+	}
+	else if (g_Engine->GetKeyState(DIK_D)) {
+		pCamera->m_eyePos = XMVectorSubtract(pCamera->m_eyePos, XMVectorScale(right, cameraSpeed));
+		pCamera->m_targetPos = XMVectorSubtract(pCamera->m_targetPos, XMVectorScale(right, cameraSpeed));
+	}
+
+	//Move forward/Backward
+	if (g_Engine->GetKeyState(DIK_S)) {
+		pCamera->m_eyePos = XMVectorSubtract(pCamera->m_eyePos, XMVectorScale(forward, cameraSpeed));
+		pCamera->m_targetPos = XMVectorSubtract(pCamera->m_targetPos, XMVectorScale(forward, cameraSpeed));
+	}
+	else if (g_Engine->GetKeyState(DIK_W)) {
+		pCamera->m_eyePos = XMVectorAdd(pCamera->m_eyePos, XMVectorScale(forward, cameraSpeed));
+		pCamera->m_targetPos = XMVectorAdd(pCamera->m_targetPos, XMVectorScale(forward, cameraSpeed));
+	}
+
+	//Rotate Y axis
+	if (g_Engine->GetKeyState(DIK_RIGHT)) {
+		pCamera->m_yaw -= rotationSpeed;
+	}
+	if (g_Engine->GetKeyState(DIK_LEFT)) {
+		pCamera->m_yaw += rotationSpeed;
+	}
+
+	//Rotate X axis
+	if (g_Engine->GetKeyState(DIK_DOWN)) {
+		pCamera->m_pitch -= rotationSpeed;
+	}
+	if (g_Engine->GetKeyState(DIK_UP)) {
+		pCamera->m_pitch += rotationSpeed;
+	}
 }

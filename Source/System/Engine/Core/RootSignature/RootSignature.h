@@ -6,7 +6,8 @@
 enum ShaderKinds
 {
     BoneShader,
-    PrimitiveShader
+    PrimitiveShader,
+    ShadowShader
 };
 
 class RootSignature {

@@ -2,13 +2,14 @@
 #include <unordered_map>
 #include "..\\Core\\RootSignature\\RootSignature.h"
 #include "..\\Core\\PipelineState\\PipelineState.h"
-#include "..\\Core\\DescriptorHeap\\DescriptorHeap.h"
+#include "..\\Core\\DescriptorHeap\\DescriptorHeap2.h"
 #include "..\\Core\\Texture2D\\Texture2D.h"
 #include "..\\Camera\\Camera.h"
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include "Bone\\Bone.h"
+#include "..\\Lights\\DirectionalLight.h"
 
 using namespace DirectX;
 
@@ -25,20 +26,35 @@ class Model
 {
 public:
     //モデルを初期化
-    Model(const Camera* pCamera);
+    Model(const Camera* pCamera, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight, UINT* pBackBufferIndex);
 
     void LoadModel(const PrimitiveModel primitiveModel);
     void LoadModel(const std::string fbxFile);
 
-    //更新
-    void Update();
+    //更新 (エンジンから実行されるため、ユーザーが実行する必要はない)
+    virtual void Update();
 
-    //描画
-    void Draw();
+    //シャドウマップに描画 (エンジンから実行されるため、ユーザーが実行する必要はない)
+    void RenderShadowMap();
+    //実際に描画 (エンジンから実行されるため、ユーザーが実行する必要はない)
+    void RenderSceneWithShadow();
 
     XMFLOAT3 m_position;    //モデル全体の位置
     XMFLOAT3 m_rotation;    //モデル全体の回転 (デグリー角)
     XMFLOAT3 m_scale;       //モデル全体のスケール
+
+public: //ゲッター関数
+    //深度
+    inline float GetZBuffer() const
+    {
+        return m_depth;
+    }
+
+    //半透明かどうか
+    inline bool GetIsTransparent() const
+    {
+        return m_bTransparent;
+    }
 
 protected:
     //シェーダーに渡す頂点情報 (プリミティブ用)
@@ -55,7 +71,7 @@ protected:
         XMMATRIX viewMatrix;
         XMMATRIX projectionMatrix;
         XMMATRIX lightViewProjMatrix;
-        XMFLOAT3 lightDirection;
+        XMMATRIX normalMatrix;
     };
 
     //メッシュごとに必要な情報
@@ -68,19 +84,26 @@ protected:
         D3D12_VERTEX_BUFFER_VIEW vertexBufferView;      //頂点バッファのデータ内容とサイズを保持
         D3D12_INDEX_BUFFER_VIEW indexBufferView;        //インデックスバッファのデータ内容とサイズを保持
         UINT indexCount;                                //インデックス数 (GPU側で、この数ぶん描画させる)
-        char materialIndex;                             //マテリアルが入っているインデックス (同じテクスチャは使いまわす)
+        //char materialIndex;                             //マテリアルが入っているインデックス (同じテクスチャは使いまわす)
 
         Mesh();
+
+        void Draw(ID3D12GraphicsCommandList* pCommandList) const;
     };
 
     ID3D12Device* m_pDevice;                                            //エンジンのデバイス
+    ID3D12GraphicsCommandList* m_pCommandList;                          //エンジンのコマンドリスト
     RootSignature* m_pRootSignature;                                    //ルートシグネチャ
     PipelineState* m_pPipelineState;                                    //パイプラインステート
     DescriptorHeap* m_pDescriptorHeap;                                  //マテリアル
     ComPtr<ID3D12Resource> m_modelConstantBuffer[FRAME_BUFFER_COUNT];   //コンスタントバッファ。画面のちらつきを防止するためトリプルバッファリング (2個でも十分なのかな?)
     ComPtr<ID3D12Resource> m_boneMatricesBuffer;                        //ボーン情報をシェーダーに送信する用
+    ComPtr<ID3D12Resource> m_lightConstantBuffer;                       //ディレクショナルライトのバッファ
+
+    UINT* m_pBackBufferIndex;        //エンジンのバックバッファのインデックス
 
     const Camera* m_pCamera;        //カメラ情報
+    const DirectionalLight* m_pDirectionalLight;    //ディレクショナルライト
 
     std::vector<Mesh*> m_meshes;    //メッシュの配列 (キャラクターなど、FBX内に複数のメッシュが存在するものに対応)
 
@@ -92,4 +115,9 @@ private:
 
     void ProcessNode(const aiScene* scene, aiNode* node);   //ノードを読み込み
     Mesh* ProcessMesh(const aiScene* scene, aiMesh* mesh);   //メッシュ情報を読み込み
+
+    void CreateDirectionalLightBuffer();
+
+    float m_depth;          //Zバッファ
+    bool m_bTransparent;    //半透明のオブジェクトかどうか
 };

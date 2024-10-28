@@ -5,18 +5,20 @@
 
 ID3D12Resource* modelConstantBuffer;
 
-Model::Model(const Camera* pCamera)
+Model::Model(const Camera* pCamera, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight, UINT* pBackBufferIndex)
     : m_modelMatrix(XMMatrixIdentity())
     , m_pCamera(pCamera)
+    , m_pDevice(pDevice)
+    , m_pCommandList(pCommandList)
+    , m_pDirectionalLight(pDirectionalLight)
+    , m_pBackBufferIndex(pBackBufferIndex)
     , m_position(XMFLOAT3(0.0f, 0.0f, 0.0f))
     , m_rotation(XMFLOAT3(0.0f, 0.0f, 0.0f))
     , m_scale(XMFLOAT3(1.0f, 1.0f, 1.0f))
-    , m_pDescriptorHeap(nullptr)
     , m_pPipelineState(nullptr)
     , m_pRootSignature(nullptr)
+    , m_depth(0.0f)
 {
-    m_pDevice = g_Engine->Device();
-
     auto eyePos = XMVectorSet(0.0f, 5.0f, 1.0f, 0.0f); // 視点の位置
     auto targetPos = XMVectorSet(0.0f, 0.0f, 0.75f, 0.0f); // 視点を向ける座標
     auto upward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f); // 上方向を表すベクトル
@@ -32,6 +34,8 @@ Model::Model(const Camera* pCamera)
         m_pDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &constantData,
             D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_modelConstantBuffer[i]));
     }
+
+    CreateDirectionalLightBuffer();
 }
 
 void Model::LoadModel(const PrimitiveModel primitiveModel)
@@ -59,6 +63,9 @@ void Model::LoadModel(const std::string fbxFile)
         printf("FBXファイルをロードできませんでした。\n");
         return;
     }
+
+    //ディスクリプタヒープを作成 (メッシュの数 + 影1つ)
+    m_pDescriptorHeap = new DescriptorHeap(m_pDevice, scene->mNumMeshes * 2, ShadowSizeHigh);
 
     ProcessNode(scene, scene->mRootNode);
 
@@ -112,9 +119,62 @@ Model::Mesh* Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
 
     CreateBuffer(meshData, vertices, indices);
 
-    meshData->materialIndex = -1;
+    //meshData->materialIndex = -1;
+
+    //マテリアルを作成
+    m_pDescriptorHeap->SetMainTexture(Texture2D::GetWhite()->Resource());
 
     return meshData;
+}
+
+void Model::CreateDirectionalLightBuffer()
+{
+    D3D12_HEAP_PROPERTIES heapProps = {};
+    heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+    //ディレクショナルライトの情報
+    CD3DX12_RESOURCE_DESC lightBuf = CD3DX12_RESOURCE_DESC::Buffer(sizeof(LightBuffer));
+    m_pDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &lightBuf,
+        D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_lightConstantBuffer));
+
+    //m_pShadowMapHeap = new DescriptorHeap;
+    //m_pShadowMapHeap->Register(ShadowSizeHigh);
+}
+
+void Model::RenderShadowMap()
+{
+    m_pCommandList->SetGraphicsRootConstantBufferView(0, m_modelConstantBuffer[*m_pBackBufferIndex]->GetGPUVirtualAddress());
+
+    // メッシュの深度情報をシャドウマップに描画
+    for (const Mesh* pMesh : m_meshes)
+    {
+        pMesh->Draw(m_pCommandList); // 深度のみを描画
+    }
+}
+
+void Model::RenderSceneWithShadow()
+{
+    //コマンドリストに送信
+    m_pCommandList->SetGraphicsRootSignature(m_pRootSignature->GetRootSignature());   //ルートシグネチャを設定
+    m_pCommandList->SetPipelineState(m_pPipelineState->GetPipelineState());           //パイプラインステートを設定
+
+    m_pCommandList->SetGraphicsRootConstantBufferView(0, m_modelConstantBuffer[*m_pBackBufferIndex]->GetGPUVirtualAddress()); //モデルの位置関係を送信
+    m_pCommandList->SetGraphicsRootConstantBufferView(1, m_lightConstantBuffer->GetGPUVirtualAddress()); //ディレクショナルライトの情報を送信
+
+    if (m_boneMatricesBuffer) {
+        m_pCommandList->SetGraphicsRootConstantBufferView(3, m_boneMatricesBuffer->GetGPUVirtualAddress());   //ボーンを送信
+    }
+
+    // ディスクリプタヒープを設定し、シャドウマップをサンプリングできるようにする
+    ID3D12DescriptorHeap* heaps[] = { m_pDescriptorHeap->GetHeap() };
+    m_pCommandList->SetDescriptorHeaps(1, heaps);
+
+    // カメラ視点からシーンを描画 (シャドウを計算し、カラー出力)
+    for (size_t i = 0; i < m_meshes.size(); i++)
+    {
+        m_pCommandList->SetGraphicsRootDescriptorTable(2, m_pDescriptorHeap->GetGpuDescriptorHandle((int)i));
+        m_meshes[i]->Draw(m_pCommandList); // カラーとシャドウを計算し描画
+    }
 }
 
 void Model::Update()
@@ -130,66 +190,24 @@ void Model::Update()
     mcb.modelMatrix = scale * rot * pos;
     mcb.viewMatrix = XMMatrixLookAtRH(m_pCamera->m_eyePos, m_pCamera->m_targetPos, m_pCamera->m_upFoward);
     mcb.projectionMatrix = XMMatrixPerspectiveFovRH(m_pCamera->m_fov, m_pCamera->m_aspect, 0.01f, 1000.0f);
-    mcb.lightViewProjMatrix = g_Engine->GetDirectionalLight()->lightViewProj;
-    mcb.lightDirection = g_Engine->GetDirectionalLight()->lightDirection;
+    mcb.lightViewProjMatrix = m_pDirectionalLight->lightViewProj;
+    mcb.normalMatrix = XMMatrixTranspose(XMMatrixInverse(nullptr, mcb.modelMatrix));
 
     //定数バッファにデータを書き込む
-    void* p;
-    UINT bufferIndex = g_Engine->CurrentBackBufferIndex();
-    m_modelConstantBuffer[bufferIndex]->Map(0, nullptr, &p);
-    memcpy(p, &mcb, sizeof(ModelConstantBuffer));
-    m_modelConstantBuffer[bufferIndex]->Unmap(0, nullptr);
-}
+    void* p0;
+    m_modelConstantBuffer[*m_pBackBufferIndex]->Map(0, nullptr, &p0);
+    memcpy(p0, &mcb, sizeof(ModelConstantBuffer));
+    m_modelConstantBuffer[*m_pBackBufferIndex]->Unmap(0, nullptr);
 
-void Model::Draw()
-{
-    //エンジンからコマンドリストを取得
-    ID3D12GraphicsCommandList* pCommandList = g_Engine->CommandList();
+    //ディレクショナルライトの情報を更新
+    void* p1;
+    m_lightConstantBuffer->Map(0, nullptr, &p1);
+    memcpy(p1, &m_pDirectionalLight->lightBuffer, sizeof(LightBuffer));
+    m_lightConstantBuffer->Unmap(0, nullptr);
 
-    //現在のバックバッファのインデックス (トリプルバッファリングのため、0～2が返される。フレームの描画が終われば次のインデックスに移行)
-    UINT bufferIndex = g_Engine->CurrentBackBufferIndex();
-
-    //コマンドリストに送信
-    pCommandList->SetGraphicsRootSignature(m_pRootSignature->GetRootSignature());                                   //ルートシグネチャを設定
-    pCommandList->SetPipelineState(m_pPipelineState->GetPipelineState());                                           //パイプラインステートを設定
-
-    pCommandList->SetGraphicsRootConstantBufferView(0, m_modelConstantBuffer[bufferIndex]->GetGPUVirtualAddress()); //モデルの位置関係を送信
-
-    if (m_boneMatricesBuffer) {
-        pCommandList->SetGraphicsRootConstantBufferView(1, m_boneMatricesBuffer->GetGPUVirtualAddress());           //ボーンを送信
-    }
-
-    if (m_pDescriptorHeap) {
-        ID3D12DescriptorHeap* materialHeap = m_pDescriptorHeap->GetHeap();  //ディスクリプタヒープを取得
-        pCommandList->SetDescriptorHeaps(1, &materialHeap);                 //ディスクリプタヒープを送信
-    }
-
-
-    //メッシュの数だけ繰り返す
-    for (size_t i = 0; i < m_meshes.size(); i++) {
-        Mesh* pMesh = m_meshes[i];
-
-        if (pMesh->contentsBuffer) {
-            pCommandList->SetGraphicsRootConstantBufferView(2, pMesh->contentsBuffer->GetGPUVirtualAddress());      //頂点数を送信
-        }
-
-        if (pMesh->shapeDeltasBuffer) {
-            pCommandList->SetGraphicsRootShaderResourceView(3, pMesh->shapeDeltasBuffer->GetGPUVirtualAddress());   //シェイプキーの位置情報を送信
-        }
-
-        if (pMesh->shapeWeightsBuffer) {
-            pCommandList->SetGraphicsRootShaderResourceView(4, pMesh->shapeWeightsBuffer->GetGPUVirtualAddress());  //シェイプキーのウェイト情報を送信
-        }
-
-        pCommandList->IASetVertexBuffers(0, 1, &pMesh->vertexBufferView);           //頂点情報を送信
-        pCommandList->IASetIndexBuffer(&pMesh->indexBufferView);                    //インデックス情報を送信
-        pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);  //3角ポリゴンのみ
-
-        if (pMesh->materialIndex != -1)
-            pCommandList->SetGraphicsRootDescriptorTable(5, g_materials[pMesh->materialIndex]->HandleGPU); //マテリアルを送信
-
-        pCommandList->DrawIndexedInstanced(pMesh->indexCount, 1, 0, 0, 0);          //描画
-    }
+    XMVECTOR objPos = XMLoadFloat3(&m_position);
+    XMVECTOR camPos = m_pCamera->m_eyePos;
+    m_depth = XMVectorGetZ(XMVector3Length(objPos - camPos)); //Z成分を深度として取得
 }
 
 void Model::LoadSphere(float radius, UINT sliceCount, UINT stackCount, const XMFLOAT4 color)
@@ -256,7 +274,7 @@ void Model::LoadSphere(float radius, UINT sliceCount, UINT stackCount, const XMF
     }
 
     CreateBuffer(meshData, vertices, indices);
-    meshData->materialIndex = -1;
+    //meshData->materialIndex = -1;
 }
 
 void Model::CreateBuffer(Mesh* pMesh, std::vector<VertexPrimitive>& vertices, std::vector<UINT>& indices)
@@ -354,6 +372,26 @@ Model::Mesh::Mesh()
     , vertexBufferView(D3D12_VERTEX_BUFFER_VIEW())
     , indexBufferView(D3D12_INDEX_BUFFER_VIEW())
     , indexCount(0)
-    , materialIndex(-1)
 {
+}
+
+void Model::Mesh::Draw(ID3D12GraphicsCommandList* pCommandList) const
+{
+    if (contentsBuffer) {
+        pCommandList->SetGraphicsRootConstantBufferView(4, contentsBuffer->GetGPUVirtualAddress());      //頂点数を送信
+    }
+
+    if (shapeDeltasBuffer) {
+        pCommandList->SetGraphicsRootShaderResourceView(5, shapeDeltasBuffer->GetGPUVirtualAddress());   //シェイプキーの位置情報を送信
+    }
+
+    if (shapeWeightsBuffer) {
+        pCommandList->SetGraphicsRootShaderResourceView(6, shapeWeightsBuffer->GetGPUVirtualAddress());  //シェイプキーのウェイト情報を送信
+    }
+
+    pCommandList->IASetVertexBuffers(0, 1, &vertexBufferView);           //頂点情報を送信
+    pCommandList->IASetIndexBuffer(&indexBufferView);                    //インデックス情報を送信
+    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);  //3角ポリゴンのみ
+
+    pCommandList->DrawIndexedInstanced(indexCount, 1, 0, 0, 0);  //描画
 }
