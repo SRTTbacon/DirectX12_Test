@@ -208,8 +208,9 @@ Scene::Scene()
 	}*/
 
 	m_pModel2 = g_Engine->AddModel(modelFile3);
-	m_pModel2->m_scale = XMFLOAT3(5.0f, 0.01f, 5.0f);
-	m_pModel2->m_bVisible = false;
+	m_pModel2->m_scale = XMFLOAT3(5.0f, 0.05f, 5.0f);
+	m_pModel2->m_position.y = -0.2f;
+	//m_pModel2->m_bVisible = false;
 
 	x = 0.13954f;
 	y = -0.00043f;

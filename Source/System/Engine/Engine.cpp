@@ -104,6 +104,8 @@ bool Engine::Init(HWND hwnd, UINT windowWidth, UINT windowHeight)
 Character* Engine::AddCharacter(std::string modelFile)
 {
 	Character* pCharacter = new Character(modelFile, &m_camera, m_pDevice.Get(), m_pCommandList.Get(), m_pDirectionalLight, &m_CurrentBackBufferIndex);
+	//pCharacter->SetShadowMap(m_pShadowDescriptorHeap->GetShadowMap());
+	pCharacter->SetShadowMap(m_pDepthStencilBuffer.Get());
 	m_modelManager.AddModel(pCharacter);
 	return pCharacter;
 }
@@ -111,6 +113,8 @@ Character* Engine::AddCharacter(std::string modelFile)
 Model* Engine::AddModel(std::string modelFile)
 {
 	Model* pModel = new Model(&m_camera, m_pDevice.Get(), m_pCommandList.Get(), m_pDirectionalLight, &m_CurrentBackBufferIndex);
+	//pModel->SetShadowMap(m_pShadowDescriptorHeap->GetShadowMap());
+	pModel->SetShadowMap(m_pDepthStencilBuffer.Get());
 	pModel->LoadModel(modelFile);
 	m_modelManager.AddModel(pModel);
 	return pModel;
@@ -310,7 +314,7 @@ bool Engine::CreateDepthStencil()
 	dsvClearValue.DepthStencil.Depth = 1.0f;
 	dsvClearValue.DepthStencil.Stencil = 0;
 
-	auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+	CD3DX12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	CD3DX12_RESOURCE_DESC resourceDesc(
 		D3D12_RESOURCE_DIMENSION_TEXTURE2D,
 		0,
@@ -322,7 +326,7 @@ bool Engine::CreateDepthStencil()
 		1,
 		0,
 		D3D12_TEXTURE_LAYOUT_UNKNOWN,
-		D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE);
+		D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 	hr = m_pDevice->CreateCommittedResource(
 		&heapProp,
 		D3D12_HEAP_FLAG_NONE,
@@ -340,7 +344,13 @@ bool Engine::CreateDepthStencil()
 	//ディスクリプタを作成
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-	m_pDevice->CreateDepthStencilView(m_pDepthStencilBuffer.Get(), nullptr, dsvHandle);
+	//深度ステンシルビュー設定用構造体の設定
+	D3D12_DEPTH_STENCIL_VIEW_DESC desc = {};
+	desc.Format = DXGI_FORMAT_D32_FLOAT;
+	desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	desc.Flags = D3D12_DSV_FLAG_NONE;
+
+	m_pDevice->CreateDepthStencilView(m_pDepthStencilBuffer.Get(), &desc, dsvHandle);
 
 	return true;
 }
@@ -385,7 +395,7 @@ void Engine::ModelRender()
 	ID3D12GraphicsCommandList* pCommandList = m_pCommandList.Get();
 
 	//シャドウマップをレンダーターゲットとして使用する準備
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+	/*CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_pShadowDescriptorHeap->GetShadowMap(),
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		D3D12_RESOURCE_STATE_DEPTH_WRITE);
@@ -396,29 +406,29 @@ void Engine::ModelRender()
 		D3D12_CLEAR_FLAG_DEPTH,
 		1.0f,  //深度クリア値 (最大値に設定)
 		0,     //ステンシルクリア値
-		0, nullptr);
+		0, nullptr);*/
 
 	//シャドウマップ用のパイプラインステートとルートシグネチャを設定
 	pCommandList->SetPipelineState(m_pShadowPipelineState->GetPipelineState());
 	pCommandList->SetGraphicsRootSignature(m_pShadowRootSignature->GetRootSignature());
 
 	//ビューポートとシザー矩形の設定
-	pCommandList->RSSetViewports(1, m_pShadowDescriptorHeap->GetShadowViewPort());
-	pCommandList->RSSetScissorRects(1, m_pShadowDescriptorHeap->GetShadowScissor());
+	//pCommandList->RSSetViewports(1, m_pShadowDescriptorHeap->GetShadowViewPort());
+	//pCommandList->RSSetScissorRects(1, m_pShadowDescriptorHeap->GetShadowScissor());
 
 	//深度バッファの設定
-	pCommandList->OMSetRenderTargets(0, nullptr, false, m_pShadowDescriptorHeap->GetShadowMapDSV());
+	//pCommandList->OMSetRenderTargets(0, nullptr, false, m_pShadowDescriptorHeap->GetShadowMapDSV());
 
 	//モデルの影の描画
 	m_modelManager.RenderShadowMap();
 
-	barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+	/*barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_pShadowDescriptorHeap->GetShadowMap(),
 		D3D12_RESOURCE_STATE_DEPTH_WRITE,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	pCommandList->ResourceBarrier(1, &barrier);
 
-	ResetViewportAndScissor();
+	ResetViewportAndScissor();*/
 
 	//モデルを描画
 	m_modelManager.RenderModel();

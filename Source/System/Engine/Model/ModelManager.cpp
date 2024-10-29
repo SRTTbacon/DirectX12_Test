@@ -14,6 +14,9 @@ void ModelManager::Update()
             continue;
         }
 
+        //モデルの更新
+        pModel->Update();
+
         //深度を取得
         float depth = pModel->GetZBuffer();
         //不透明か半透明かで分ける
@@ -23,9 +26,6 @@ void ModelManager::Update()
         else {
             m_opaqueModels.push({ depth, pModel });
         }
-
-        //モデルの更新
-        pModel->Update();
     }
 }
 

@@ -28,6 +28,8 @@ public:
     //モデルを初期化
     Model(const Camera* pCamera, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight, UINT* pBackBufferIndex);
 
+    void SetShadowMap(ID3D12Resource* pShadowMapBuffer);
+
     void LoadModel(const PrimitiveModel primitiveModel);
     void LoadModel(const std::string fbxFile);
 
@@ -94,6 +96,7 @@ protected:
     };
 
     ID3D12Device* m_pDevice;                                            //エンジンのデバイス
+    ID3D12Resource* m_pShadowMapBuffer;                                 //影のテクスチャ(エンジンから貰う)
     ID3D12GraphicsCommandList* m_pCommandList;                          //エンジンのコマンドリスト
     RootSignature* m_pRootSignature;                                    //ルートシグネチャ
     PipelineState* m_pPipelineState;                                    //パイプラインステート

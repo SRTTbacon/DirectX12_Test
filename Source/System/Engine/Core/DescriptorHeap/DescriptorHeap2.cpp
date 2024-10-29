@@ -15,6 +15,8 @@ DescriptorHeap::DescriptorHeap(ID3D12Device* device, UINT descriptorCount, Shado
     heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
+    printf("descriptorCount = %u\n", descriptorCount);
+
     device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_descriptorHeap));
     m_descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -25,12 +27,13 @@ DescriptorHeap::~DescriptorHeap()
 {
 }
 
-void DescriptorHeap::SetMainTexture(ID3D12Resource* mainTex)
+void DescriptorHeap::SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* pShadowMap)
 {
     m_cpuDescriptorHandle = m_descriptorHeap->GetCPUDescriptorHandleForHeapStart();
     m_gpuDescriptorHandle = m_descriptorHeap->GetGPUDescriptorHandleForHeapStart();
-    m_cpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(textureCount);
-    m_gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(textureCount);
+    m_cpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(textureCount) * 2ULL;
+    m_gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(textureCount) * 2ULL;
+    printf("textureCount = %d\n", textureCount * 2);
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -40,7 +43,16 @@ void DescriptorHeap::SetMainTexture(ID3D12Resource* mainTex)
 
     m_pDevice->CreateShaderResourceView(mainTex, &srvDesc, m_cpuDescriptorHandle);
 
-    srvDesc.Format = m_shadowMap->GetDesc().Format;
+    srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+    srvDesc.Texture2D.MipLevels = 1;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+    printf("Fomrat = %d\n", srvDesc.Format);
+
+    m_cpuDescriptorHandle.ptr += m_descriptorSize;
+    m_gpuDescriptorHandle.ptr += m_descriptorSize;
+
+    m_pDevice->CreateShaderResourceView(pShadowMap, &srvDesc, m_cpuDescriptorHandle);
 
     textureCount++;
 }
@@ -52,7 +64,7 @@ void DescriptorHeap::CreateShadowMap(const ShadowSize shadowSize)
     texDesc.Width = (UINT)shadowSize;
     texDesc.Height = (UINT)shadowSize;
     texDesc.DepthOrArraySize = 1;
-    texDesc.MipLevels = 0;
+    texDesc.MipLevels = 1;
     texDesc.Format = DXGI_FORMAT_R32_TYPELESS;                //SRVおよびDSVと互換性を持つタイプレスフォーマット
     texDesc.SampleDesc.Count = 1;
     texDesc.SampleDesc.Quality = 0;
@@ -113,7 +125,7 @@ void DescriptorHeap::CreateShadowMap(const ShadowSize shadowSize)
 D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeap::GetGpuDescriptorHandle(int index)
 {
     D3D12_GPU_DESCRIPTOR_HANDLE  gpuDescriptorHandle = m_descriptorHeap->GetGPUDescriptorHandleForHeapStart();
-    gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(index);
+    gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(index) * 2ULL;
     return gpuDescriptorHandle;
 }
 

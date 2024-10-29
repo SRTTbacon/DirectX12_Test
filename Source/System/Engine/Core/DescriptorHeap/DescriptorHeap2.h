@@ -19,7 +19,7 @@ public:
     DescriptorHeap(ID3D12Device* device, UINT descriptorCount, ShadowSize shadowSize);
     ~DescriptorHeap();
 
-    void SetMainTexture(ID3D12Resource* mainTex);
+    void SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* pShadowMap);
 
     D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(int index);
     ID3D12DescriptorHeap* GetHeap() const;

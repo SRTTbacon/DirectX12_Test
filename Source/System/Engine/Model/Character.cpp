@@ -109,11 +109,10 @@ void Character::LoadFBX(const std::string& fbxFile)
             //テクスチャがまだロードされていない場合はロードし、ロード済みの場合は入っているインデックスを参照
             if (textures.find(wideTexPath) == textures.end()) {
                 //テクスチャを作成
-                printf("texPath = %s\n", texPath.c_str());
                 Texture2D* mainTex = Texture2D::Get(texPath);
                 //マテリアルを作成
                 //DescriptorHandle* handle = m_pDescriptorHeap->Register(mainTex);
-                m_pDescriptorHeap->SetMainTexture(mainTex->Resource());
+                m_pDescriptorHeap->SetMainTexture(mainTex->Resource(), m_pShadowMapBuffer);
 
                 //g_materials.push_back(handle);
                 //マテリアルインデックスは最後に追加したものを使用
@@ -122,11 +121,11 @@ void Character::LoadFBX(const std::string& fbxFile)
             else {
                 //m_meshes[i]->materialIndex = (BYTE)index;
                 //g_materials[index]->UseCount++;
-                m_pDescriptorHeap->SetMainTexture(textures[wideTexPath]->Resource());
+                m_pDescriptorHeap->SetMainTexture(textures[wideTexPath]->Resource(), m_pShadowMapBuffer);
             }
         }
         else {
-            m_pDescriptorHeap->SetMainTexture(Texture2D::GetWhite()->Resource());
+            m_pDescriptorHeap->SetMainTexture(Texture2D::GetWhite()->Resource(), m_pShadowMapBuffer);
         }
     }
 }

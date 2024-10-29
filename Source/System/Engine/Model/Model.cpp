@@ -33,6 +33,11 @@ Model::Model(const Camera* pCamera, ID3D12Device* pDevice, ID3D12GraphicsCommand
     CreateDirectionalLightBuffer();
 }
 
+void Model::SetShadowMap(ID3D12Resource* pShadowMapBuffer)
+{
+    m_pShadowMapBuffer = pShadowMapBuffer;
+}
+
 void Model::LoadModel(const PrimitiveModel primitiveModel)
 {
     if (primitiveModel == PrimitiveModel::Primitive_Sphere) {
@@ -117,7 +122,7 @@ Model::Mesh* Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
     //meshData->materialIndex = -1;
 
     //マテリアルを作成
-    m_pDescriptorHeap->SetMainTexture(Texture2D::GetWhite()->Resource());
+    m_pDescriptorHeap->SetMainTexture(Texture2D::GetWhite()->Resource(), m_pShadowMapBuffer);
 
     return meshData;
 }
@@ -139,6 +144,10 @@ void Model::CreateDirectionalLightBuffer()
 void Model::RenderShadowMap()
 {
     m_pCommandList->SetGraphicsRootConstantBufferView(0, m_modelConstantBuffer[*m_pBackBufferIndex]->GetGPUVirtualAddress());
+
+    if (m_boneMatricesBuffer) {
+        m_pCommandList->SetGraphicsRootConstantBufferView(3, m_boneMatricesBuffer->GetGPUVirtualAddress());   //ボーンを送信
+    }
 
     // メッシュの深度情報をシャドウマップに描画
     for (const Mesh* pMesh : m_meshes)
