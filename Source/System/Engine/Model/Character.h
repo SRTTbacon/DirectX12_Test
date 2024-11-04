@@ -17,12 +17,12 @@ public:
     //基本的にエンジンで実行
     //引数 : std::string FBXファイルのパス, Camera* カメラクラスのポインタ, ID3D12Device* デバイス, ID3D12GraphicsCommandList* コマンドリスト, DirectionalLight* ディレクショナルライト
     //       UINT* バックバッファのインデックスのポインタ, float* 1フレームにかかる時間のポインタ
-	Character(const std::string fbxFile, const Camera* pCamera, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight, 
-        UINT* pBackBufferIndex);
+    Character(const std::string fbxFile, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, DirectionalLight* pDirectionalLight,
+        ID3D12Resource* pShadowMapBuffer);
 
     UINT AddAnimation(Animation animation);
 
-    void Update();
+    void Update(UINT backBufferIndex);
 
     //ボーンの位置を更新
     void UpdateBonePosition(std::string boneName, XMFLOAT3& position);
@@ -38,7 +38,7 @@ public:
 
     void Test();
 
-public: //ゲッター関数 (頻繁に呼び出すものはinline)
+public: //ゲッター関数
 
     //すべてのボーン名を取得
     std::vector<std::string> GetBoneNames();
@@ -92,11 +92,10 @@ private:
     //シェーダーに渡す頂点情報
     struct Vertex {
         XMFLOAT3 position;      //頂点の位置 (Tポーズ)
-        XMFLOAT3 normal;        //法線
-        XMFLOAT2 texCoords;     //UV
-        XMFLOAT4 color;         //色
         XMFLOAT4 boneWeights;   //ボーンの影響度
         UINT boneIDs[4];        //4つのボーンから影響を受ける
+        XMFLOAT3 normal;        //法線
+        XMFLOAT2 texCoords;     //UV
         UINT vertexID;          //頂点ID
     };
     //シェーダーに渡す頂点数の情報 (構造体で渡す必要?)

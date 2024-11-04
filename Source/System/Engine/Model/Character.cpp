@@ -1,8 +1,8 @@
 #include "Character.h"
 
-Character::Character(const std::string fbxFile, const Camera* pCamera, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight,
-    UINT* pBackBufferIndex)
-    : Model(pCamera, pDevice, pCommandList, pDirectionalLight, pBackBufferIndex)
+Character::Character(const std::string fbxFile, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, DirectionalLight* pDirectionalLight,
+    ID3D12Resource* pShadowMapBuffer)
+    : Model(pDevice, pCommandList, pCamera, pDirectionalLight, pShadowMapBuffer)
     , m_animationSpeed(1.0f)
     , m_nowAnimationTime(0.0f)
     , m_nowAnimationIndex(-1)
@@ -27,7 +27,7 @@ UINT Character::AddAnimation(Animation animation)
     return (unsigned int)m_animations.size() - 1;
 }
 
-void Character::Update()
+void Character::Update(UINT backBufferIndex)
 {
     //ボーンのマトリックスを更新
     UpdateBoneTransform();
@@ -39,7 +39,7 @@ void Character::Update()
     UpdateAnimation();
 
     //親クラスの更新
-    Model::Update();
+    Model::Update(backBufferIndex);
 }
 
 void Character::CalculateBoneTransforms(const aiNode* node, const XMMATRIX& parentTransform)
@@ -156,7 +156,6 @@ Model::Mesh* Character::ProcessMesh(const aiScene* scene, aiMesh* mesh, Humanoid
 
         vertex.position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
         vertex.normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
-        vertex.color = { 1.0f, 1.0f,1.0f,1.0f };
         if (mesh->mTextureCoords[0]) {
             vertex.texCoords = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
         }
@@ -851,13 +850,8 @@ void Character::UpdateAnimation()
     //ボーンアニメーション
     for (UINT i = 0; i < pFrame->boneAnimations.size(); i++) {
         std::string boneName = m_animations[m_nowAnimationIndex].m_boneMapping[i];
-        if (boneName[0] == 'T' && boneName[1] == 'h' && boneName[2] == 'u' && boneName[3] == 'm' && boneName[4] == 'b') {
-
-        }
-        else {
-            UpdateBonePosition(boneName, pFrame->boneAnimations[i].position);
-            UpdateBoneRotation(boneName, pFrame->boneAnimations[i].rotation);
-        }
+        UpdateBonePosition(boneName, pFrame->boneAnimations[i].position);
+        UpdateBoneRotation(boneName, pFrame->boneAnimations[i].rotation);
     }
 
     //シェイプキーのアニメーション

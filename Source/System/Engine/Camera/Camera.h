@@ -1,6 +1,7 @@
 #pragma once
 #include <DirectXMath.h>
 #include "..\\..\\Main\\Main.h"
+#include "..\\Lights\\DirectionalLight.h"
 
 struct Camera
 {
@@ -10,11 +11,13 @@ struct Camera
 
 	float m_fov;
 	float m_aspect;
+	float m_near;
+	float m_far;
 
 	float m_yaw;
 	float m_pitch;
 
-	void Update();
+	void Update(DirectionalLight* pDirectionalLight);
 	void SetFov(float fovDegree);
 
 	Camera();

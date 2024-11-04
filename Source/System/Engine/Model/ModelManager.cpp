@@ -5,7 +5,7 @@ void ModelManager::AddModel(Model* pModel)
 	m_models.push_back(pModel);
 }
 
-void ModelManager::Update()
+void ModelManager::Update(UINT backBufferIndex)
 {
     //各オブジェクトの描画順番を計算
     for (Model* pModel : m_models) {
@@ -15,7 +15,7 @@ void ModelManager::Update()
         }
 
         //モデルの更新
-        pModel->Update();
+        pModel->Update(backBufferIndex);
 
         //深度を取得
         float depth = pModel->GetZBuffer();
@@ -29,7 +29,7 @@ void ModelManager::Update()
     }
 }
 
-void ModelManager::RenderShadowMap()
+void ModelManager::RenderShadowMap(UINT backBufferIndex)
 {
     m_sortedOpaqueModels.clear();
     m_sortedTransparentModels.clear();
@@ -39,7 +39,7 @@ void ModelManager::RenderShadowMap()
         Model* pModel = m_opaqueModels.top().second;
         m_opaqueModels.pop();
 
-        pModel->RenderShadowMap();
+        pModel->RenderShadowMap(backBufferIndex);
 
         m_sortedOpaqueModels.push_back(pModel);
     }
@@ -48,21 +48,21 @@ void ModelManager::RenderShadowMap()
         Model* pModel = m_transparentModels.top().second;
         m_transparentModels.pop();
 
-        pModel->RenderShadowMap();
+        pModel->RenderShadowMap(backBufferIndex);
 
         m_sortedTransparentModels.push_back(pModel);
     }
 }
 
-void ModelManager::RenderModel()
+void ModelManager::RenderModel(UINT backBufferIndex)
 {
     //本体を描画
     //先に不透明のモデルを描画し、次に半透明のモデルを描画
     for (Model* pModel : m_sortedOpaqueModels) {
-        pModel->RenderSceneWithShadow();
+        pModel->RenderSceneWithShadow(backBufferIndex);
     }
 
     for (Model* pModel : m_sortedTransparentModels) {
-        pModel->RenderSceneWithShadow();
+        pModel->RenderSceneWithShadow(backBufferIndex);
     }
 }

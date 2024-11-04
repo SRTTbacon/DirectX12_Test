@@ -19,14 +19,13 @@ RootSignature::RootSignature(ID3D12Device* device, ShaderKinds shaderKind)
 	int samplerCount = 0;
 	CD3DX12_STATIC_SAMPLER_DESC* samplers = nullptr;
 	if (shaderKind != ShaderKinds::ShadowShader) {
-		samplers = new CD3DX12_STATIC_SAMPLER_DESC[2];
-		samplers[0] = CD3DX12_STATIC_SAMPLER_DESC(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR);
-		samplers[1] = CD3DX12_STATIC_SAMPLER_DESC(1, D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-			D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 0.0f, 0, D3D12_COMPARISON_FUNC_LESS_EQUAL);
-		samplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-		samplers[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
 		samplerCount = 2;
+		samplers = new CD3DX12_STATIC_SAMPLER_DESC[samplerCount];
+		samplers[0] = CD3DX12_STATIC_SAMPLER_DESC(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR);
+		samplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		samplers[1] = CD3DX12_STATIC_SAMPLER_DESC(1, D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP);
+		samplers[1].MaxAnisotropy = 1;
+		samplers[1].ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	}
 
 	//ルートシグニチャの設定（ルートパラメーターとスタティックサンプラーを入れる）
@@ -80,7 +79,6 @@ CD3DX12_ROOT_PARAMETER* RootSignature::GetRootParameter()
 		m_rootParamSize = 7;
 		CD3DX12_ROOT_PARAMETER* rootParam = new CD3DX12_ROOT_PARAMETER[m_rootParamSize];
 		rootParam[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb0の定数バッファを設定
-
 		rootParam[1].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);		//ピクセルシェーダーのb0の定数バッファを設定
 
 		m_pTableRange1 = new CD3DX12_DESCRIPTOR_RANGE[1];				//ディスクリプタテーブル
@@ -114,10 +112,11 @@ CD3DX12_ROOT_PARAMETER* RootSignature::GetRootParameter()
 	}
 	//影のみのシェーダー
 	else if (m_shaderKind == ShaderKinds::ShadowShader) {
-		m_rootParamSize = 1;
+		m_rootParamSize = 2;
 		CD3DX12_ROOT_PARAMETER* rootParam = new CD3DX12_ROOT_PARAMETER[m_rootParamSize];
 		//定数バッファをルートパラメータとして設定 (メッシュごとのワールド変換行列用)
-		rootParam[0].InitAsConstantBufferView(0);
+		rootParam[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+		rootParam[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb1の定数バッファを設定
 
 		return rootParam;
 	}

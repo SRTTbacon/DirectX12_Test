@@ -1,21 +1,23 @@
 #pragma once
 #include <DirectXMath.h>
+#include "LightTransform.h"
 
 struct LightBuffer
 {
 	DirectX::XMFLOAT3 lightDirection;
-	DirectX::XMFLOAT4 ambientColor;
-	DirectX::XMFLOAT4 diffuseColor;
-	DirectX::XMFLOAT4 specularColor;
+	DirectX::XMFLOAT3 ambientColor;
+	DirectX::XMFLOAT3 diffuseColor;
 };
 
-struct DirectionalLight
+class DirectionalLight : public LightTransform
 {
-	DirectX::XMMATRIX lightView;
-	DirectX::XMMATRIX lightProj;;
+public:
 	DirectX::XMMATRIX lightViewProj;
 
 	LightBuffer lightBuffer;
+
+	float m_near;
+	float m_far;
 
 	DirectionalLight();
 };

@@ -21,13 +21,15 @@ struct SoundHandle
 {
 	double maxSoundTime;	//サウンドの長さ (秒単位)
 
-	float defaultFrequency;	//初期の周波数
+	const UINT streamHandle;		//サウンドハンドル
+	const float defaultFrequency;	//初期の周波数
+
 	float speed;			//速度 (0.0f～)
 	float volume;			//音量 (0.0f～1.0f)
 
-	UINT streamHandle;		//サウンドハンドル
-
 	bool bPlaying;			//再生中かどうか
+
+	SoundHandle(const UINT handle, const float freq);
 
 	//サウンドの再生
 	//引数 : bool 最初から再生するか (falseの場合、PauseSound()を呼んだ時間から再開)
@@ -49,7 +51,7 @@ struct SoundHandle
 
 	//サウンドを解放
 	//この関数実行後は使用不可になる
-	void Release();
+	void Release() const;
 };
 
 class SoundSystem

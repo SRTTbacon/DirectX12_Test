@@ -18,7 +18,7 @@ private:
 
 	SoundHandle* pBGMHandle;
 
-	std::vector<Model> m_spheres;
+	std::vector<Model*> m_spheres;
 
 	void UpdateCamera();
 };

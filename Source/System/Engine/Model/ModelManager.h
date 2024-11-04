@@ -9,13 +9,13 @@ public:
 
 	//更新
 	//深度から描画順番を決定するため、各フレームのUpdate関数の最後に実行
-	void Update();
+	void Update(UINT backBufferIndex);
 
 	//深度が大きい順に影を描画
-	void RenderShadowMap();
+	void RenderShadowMap(UINT backBufferIndex);
 
 	//深度が大きい順に本体を描画
-	void RenderModel();
+	void RenderModel(UINT backBufferIndex);
 
 private:
 	// 比較関数: 深度の大きい順に並べる

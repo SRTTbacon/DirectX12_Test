@@ -24,11 +24,10 @@ StructuredBuffer<float> ShapeWeights : register(t1);			//ŠeƒVƒFƒCƒvƒL[‚ÌƒEƒFƒCƒ
 struct VSInput
 {
 	float3 pos : POSITION;				//’¸“_À•W
+    float4 boneWeights : BONEWEIGHTS;	//Še’¸“_‚Ìƒ{[ƒ“‚Ì‰e‹¿“x
+    uint4 boneIDs : BONEIDS;			//Še’¸“_‚É‰e‹¿‚ğ—^‚¦‚éƒ{[ƒ“‚ÌƒCƒ“ƒfƒbƒNƒX
 	float3 normal : NORMAL;				//–@ü
 	float2 uv : TEXCOORD;				//UV
-	float4 color : COLOR;				//’¸“_F
-	float4 boneWeights : BONEWEIGHTS;	//Še’¸“_‚Ìƒ{[ƒ“‚Ì‰e‹¿“x
-	uint4 boneIDs : BONEIDS;			//Še’¸“_‚É‰e‹¿‚ğ—^‚¦‚éƒ{[ƒ“‚ÌƒCƒ“ƒfƒbƒNƒX
 	uint vertexID : VERTEXID;			//’¸“_‚ÌID
 };
 
@@ -36,9 +35,8 @@ struct VSOutput
 {
 	float4 svpos : SV_POSITION; //À•W
     float3 normal : NORMAL;		//ƒm[ƒ}ƒ‹ƒ}ƒbƒv
-	float4 color : COLOR;		//F
 	float2 uv : TEXCOORD;		//UV
-    float4 lightSpacePos : TEXCOORD1;	//ƒfƒBƒŒƒNƒVƒ‡ƒiƒ‹ƒ‰ƒCƒg
+    float4 shadowPos : TEXCOORD1;
 };
 
 //’¸“_ID‚ÆƒVƒFƒCƒvƒL[‚ÌID‚©‚ç‘Š‘ÎˆÊ’u‚ğæ“¾
@@ -52,7 +50,7 @@ VSOutput vert(VSInput input)
 	VSOutput output = (VSOutput)0;
 	
 	//ƒ{[ƒ“‚ğ”½‰f
-	matrix skinMatrix = input.boneWeights.x * boneMatrices[input.boneIDs.x] + input.boneWeights.y * boneMatrices[input.boneIDs.y] +
+    matrix skinMatrix = input.boneWeights.x * boneMatrices[input.boneIDs.x] + input.boneWeights.y * boneMatrices[input.boneIDs.y] +
 		input.boneWeights.z * boneMatrices[input.boneIDs.z] + input.boneWeights.w * boneMatrices[input.boneIDs.w];
 
     float3 shapePos = input.pos;
@@ -69,10 +67,9 @@ VSOutput vert(VSInput input)
 	float4 projPos = mul(projectionMatrix, viewPos);			//“Š‰e•ÏŠ·
 
 	output.svpos = projPos;			//“Š‰e•ÏŠ·‚³‚ê‚½À•W
-    output.normal = normalize(mul(input.normal, (float3x3)normalMatrix)); //ƒm[ƒ}ƒ‹ƒ}ƒbƒv
-	output.color = input.color;		//’¸“_F
+    output.normal = mul(float4(input.normal, 1.0f), normalMatrix).xyz;
 	output.uv = input.uv;			//UV
-    output.lightSpacePos = mul(worldPos, lightViewProjMatrix);
+    output.shadowPos = mul(worldPos, lightViewProjMatrix);
 
 	return output;				//ƒsƒNƒZƒ‹ƒVƒF[ƒ_[‚É“n‚·
 }

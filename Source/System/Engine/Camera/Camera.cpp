@@ -7,7 +7,7 @@ void Camera::SetFov(float fovDegree)
 	m_fov = XMConvertToRadians(fovDegree);
 }
 
-void Camera::Update()
+void Camera::Update(DirectionalLight* pDirectionalLight)
 {
     m_pitch = max(-XM_PIDIV2 + 0.01f, min(XM_PIDIV2 - 0.01f, m_pitch));
 
@@ -27,5 +27,7 @@ Camera::Camera()
     , m_aspect(static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT))
     , m_yaw(0.0f)
     , m_pitch(0.0f)
+    , m_near(0.01f)
+    , m_far(1000.0f)
 {
 }

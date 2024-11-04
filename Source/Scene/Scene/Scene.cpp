@@ -139,6 +139,13 @@ void Scene::Update()
 		m_pModel1->m_rotation.x += 1.0f;
 	}
 
+	if (g_Engine->GetKeyState(DIK_G)) {
+		m_pModel1->m_position.x -= 0.05f;
+	}
+	if (g_Engine->GetKeyState(DIK_H)) {
+		m_pModel1->m_position.x += 0.05f;
+	}
+
 	//printf("x=%f, y=%f, z=%f, w=%f\n", x, y, z, w);
 	//printf("x2=%f, y2=%f, z2=%f, w2=%f\n", x2, y2, z2, w2);
 
@@ -191,20 +198,17 @@ Scene::Scene()
 	m_model1.UpdateBoneRotation("Left arm", a);
 
 	//m_model1.m_position.x = 2.0f;
-
+	*/
 	//m_model2.LoadModel(Primitive_Sphere);
-	for (std::string name : m_model1.GetBoneNames()) {
-		if (name[0] == 'L' || name[0] == 'R') {
-			Model model(&m_camera);
-			model.LoadModel(modelFile2);
-			XMMATRIX mat = m_model1.finalBoneTransforms[name];
-			model.m_position.x = mat.r[3].m128_f32[0];
-			model.m_position.y = mat.r[3].m128_f32[1];
-			model.m_position.z = mat.r[3].m128_f32[2];
-			printf("Name = %s, x=%f, y=%f, z=%f\n", name.c_str(), model.m_position.x, model.m_position.y, model.m_position.z);
-			model.m_scale = XMFLOAT3(0.05f, 0.05f, 0.05f);
-			m_spheres.push_back(model);
-		}
+	/*for (std::string name : m_pModel1->GetBoneNames()) {
+		Model* pModel = g_Engine->AddModel(modelFile2);
+		XMMATRIX mat = m_pModel1->finalBoneTransforms[name];
+		pModel->m_position.x = mat.r[3].m128_f32[0];
+		pModel->m_position.y = mat.r[3].m128_f32[1];
+		pModel->m_position.z = mat.r[3].m128_f32[2];
+		pModel->m_scale = XMFLOAT3(0.05f, 0.05f, 0.05f);
+		pModel->m_bVisible = false;
+		m_spheres.push_back(pModel);
 	}*/
 
 	m_pModel2 = g_Engine->AddModel(modelFile3);

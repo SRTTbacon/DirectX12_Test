@@ -121,6 +121,9 @@
     <ClCompile Include="Source\System\Engine\Model\ModelManager.cpp">
       <Filter>Source\System\Engine\Model</Filter>
     </ClCompile>
+    <ClCompile Include="Source\System\Engine\Lights\LightTransform.cpp">
+      <Filter>Source\System\Engine\Lights</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\System\Main\Main.h">
@@ -185,6 +188,9 @@
     </ClInclude>
     <ClInclude Include="Source\System\Engine\Model\ModelManager.h">
       <Filter>Source\System\Engine\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Lights\LightTransform.h">
+      <Filter>Source\System\Engine\Lights</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

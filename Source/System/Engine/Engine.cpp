@@ -103,18 +103,16 @@ bool Engine::Init(HWND hwnd, UINT windowWidth, UINT windowHeight)
 
 Character* Engine::AddCharacter(std::string modelFile)
 {
-	Character* pCharacter = new Character(modelFile, &m_camera, m_pDevice.Get(), m_pCommandList.Get(), m_pDirectionalLight, &m_CurrentBackBufferIndex);
+	Character* pCharacter = new Character(modelFile, m_pDevice.Get(), m_pCommandList.Get(), &m_camera, m_pDirectionalLight, m_pDepthStencilBuffer.Get());
 	//pCharacter->SetShadowMap(m_pShadowDescriptorHeap->GetShadowMap());
-	pCharacter->SetShadowMap(m_pDepthStencilBuffer.Get());
 	m_modelManager.AddModel(pCharacter);
 	return pCharacter;
 }
 
 Model* Engine::AddModel(std::string modelFile)
 {
-	Model* pModel = new Model(&m_camera, m_pDevice.Get(), m_pCommandList.Get(), m_pDirectionalLight, &m_CurrentBackBufferIndex);
+	Model* pModel = new Model(m_pDevice.Get(), m_pCommandList.Get(), &m_camera, m_pDirectionalLight, m_pDepthStencilBuffer.Get());
 	//pModel->SetShadowMap(m_pShadowDescriptorHeap->GetShadowMap());
-	pModel->SetShadowMap(m_pDepthStencilBuffer.Get());
 	pModel->LoadModel(modelFile);
 	m_modelManager.AddModel(pModel);
 	return pModel;
@@ -379,15 +377,15 @@ void Engine::BeginRender()
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_currentRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_pCommandList->ResourceBarrier(1, &barrier);
 
+	//深度ステンシルビューをクリア
+	m_pCommandList->ClearDepthStencilView(currentDsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
 	//レンダーターゲットを設定
 	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
 
 	//レンダーターゲットをクリア
 	const float clearColor[] = { 0.25f, 0.25f, 0.25f, 1.0f };
 	m_pCommandList->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
-
-	//深度ステンシルビューをクリア
-	m_pCommandList->ClearDepthStencilView(currentDsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
 void Engine::ModelRender()
@@ -409,6 +407,10 @@ void Engine::ModelRender()
 		0, nullptr);*/
 
 	//シャドウマップ用のパイプラインステートとルートシグネチャを設定
+
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencilBuffer.Get(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	m_pCommandList->ResourceBarrier(1, &barrier);
+
 	pCommandList->SetPipelineState(m_pShadowPipelineState->GetPipelineState());
 	pCommandList->SetGraphicsRootSignature(m_pShadowRootSignature->GetRootSignature());
 
@@ -420,18 +422,15 @@ void Engine::ModelRender()
 	//pCommandList->OMSetRenderTargets(0, nullptr, false, m_pShadowDescriptorHeap->GetShadowMapDSV());
 
 	//モデルの影の描画
-	m_modelManager.RenderShadowMap();
+	m_modelManager.RenderShadowMap(m_CurrentBackBufferIndex);
 
-	/*barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-		m_pShadowDescriptorHeap->GetShadowMap(),
-		D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencilBuffer.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	pCommandList->ResourceBarrier(1, &barrier);
 
-	ResetViewportAndScissor();*/
+	//ResetViewportAndScissor();
 
 	//モデルを描画
-	m_modelManager.RenderModel();
+	m_modelManager.RenderModel(m_CurrentBackBufferIndex);
 }
 
 void Engine::WaitRender()
@@ -523,9 +522,9 @@ void Engine::Update()
 
 void Engine::LateUpdate()
 {
-	m_camera.Update();
+	m_camera.Update(m_pDirectionalLight);
 
-	m_modelManager.Update();
+	m_modelManager.Update(m_CurrentBackBufferIndex);
 }
 
 void Engine::ResetViewportAndScissor()

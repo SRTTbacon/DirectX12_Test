@@ -16,30 +16,21 @@ using namespace DirectX;
 //ボーンは最大512個
 constexpr int MAX_BONE_COUNT = 512;
 
-enum PrimitiveModel
-{
-    Primitive_None,
-    Primitive_Sphere
-};
-
 class Model
 {
 public:
     //モデルを初期化
-    Model(const Camera* pCamera, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight, UINT* pBackBufferIndex);
+    Model(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, DirectionalLight* pDirectionalLight, ID3D12Resource* pShadowMapBuffer);
 
-    void SetShadowMap(ID3D12Resource* pShadowMapBuffer);
-
-    void LoadModel(const PrimitiveModel primitiveModel);
     void LoadModel(const std::string fbxFile);
 
     //更新 (エンジンから実行されるため、ユーザーが実行する必要はない)
-    virtual void Update();
+    virtual void Update(UINT backBufferIndex);
 
     //シャドウマップに描画 (エンジンから実行されるため、ユーザーが実行する必要はない)
-    void RenderShadowMap();
+    void RenderShadowMap(UINT backBufferIndex);
     //実際に描画 (エンジンから実行されるため、ユーザーが実行する必要はない)
-    void RenderSceneWithShadow();
+    void RenderSceneWithShadow(UINT backBufferIndex);
 
     XMFLOAT3 m_position;    //モデル全体の位置
     XMFLOAT3 m_rotation;    //モデル全体の回転 (デグリー角)
@@ -63,10 +54,11 @@ public: //ゲッター関数
 protected:
     //シェーダーに渡す頂点情報 (プリミティブ用)
     struct VertexPrimitive {
-        XMFLOAT3 Position;
-        XMFLOAT3 Normal;
-        XMFLOAT2 TexCoords;
-        XMFLOAT4 Color; // 頂点色
+        XMFLOAT3 position;
+        XMFLOAT4 boneWeights;   //ボーンの影響度
+        UINT boneIDs[4];        //4つのボーンから影響を受ける
+        XMFLOAT3 normal;
+        XMFLOAT2 texCoords;
     };
 
     //シェーダーに渡すビュー情報
@@ -105,8 +97,6 @@ protected:
     ComPtr<ID3D12Resource> m_boneMatricesBuffer;                        //ボーン情報をシェーダーに送信する用
     ComPtr<ID3D12Resource> m_lightConstantBuffer;                       //ディレクショナルライトのバッファ
 
-    UINT* m_pBackBufferIndex;        //エンジンのバックバッファのインデックス
-
     const Camera* m_pCamera;        //カメラ情報
     const DirectionalLight* m_pDirectionalLight;    //ディレクショナルライト
 
@@ -115,13 +105,12 @@ protected:
     XMMATRIX m_modelMatrix;         //位置、回転、スケールをMatrixで保持
 
 private:
-    void LoadSphere(float radius, UINT sliceCount, UINT stackCount, const XMFLOAT4 color);
     void CreateBuffer(Mesh* pMesh, std::vector<VertexPrimitive>& vertices, std::vector<UINT>& indices);
 
     void ProcessNode(const aiScene* scene, aiNode* node);   //ノードを読み込み
     Mesh* ProcessMesh(const aiScene* scene, aiMesh* mesh);   //メッシュ情報を読み込み
 
-    void CreateDirectionalLightBuffer();
+    void CreateConstantBuffer();
 
     float m_depth;          //Zバッファ
     bool m_bTransparent;    //半透明のオブジェクトかどうか

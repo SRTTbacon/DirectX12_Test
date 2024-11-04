@@ -10,13 +10,14 @@ SoundSystem::SoundSystem(HWND pHandle)
 {
 	//引数1 : 再生デバイス (-1が現在選択されているデバイスで、インデックスを変更すると、例えばモニターのスピーカーなどから再生される。基本-1)
 	//引数2 : サンプリングレート (44.1kHz、48kHz、96kHz、192kHzなどが主流。数値が大きくなるほどサウンド次第では高音質になるが、負荷が大きくなる)
-	//引数3 : フラグ (ステレオ再生であれば基本0指定。3D表現を行うときや、あえてモノクロで再生するのであれば "BASS_DEVICE_*" で指定)
-	//引数4 : よくわからん
+	//引数3 : フラグ (ステレオ再生であれば基本0指定。3D表現を行うときや、あえてモノラルで再生するのであれば "BASS_DEVICE_*" で指定)
+	//引数4 : よくわからんからnullptr
 	BASS_Init(-1, 96000, 0, pHandle, nullptr);
 }
 
 SoundSystem::~SoundSystem()
 {
+	//すべてのロードされているサウンドを解放
 	for (UINT i = 0; i < m_soundHandles.size(); i++) {
 		if (m_soundHandles[i] && m_soundHandles[i]->streamHandle > 0) {
 			m_soundHandles[i]->Release();
@@ -57,12 +58,10 @@ SoundHandle* SoundSystem::LoadSound(std::string filePath, bool bPlay)
 	}
 
 	//サウンドの状態を保持する構造体
-	SoundHandle* pHandle = new SoundHandle();
-	BASS_ChannelGetAttribute(fxHandle, BASS_ATTRIB_TEMPO_FREQ, &pHandle->defaultFrequency);
-	pHandle->streamHandle = fxHandle;
+	float freq;
+	BASS_ChannelGetAttribute(fxHandle, BASS_ATTRIB_TEMPO_FREQ, &freq);
+	SoundHandle* pHandle = new SoundHandle(fxHandle, freq);
 	pHandle->maxSoundTime = BASS_ChannelBytes2Seconds(fxHandle, BASS_ChannelGetLength(fxHandle, BASS_POS_BYTE));
-	pHandle->speed = 1.0f;
-	pHandle->volume = 1.0f;
 	pHandle->bPlaying = bPlay;
 
 	//ロード後すぐに再生
@@ -90,6 +89,16 @@ void SoundSystem::Update()
 			m_soundHandles.erase(it);
 		}
 	}
+}
+
+SoundHandle::SoundHandle(const UINT handle, const float freq)
+	: streamHandle(handle)
+	, defaultFrequency(freq)
+	, speed(1.0f)
+	, volume(1.0f)
+	, maxSoundTime(0.0)
+	, bPlaying(false)
+{
 }
 
 //サウンドを再生
@@ -168,13 +177,12 @@ void SoundHandle::SetPosition(double toTime) const
 	BASS_ChannelSetPosition(streamHandle, BASS_ChannelSeconds2Bytes(streamHandle, toTime), BASS_POS_BYTE);
 }
 
-void SoundHandle::Release()
+//サウンドの解放
+void SoundHandle::Release() const
 {
 	if (streamHandle == 0)
 		return;
 
 	BASS_ChannelStop(streamHandle);
 	BASS_StreamFree(streamHandle);
-
-	streamHandle = 0;
 }
