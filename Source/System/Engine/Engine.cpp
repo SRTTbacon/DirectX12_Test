@@ -407,7 +407,7 @@ void Engine::ModelRender()
 		0, nullptr);*/
 
 	//シャドウマップ用のパイプラインステートとルートシグネチャを設定
-
+	/*
 	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencilBuffer.Get(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	m_pCommandList->ResourceBarrier(1, &barrier);
 
@@ -426,10 +426,11 @@ void Engine::ModelRender()
 
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencilBuffer.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	pCommandList->ResourceBarrier(1, &barrier);
-
+	*/
 	//ResetViewportAndScissor();
-
+	
 	//モデルを描画
+	m_modelManager.RenderShadowMap(m_CurrentBackBufferIndex);
 	m_modelManager.RenderModel(m_CurrentBackBufferIndex);
 }
 
@@ -441,6 +442,7 @@ void Engine::WaitRender()
 
 	//バックバッファ番号更新
 	m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+
 
 	//次のフレームの描画準備がまだであれば待機する.
 	if (m_pFence->GetCompletedValue() < currentFanceValue)

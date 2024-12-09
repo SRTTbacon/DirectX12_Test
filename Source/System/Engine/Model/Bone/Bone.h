@@ -67,6 +67,6 @@ private:
 
     const std::string m_boneName;           //ボーン名(不変)
 
-    std::vector<ChildBone> m_childBones;         //子ボーン
-    unsigned int m_parentBoneIndex;                 //親ボーンのインデックス
+    std::vector<ChildBone> m_childBones;    //子ボーン
+    unsigned int m_parentBoneIndex;         //親ボーンのインデックス
 };

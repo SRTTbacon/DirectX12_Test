@@ -10,7 +10,7 @@ public:
 	const DirectX::XMFLOAT3& GetPosition() const;
 
 	void SetRotation(float x, float y, float z);
-	const DirectX::XMFLOAT3& GetRotation() const;
+	const DirectX::XMFLOAT3 GetRotation() const;
 	const DirectX::XMFLOAT3 GetRotationRadians() const;
 	const DirectX::XMFLOAT4 GetQuaternion() const;
 
@@ -23,8 +23,8 @@ public:
 	DirectX::XMFLOAT3 GetRight() const;
 	DirectX::XMFLOAT3 GetUp() const;
 
-	DirectX::XMMATRIX& GetTransformMatrix() const;
-	DirectX::XMMATRIX& GetViewMatrix() const;
+	DirectX::XMMATRIX GetTransformMatrix() const;
+	DirectX::XMMATRIX GetViewMatrix() const;
 
 private:
 	DirectX::XMFLOAT3 mPosition;

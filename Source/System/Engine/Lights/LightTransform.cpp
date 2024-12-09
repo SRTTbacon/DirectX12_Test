@@ -26,7 +26,7 @@ void LightTransform::SetRotation(float x, float y, float z)
 	mRotation.z = DirectX::XMConvertToRadians(z);
 }
 
-const DirectX::XMFLOAT3& LightTransform::GetRotation() const
+const DirectX::XMFLOAT3 LightTransform::GetRotation() const
 {
 	return DirectX::XMFLOAT3(DirectX::XMConvertToDegrees(mRotation.x), DirectX::XMConvertToDegrees(mRotation.y), DirectX::XMConvertToDegrees(mRotation.z));
 }
@@ -84,7 +84,7 @@ DirectX::XMFLOAT3 LightTransform::GetUp() const
 	return result;
 }
 
-DirectX::XMMATRIX& LightTransform::GetTransformMatrix() const
+DirectX::XMMATRIX LightTransform::GetTransformMatrix() const
 {
 	DirectX::XMMATRIX s = DirectX::XMMatrixScaling(mScale.x, mScale.y, mScale.z);
 	DirectX::XMMATRIX r = DirectX::XMMatrixRotationRollPitchYaw(mRotation.x, mRotation.y, mRotation.z);
@@ -94,7 +94,7 @@ DirectX::XMMATRIX& LightTransform::GetTransformMatrix() const
 	return result;
 }
 
-DirectX::XMMATRIX& LightTransform::GetViewMatrix() const
+DirectX::XMMATRIX LightTransform::GetViewMatrix() const
 {
 	DirectX::XMFLOAT3 position = GetPosition();
 	DirectX::XMFLOAT3 forward = GetForward();

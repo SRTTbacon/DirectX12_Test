@@ -23,6 +23,8 @@ struct AnimationFrame
 	float time;		//フレーム時間
 	std::vector<BoneAnimation> boneAnimations;		//各ボーンの位置、回転
 	std::vector<float> shapeAnimations;	//各シェイプキーの値
+
+	AnimationFrame(float time);
 };
 
 //アニメーション

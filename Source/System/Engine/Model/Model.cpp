@@ -20,11 +20,14 @@ Model::Model(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, con
     , m_bVisible(true)
     , m_bTransparent(false)
 {
-    CreateConstantBuffer();
 }
 
 void Model::LoadModel(const std::string fbxFile)
 {
+    m_fbxFile = fbxFile;
+
+    CreateConstantBuffer();
+
     Assimp::Importer importer;
 
     //モデル読み込み時のフラグ。メッシュのポリゴンはすべて三角形にし、左手座標系に変換
@@ -44,7 +47,6 @@ void Model::LoadModel(const std::string fbxFile)
 
     m_pRootSignature = new RootSignature(m_pDevice, ShaderKinds::PrimitiveShader);
     m_pPipelineState = new PipelineState(m_pDevice, m_pRootSignature);
-
 }
 
 void Model::ProcessNode(const aiScene* scene, aiNode* node) {
@@ -107,11 +109,18 @@ void Model::CreateConstantBuffer()
     D3D12_HEAP_PROPERTIES heapProps = {};
     heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
 
-    CD3DX12_RESOURCE_DESC constantData = CD3DX12_RESOURCE_DESC::Buffer(sizeof(ModelConstantBuffer));
+    CD3DX12_RESOURCE_DESC constantData = CD3DX12_RESOURCE_DESC::Buffer((sizeof(ModelConstantBuffer) + 255) & ~255);
     //定数バッファをリソースとして作成
     for (int i = 0; i < FRAME_BUFFER_COUNT; i++) {
-        m_pDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &constantData,
+        HRESULT hr = m_pDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &constantData,
             D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_modelConstantBuffer[i]));
+
+        if (FAILED(hr)) {
+            printf("コンスタントバッファの生成に失敗:エラーコード%d\n", hr);
+        }
+        else {
+            printf("コンスタントバッファを生成しました。%s\n", m_fbxFile.c_str());
+        }
     }
 
     //ディレクショナルライトの情報
@@ -193,18 +202,32 @@ void Model::Update(UINT backBufferIndex)
 
     //定数バッファにデータを書き込む
     void* p0;
-    m_modelConstantBuffer[backBufferIndex]->Map(0, nullptr, &p0);
-    memcpy(p0, &mcb, sizeof(ModelConstantBuffer));
-    m_modelConstantBuffer[backBufferIndex]->Unmap(0, nullptr);
+    HRESULT hr = m_modelConstantBuffer[backBufferIndex]->Map(0, nullptr, &p0);
+    if (p0) {
+        memcpy(p0, &mcb, sizeof(ModelConstantBuffer));
+        m_modelConstantBuffer[backBufferIndex]->Unmap(0, nullptr);
+    }
+    if (FAILED(hr)) {
+        printf("バッファの更新に失敗しました。エラーコード:%d\n", hr);
+
+        HRESULT reason = m_pDevice->GetDeviceRemovedReason();
+        if (reason != S_OK) {
+            // デバイス削除の原因をログに出力
+            printf("Device removed reason: 0x%08X\n", reason);
+        }
+    }
 
     void* p1;
     m_lightConstantBuffer->Map(0, nullptr, &p1);
-    memcpy(p1, &m_pDirectionalLight->lightBuffer, sizeof(LightBuffer));
-    m_lightConstantBuffer->Unmap(0, nullptr);
+    if (p1) {
+        memcpy(p1, &m_pDirectionalLight->lightBuffer, sizeof(LightBuffer));
+        m_lightConstantBuffer->Unmap(0, nullptr);
+    }
 
     XMVECTOR objPos = XMLoadFloat3(&m_position);
     XMVECTOR camPos = m_pCamera->m_eyePos;
     m_depth = XMVectorGetZ(XMVector3Length(objPos - camPos)); //Z成分を深度として取得
+
 }
 
 void Model::CreateBuffer(Mesh* pMesh, std::vector<VertexPrimitive>& vertices, std::vector<UINT>& indices)

@@ -30,7 +30,7 @@ void Animation::Load(std::string animFilePath)
 
 	for (int i = 0; i < animCount; i++) {
 		float time = br.ReadFloat();			//フレーム時間
-		AnimationFrame frame{ time };
+		AnimationFrame frame(time);
 		for (int j = 0; j < boneCount; j++) {
 			//回転
 			float rotX = br.ReadFloat();
@@ -151,8 +151,7 @@ AnimationFrame* Animation::GetFrame(float nowAnimTime)
 	float t = (nowAnimTime - currentFrame->time) / (nextFrame->time - currentFrame->time);
 
 	//現在のフレームと次のフレームの間を補間
-	m_pTempFrame = new AnimationFrame();
-	m_pTempFrame->time = nowAnimTime;
+	m_pTempFrame = new AnimationFrame(nowAnimTime);
 
 	//ボーンの補間
 	for (UINT i = 0; i < currentFrame->boneAnimations.size(); i++) {
@@ -177,4 +176,9 @@ bool Animation::IsLastFrame(AnimationFrame* pAnimFrame)
 	if (!pAnimFrame)
 		return false;
 	return pAnimFrame == &m_frames[m_frames.size() - 1];
+}
+
+AnimationFrame::AnimationFrame(float time)
+	: time(time)
+{
 }

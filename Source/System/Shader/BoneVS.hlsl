@@ -67,7 +67,7 @@ VSOutput vert(VSInput input)
 	float4 projPos = mul(projectionMatrix, viewPos);			//“Š‰e•ÏŠ·
 
 	output.svpos = projPos;			//“Š‰e•ÏŠ·‚³‚ê‚½À•W
-    output.normal = mul(float4(input.normal, 1.0f), normalMatrix).xyz;
+    output.normal = mul(float4(input.normal, 1.0f), skinMatrix).xyz;
 	output.uv = input.uv;			//UV
     output.shadowPos = mul(worldPos, lightViewProjMatrix);
 

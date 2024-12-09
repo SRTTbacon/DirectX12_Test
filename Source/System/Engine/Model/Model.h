@@ -36,6 +36,8 @@ public:
     XMFLOAT3 m_rotation;    //モデル全体の回転 (デグリー角)
     XMFLOAT3 m_scale;       //モデル全体のスケール
 
+    std::string m_fbxFile;
+
     bool m_bVisible;        //描画するかどうか
 
 public: //ゲッター関数
@@ -104,13 +106,13 @@ protected:
 
     XMMATRIX m_modelMatrix;         //位置、回転、スケールをMatrixで保持
 
+    void CreateConstantBuffer();
+
 private:
     void CreateBuffer(Mesh* pMesh, std::vector<VertexPrimitive>& vertices, std::vector<UINT>& indices);
 
     void ProcessNode(const aiScene* scene, aiNode* node);   //ノードを読み込み
     Mesh* ProcessMesh(const aiScene* scene, aiMesh* mesh);   //メッシュ情報を読み込み
-
-    void CreateConstantBuffer();
 
     float m_depth;          //Zバッファ
     bool m_bTransparent;    //半透明のオブジェクトかどうか

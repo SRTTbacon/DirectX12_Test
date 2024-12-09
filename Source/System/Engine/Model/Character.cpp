@@ -7,6 +7,10 @@ Character::Character(const std::string fbxFile, ID3D12Device* pDevice, ID3D12Gra
     , m_nowAnimationTime(0.0f)
     , m_nowAnimationIndex(-1)
 {
+    m_fbxFile = fbxFile;
+
+    CreateConstantBuffer();
+
     //FBXをロード (今後独自フォーマットに変更予定)
 	LoadFBX(fbxFile);
 
@@ -338,8 +342,6 @@ void Character::CreateShapeDeltasTexture(HumanoidMesh& humanoidMesh)
 
     //一度設定したら変更しないためクリア
     humanoidMesh.shapeDeltas.clear();
-
-    printf("テスト : %u\n", humanoidMesh.vertexCount);
 }
 
 static XMVECTOR ExtractEulerAngles(const XMMATRIX& matrix) {
@@ -616,8 +618,6 @@ void Character::LoadShapeKey(const aiMesh* mesh, std::vector<Vertex>& vertices, 
 
             humanoidMesh.shapeWeights.push_back(0.0f);
             humanoidMesh.shapeMapping[shapeName] = shapeIndex;
-
-            printf("shapeName = %s, Index = %d\n", shapeName.c_str(), shapeIndex);
 
             for (UINT j = 0; j < animMesh->mNumVertices; j++) {
                 aiVector3D& vec = animMesh->mVertices[j];

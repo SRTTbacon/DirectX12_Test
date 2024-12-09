@@ -7,7 +7,7 @@ DirectionalLight::DirectionalLight()
 	, m_far(500.0f)
 	, LightTransform()
 {
-	SetRotation(30.0f, 30.0f, 30.0f);
+	SetRotation(-30.0f, 30.0f, -30.0f);
 	DirectX::XMFLOAT3 storeVector = GetForward();
 	DirectX::XMVECTOR lightDirection = DirectX::XMLoadFloat3(&storeVector);
 	DirectX::XMVECTOR sceneCenter = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);

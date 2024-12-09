@@ -1,14 +1,5 @@
 #include "Scene.h"
 
-// Šg’£q‚ğ’u‚«Š·‚¦‚éˆ—
-#include <filesystem>
-namespace fs = std::filesystem;
-static std::wstring ReplaceExtension(const std::wstring& origin, const char* ext)
-{
-	fs::path p = origin.c_str();
-	return p.replace_extension(ext).c_str();
-}
-
 Scene* g_Scene;
 
 using namespace DirectX;
@@ -180,7 +171,7 @@ void Scene::Draw()
 Scene::Scene() 
 {
 	m_pModel1 = g_Engine->AddCharacter(modelFile1);
-	m_pModel1->AddAnimation(g_Engine->GetAnimation("Resource\\Test2.hcs"));
+	m_pModel1->AddAnimation(g_Engine->GetAnimation("Resource\\Test.hcs"));
 
 	XMFLOAT4 a = {0.0f, 0.0f, 0.0f, 0.0f};
 	/*XMFLOAT3 a = {-10.0f, 13.5f, 0.58f};
