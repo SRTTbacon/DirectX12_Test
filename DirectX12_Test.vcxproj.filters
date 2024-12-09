@@ -124,6 +124,9 @@
     <ClCompile Include="Source\System\Engine\Lights\LightTransform.cpp">
       <Filter>Source\System\Engine\Lights</Filter>
     </ClCompile>
+    <ClCompile Include="Source\System\Engine\Lights\ZShadow.cpp">
+      <Filter>Source\System\Engine\Lights</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\System\Main\Main.h">
@@ -190,6 +193,9 @@
       <Filter>Source\System\Engine\Model</Filter>
     </ClInclude>
     <ClInclude Include="Source\System\Engine\Lights\LightTransform.h">
+      <Filter>Source\System\Engine\Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Lights\ZShadow.h">
       <Filter>Source\System\Engine\Lights</Filter>
     </ClInclude>
   </ItemGroup>

@@ -40,7 +40,7 @@ void DescriptorHeap::SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* pSh
 
     m_pDevice->CreateShaderResourceView(mainTex, &srvDesc, m_cpuDescriptorHandle);
 
-    srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+    srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
     srvDesc.Texture2D.MipLevels = 1;
     srvDesc.Texture2D.MostDetailedMip = 0;
     srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;

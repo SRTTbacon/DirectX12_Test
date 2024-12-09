@@ -124,17 +124,23 @@ void Scene::Update()
 		pBGMHandle->SetPosition(m_pModel1->m_nowAnimationTime);
 	}
 	if (g_Engine->GetKeyState(DIK_N)) {
-		m_pModel1->m_rotation.y += 1.0f;
+		g_Engine->GetDirectionalLight()->AddRotationX(-1.0f);
 	}
 	if (g_Engine->GetKeyState(DIK_M)) {
-		m_pModel1->m_rotation.x += 1.0f;
+		g_Engine->GetDirectionalLight()->AddRotationX(1.0f);
 	}
 
 	if (g_Engine->GetKeyState(DIK_G)) {
-		m_pModel1->m_position.x -= 0.05f;
+		m_pModel1->m_position.z -= 0.05f;
 	}
 	if (g_Engine->GetKeyState(DIK_H)) {
-		m_pModel1->m_position.x += 0.05f;
+		m_pModel1->m_position.z += 0.05f;
+	}
+	if (g_Engine->GetKeyState(DIK_T)) {
+		m_pModel1->m_position.y -= 0.01f;
+	}
+	if (g_Engine->GetKeyState(DIK_Y)) {
+		m_pModel1->m_position.y += 0.01f;
 	}
 
 	//printf("x=%f, y=%f, z=%f, w=%f\n", x, y, z, w);
@@ -171,7 +177,8 @@ void Scene::Draw()
 Scene::Scene() 
 {
 	m_pModel1 = g_Engine->AddCharacter(modelFile1);
-	m_pModel1->AddAnimation(g_Engine->GetAnimation("Resource\\Test.hcs"));
+	m_pModel1->AddAnimation(g_Engine->GetAnimation("Resource\\Test2.hcs"));
+	m_pModel1->m_animationSpeed = 0.5f;
 
 	XMFLOAT4 a = {0.0f, 0.0f, 0.0f, 0.0f};
 	/*XMFLOAT3 a = {-10.0f, 13.5f, 0.58f};

@@ -18,6 +18,9 @@ public:
 	const DirectX::XMFLOAT3& GetScale() const;
 
 	void AddTranslation(float x, float y, float z);
+	void AddRotationX(float x);
+	void AddRotationY(float y);
+	void AddRotationZ(float z);
 
 	DirectX::XMFLOAT3 GetForward() const;
 	DirectX::XMFLOAT3 GetRight() const;

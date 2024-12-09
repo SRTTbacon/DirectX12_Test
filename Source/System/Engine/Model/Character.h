@@ -15,8 +15,8 @@ class Character : public Model
 public:
     //コンストラクタ
     //基本的にエンジンで実行
-    //引数 : std::string FBXファイルのパス, Camera* カメラクラスのポインタ, ID3D12Device* デバイス, ID3D12GraphicsCommandList* コマンドリスト, DirectionalLight* ディレクショナルライト
-    //       UINT* バックバッファのインデックスのポインタ, float* 1フレームにかかる時間のポインタ
+    //引数 : std::string FBXファイルのパス, Camera* カメラクラスのポインタ, ID3D12Device* デバイス, ID3D12GraphicsCommandList* コマンドリスト, Camera* カメラ, 
+    //          DirectionalLight* ディレクショナルライト, ID3D12Resource* 影が書き込まれるバッファ
     Character(const std::string fbxFile, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, DirectionalLight* pDirectionalLight,
         ID3D12Resource* pShadowMapBuffer);
 

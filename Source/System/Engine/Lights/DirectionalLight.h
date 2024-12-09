@@ -20,4 +20,6 @@ public:
 	float m_far;
 
 	DirectionalLight();
+
+	void Update();
 };

@@ -30,6 +30,7 @@
     <ClCompile Include="Source\System\Engine\Input\Input.cpp" />
     <ClCompile Include="Source\System\Engine\Lights\DirectionalLight.cpp" />
     <ClCompile Include="Source\System\Engine\Lights\LightTransform.cpp" />
+    <ClCompile Include="Source\System\Engine\Lights\ZShadow.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Animation\Animation.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Animation\AnimationManager.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Bone\Bone.cpp" />
@@ -54,6 +55,7 @@
     <ClInclude Include="Source\System\Engine\Input\Input.h" />
     <ClInclude Include="Source\System\Engine\Lights\DirectionalLight.h" />
     <ClInclude Include="Source\System\Engine\Lights\LightTransform.h" />
+    <ClInclude Include="Source\System\Engine\Lights\ZShadow.h" />
     <ClInclude Include="Source\System\Engine\Model\Animation\Animation.h" />
     <ClInclude Include="Source\System\Engine\Model\Animation\AnimationManager.h" />
     <ClInclude Include="Source\System\Engine\Model\Bone\Bone.h" />

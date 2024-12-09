@@ -37,6 +37,6 @@ VSOutput main(VSInput input)
     
     float4 localPos = mul(float4(input.position, 1.0f), skinMatrix); //頂点座標
     float4 worldPos = mul(modelMatrix, localPos);       //ワールド座標に変換
-    output.position = mul(localPos, lightViewProjMatrix);
+    output.position = mul(lightViewProjMatrix, worldPos);
     return output;
 }

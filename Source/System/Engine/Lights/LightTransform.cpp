@@ -63,6 +63,19 @@ void LightTransform::AddTranslation(float x, float y, float z)
 	mPosition.z += z;
 }
 
+void LightTransform::AddRotationX(float x)
+{
+	mRotation.x += DirectX::XMConvertToRadians(x);
+}
+void LightTransform::AddRotationY(float y)
+{
+	mRotation.y += DirectX::XMConvertToRadians(y);
+}
+void LightTransform::AddRotationZ(float z)
+{
+	mRotation.z += DirectX::XMConvertToRadians(z);
+}
+
 DirectX::XMFLOAT3 LightTransform::GetForward() const
 {
 	DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationRollPitchYaw(mRotation.x, mRotation.y, mRotation.z);

@@ -39,7 +39,7 @@ void ModelManager::RenderShadowMap(UINT backBufferIndex)
         Model* pModel = m_opaqueModels.top().second;
         m_opaqueModels.pop();
 
-        //pModel->RenderShadowMap(backBufferIndex);
+        pModel->RenderShadowMap(backBufferIndex);
 
         m_sortedOpaqueModels.push_back(pModel);
     }
@@ -48,7 +48,7 @@ void ModelManager::RenderShadowMap(UINT backBufferIndex)
         Model* pModel = m_transparentModels.top().second;
         m_transparentModels.pop();
 
-        //pModel->RenderShadowMap(backBufferIndex);
+        pModel->RenderShadowMap(backBufferIndex);
 
         m_sortedTransparentModels.push_back(pModel);
     }

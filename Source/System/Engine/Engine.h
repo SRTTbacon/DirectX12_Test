@@ -1,29 +1,19 @@
 #pragma once
-#include <d3d12.h>
-#include <dxgi.h>
 #include <dxgi1_4.h>
-#include <d3dx12.h>
 #include <vector>
-#include "..\\ComPtr.h"
 #include "Input\\Input.h"
-#include <DirectXMath.h>
-#include <timeapi.h>
 #include <filesystem>
 
-#include "..\\Main\\Utility.h"
-
-#include "Core\\PipelineState\\PipelineState.h"
-#include "Core\\DescriptorHeap\\DescriptorHeap2.h"
-
-#include "Lights\\DirectionalLight.h"
+#include "Lights\ZShadow.h"
 
 #include "SoundSystem\\SoundSystem.h"
+
 #include "Model\\Animation\\AnimationManager.h"
 #include "Model\\ModelManager.h"
 #include "Model\\Character.h"
 
-#pragma comment(lib, "d3d12.lib") // d3d12ライブラリをリンクする
-#pragma comment(lib, "dxgi.lib") // dxgiライブラリをリンクする
+#pragma comment(lib, "d3d12.lib")	//d3d12ライブラリをリンクする
+#pragma comment(lib, "dxgi.lib")	//dxgiライブラリをリンクする
 
 class Character;
 
@@ -134,9 +124,6 @@ private: //描画に使うDirectX12のオブジェクト
 	ComPtr<ID3D12CommandAllocator> m_pAllocator[FRAME_BUFFER_COUNT] = { nullptr };	//コマンドアロケーター
 	ComPtr<ID3D12GraphicsCommandList> m_pCommandList = nullptr;						//コマンドリスト
 
-	RootSignature* m_pShadowRootSignature = nullptr;		//影用のルートシグネチャ
-	PipelineState* m_pShadowPipelineState = nullptr;		//影用のパイプラインステート
-
 	HANDLE m_fenceEvent = nullptr;				//フェンスで使うイベント
 	ComPtr<ID3D12Fence> m_pFence = nullptr;		//フェンス
 	UINT64 m_fenceValue[FRAME_BUFFER_COUNT];	//フェンスの値（トリプルバッファリング用に3個）
@@ -161,12 +148,10 @@ private: //描画に使うオブジェクト
 	UINT m_DsvDescriptorSize = 0;
 	//深度ステンシルのディスクリプタヒープ
 	ComPtr<ID3D12DescriptorHeap> m_pDsvHeap = nullptr;
-	//深度ステンシルバッファ
 	ComPtr<ID3D12Resource> m_pDepthStencilBuffer = nullptr;
 
-	DescriptorHeap* m_pShadowDescriptorHeap = nullptr;
-
 	ModelManager m_modelManager;
+	ZShadow* m_pZShadow;
 
 private: //描画ループで使用するもの
 	//現在のフレームのレンダーターゲットを一時的に保存

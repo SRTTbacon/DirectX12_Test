@@ -66,10 +66,17 @@ VSOutput vert(VSInput input)
 	float4 viewPos = mul(viewMatrix, worldPos);					//ビュー座標に変換
 	float4 projPos = mul(projectionMatrix, viewPos);			//投影変換
 
+	// ボーンアニメーションによる法線変換
+    float3 skinnedNormal = float3(0.0f, 0.0f, 0.0f);
+    skinnedNormal += input.boneWeights.x * mul(input.normal, (float3x3)boneMatrices[input.boneIDs.x]);
+    skinnedNormal += input.boneWeights.y * mul(input.normal, (float3x3)boneMatrices[input.boneIDs.y]);
+    skinnedNormal += input.boneWeights.z * mul(input.normal, (float3x3)boneMatrices[input.boneIDs.z]);
+    skinnedNormal += input.boneWeights.w * mul(input.normal, (float3x3)boneMatrices[input.boneIDs.w]);
+	
 	output.svpos = projPos;			//投影変換された座標
-    output.normal = mul(float4(input.normal, 1.0f), skinMatrix).xyz;
+    output.normal = normalize(mul(normalMatrix, float4(skinnedNormal, 1.0f)).xyz);
 	output.uv = input.uv;			//UV
-    output.shadowPos = mul(worldPos, lightViewProjMatrix);
+    output.shadowPos = mul(lightViewProjMatrix, worldPos);
 
 	return output;				//ピクセルシェーダーに渡す
 }

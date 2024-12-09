@@ -1,4 +1,4 @@
-#define BIAS 0.005f     //シャギー抑制のバイアス値
+#define BIAS 0.0001f     //シャギー抑制のバイアス値
 
 SamplerState texSampler : register(s0); //テクスチャ用サンプラー
 SamplerComparisonState shadowSampler : register(s1); //テクスチャ用サンプラー
@@ -7,11 +7,9 @@ Texture2D<float> shadowMap : register(t1); //シャドウマップ
 //定数バッファ
 cbuffer LightBuffer : register(b0)
 {
-    float3 lightDir; //ライトの方向
+    float3 lightDir;        //ライトの方向
     float3 ambientColor;
     float3 diffuseColor;
-    float3 specularColor;
-    float3 eye;
 };
 
 struct VSOutput
@@ -24,30 +22,74 @@ struct VSOutput
 
 float ShadowCalculation(float4 shadowPos)
 {
-    float shadowFactor = 1.0f;
-    
-    // シャドウマップ座標変換
-    float3 posFromLightVP = shadowPos.xyz / shadowPos.w;
-    float2 shadowUV = (posFromLightVP.xy + float2(1.0f, -1.0f)) * float2(0.5f, -0.5f);
+    // 1. 射影座標に変換
+    float3 projCoords = shadowPos.xyz / shadowPos.w;
+    projCoords.xy *= float2(1.0f, -1.0f);
+    projCoords = projCoords * 0.5f + 0.5f;
 
-    //シャドウの有無を判定
-    shadowFactor = shadowMap.SampleCmp(shadowSampler, shadowUV, posFromLightVP.z - BIAS);
+    if (projCoords.x < 0.0f || projCoords.x > 1.0f ||
+        projCoords.y < 0.0f || projCoords.y > 1.0f)
+    {
+        return 1.0f; // 範囲外は影なし
+    }
 
-    return shadowFactor;
+    // 2. ブロッカー探索
+    float texelSize = 1.0f / 8192.0f;
+    float averageBlockerDepth = 0.0f;
+    int blockerCount = 0;
+
+    int searchRadius = 3; // ブロッカー探索範囲
+    for (int x = -searchRadius; x <= searchRadius; x++)
+    {
+        for (int y = -searchRadius; y <= searchRadius; y++)
+        {
+            float2 offset = float2(x, y) * texelSize;
+            float shadowDepth = shadowMap.SampleCmpLevelZero(shadowSampler, projCoords.xy + offset, projCoords.z - BIAS);
+            if (shadowDepth < projCoords.z)
+            {
+                averageBlockerDepth += shadowDepth;
+                blockerCount++;
+            }
+        }
+    }
+
+    if (blockerCount == 0)
+    {
+        return 1.0f; // 影なし
+    }
+
+    averageBlockerDepth /= blockerCount;
+
+    // 3. 半影サイズの計算
+    float penumbraSize = (projCoords.z - averageBlockerDepth) / averageBlockerDepth * 0.05f;
+
+    // 4. PCFによるシャドウサンプリング
+    int filterRadius = saturate(penumbraSize / texelSize);
+    float shadowFactor = 0.0f;
+    int samples = 0;
+
+    for (int x1 = -filterRadius; x1 <= filterRadius; x1++)
+    {
+        for (int y = -filterRadius; y <= filterRadius; y++)
+        {
+            float2 offset = float2(x1, y) * texelSize;
+            shadowFactor += shadowMap.SampleCmpLevelZero(shadowSampler, projCoords.xy + offset, projCoords.z - BIAS);
+            samples++;
+        }
+    }
+
+    return shadowFactor / samples;
 }
 
 float4 pixel(VSOutput input) : SV_TARGET
 {
-    //法線を正規化
-    float3 normal = normalize(input.normal);
-
     //ライトの方向を逆に
-    float lightIntensity = saturate(dot(normal, -lightDir));
+    float lightIntensity = saturate(dot(input.normal, -lightDir));
 
     // シャドウの計算
     float shadowFactor = ShadowCalculation(input.shadowPos);
     
-    float3 diffuse = diffuseColor * lightIntensity;
+    float3 diffuse = float3(1.0f, 1.0f, 1.0f) * lightIntensity;
 
     //シャドウがかかっていれば光を減少させる (0.0f なら完全な影、1.0f なら影なし)
     float3 lighting = ambientColor + shadowFactor * diffuse;

@@ -18,6 +18,7 @@ Engine::Engine()
 	, m_pKeyInput(nullptr)
 	, m_pSoundSystem(nullptr)
 	, m_sceneTimeMS(0)
+	, m_pZShadow(nullptr)
 {
 }
 
@@ -91,11 +92,7 @@ bool Engine::Init(HWND hwnd, UINT windowWidth, UINT windowHeight)
 	//ディレクショナルライトの初期化
 	m_pDirectionalLight = new DirectionalLight();
 
-	//影用のルートシグネチャ、パイプラインステートの作成
-	m_pShadowRootSignature = new RootSignature(m_pDevice.Get(), ShaderKinds::ShadowShader);
-	m_pShadowPipelineState = new PipelineState(m_pDevice.Get(), m_pShadowRootSignature);
-
-	m_pShadowDescriptorHeap = new DescriptorHeap(m_pDevice.Get(), 1, ShadowSizeHigh);
+	m_pZShadow = new ZShadow(m_pDevice.Get(), m_pCommandList.Get());
 
 	printf("描画エンジンの初期化に成功\n");
 	return true;
@@ -103,16 +100,14 @@ bool Engine::Init(HWND hwnd, UINT windowWidth, UINT windowHeight)
 
 Character* Engine::AddCharacter(std::string modelFile)
 {
-	Character* pCharacter = new Character(modelFile, m_pDevice.Get(), m_pCommandList.Get(), &m_camera, m_pDirectionalLight, m_pDepthStencilBuffer.Get());
-	//pCharacter->SetShadowMap(m_pShadowDescriptorHeap->GetShadowMap());
+	Character* pCharacter = new Character(modelFile, m_pDevice.Get(), m_pCommandList.Get(), &m_camera, m_pDirectionalLight, m_pZShadow->GetZBuffer());
 	m_modelManager.AddModel(pCharacter);
 	return pCharacter;
 }
 
 Model* Engine::AddModel(std::string modelFile)
 {
-	Model* pModel = new Model(m_pDevice.Get(), m_pCommandList.Get(), &m_camera, m_pDirectionalLight, m_pDepthStencilBuffer.Get());
-	//pModel->SetShadowMap(m_pShadowDescriptorHeap->GetShadowMap());
+	Model* pModel = new Model(m_pDevice.Get(), m_pCommandList.Get(), &m_camera, m_pDirectionalLight, m_pZShadow->GetZBuffer());
 	pModel->LoadModel(modelFile);
 	m_modelManager.AddModel(pModel);
 	return pModel;
@@ -376,16 +371,6 @@ void Engine::BeginRender()
 	//レンダーターゲットが使用可能になるまで待つ
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_currentRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_pCommandList->ResourceBarrier(1, &barrier);
-
-	//深度ステンシルビューをクリア
-	m_pCommandList->ClearDepthStencilView(currentDsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
-	//レンダーターゲットを設定
-	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
-
-	//レンダーターゲットをクリア
-	const float clearColor[] = { 0.25f, 0.25f, 0.25f, 1.0f };
-	m_pCommandList->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
 }
 
 void Engine::ModelRender()
@@ -407,12 +392,7 @@ void Engine::ModelRender()
 		0, nullptr);*/
 
 	//シャドウマップ用のパイプラインステートとルートシグネチャを設定
-	/*
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencilBuffer.Get(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	m_pCommandList->ResourceBarrier(1, &barrier);
-
-	pCommandList->SetPipelineState(m_pShadowPipelineState->GetPipelineState());
-	pCommandList->SetGraphicsRootSignature(m_pShadowRootSignature->GetRootSignature());
+	
 
 	//ビューポートとシザー矩形の設定
 	//pCommandList->RSSetViewports(1, m_pShadowDescriptorHeap->GetShadowViewPort());
@@ -422,15 +402,13 @@ void Engine::ModelRender()
 	//pCommandList->OMSetRenderTargets(0, nullptr, false, m_pShadowDescriptorHeap->GetShadowMapDSV());
 
 	//モデルの影の描画
+	m_pZShadow->BeginMapping();
 	m_modelManager.RenderShadowMap(m_CurrentBackBufferIndex);
-
-	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pDepthStencilBuffer.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	pCommandList->ResourceBarrier(1, &barrier);
-	*/
-	//ResetViewportAndScissor();
+	
+	ResetViewportAndScissor();
 	
 	//モデルを描画
-	m_modelManager.RenderShadowMap(m_CurrentBackBufferIndex);
+	//m_modelManager.RenderShadowMap(m_CurrentBackBufferIndex);
 	m_modelManager.RenderModel(m_CurrentBackBufferIndex);
 }
 
@@ -520,6 +498,8 @@ void Engine::Update()
 
 	//サウンドを更新
 	m_pSoundSystem->Update();
+
+	m_pDirectionalLight->Update();
 }
 
 void Engine::LateUpdate()
@@ -543,7 +523,14 @@ void Engine::ResetViewportAndScissor()
 	auto currentDsvHandle = m_pDsvHeap->GetCPUDescriptorHandleForHeapStart();
 
 	//レンダーターゲットを設定
-	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, false, &currentDsvHandle);
+	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, true, &currentDsvHandle);
+
+	//深度ステンシルビューをクリア
+	m_pCommandList->ClearDepthStencilView(currentDsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+	//レンダーターゲットをクリア
+	const float clearColor[] = { 0.25f, 0.25f, 0.25f, 1.0f };
+	m_pCommandList->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
 }
 
 Animation Engine::GetAnimation(std::string animFilePath)

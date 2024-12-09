@@ -7,12 +7,16 @@ DirectionalLight::DirectionalLight()
 	, m_far(500.0f)
 	, LightTransform()
 {
-	SetRotation(-30.0f, 30.0f, -30.0f);
+	SetRotation(50.0f, -30.0f, 0.0f);
+}
+
+void DirectionalLight::Update()
+{
 	DirectX::XMFLOAT3 storeVector = GetForward();
 	DirectX::XMVECTOR lightDirection = DirectX::XMLoadFloat3(&storeVector);
 	DirectX::XMVECTOR sceneCenter = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 
-	float shadowDistance = 50.0f;
+	float shadowDistance = 100.0f;
 	DirectX::XMVECTOR lightPosition = DirectX::XMVectorMultiplyAdd(lightDirection, XMVectorReplicate(-shadowDistance), sceneCenter);
 	DirectX::XMStoreFloat3(&storeVector, lightPosition);
 
