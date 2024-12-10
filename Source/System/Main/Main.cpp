@@ -130,7 +130,7 @@ static void MainLoop()
 			g_Engine->EndRender();
 			clock_t end = clock();
 			const double time = static_cast<double>(end - start) / CLOCKS_PER_SEC * 1000.0;
-			printf("%lf[FPS]\n", time);
+			//printf("%lf[FPS]\n", time);
 		}
 	}
 }

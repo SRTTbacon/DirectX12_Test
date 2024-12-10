@@ -64,6 +64,13 @@ SoundHandle* SoundSystem::LoadSound(std::string filePath, bool bPlay)
 	pHandle->maxSoundTime = BASS_ChannelBytes2Seconds(fxHandle, BASS_ChannelGetLength(fxHandle, BASS_POS_BYTE));
 	pHandle->bPlaying = bPlay;
 
+	// 再生終了時のコールバックを設定
+	HSYNC syncHandle = BASS_ChannelSetSync(fxHandle, BASS_SYNC_END, 0, &SoundSystem::PlaybackEndCallback, pHandle);
+	if (!syncHandle) {
+		printf("aaaaaaaaaaaaaaaaaaaaaaa\n");
+		return nullptr;
+	}
+
 	//ロード後すぐに再生
 	if (bPlay) {
 		pHandle->PlaySound(true);
@@ -91,6 +98,14 @@ void SoundSystem::Update()
 	}
 }
 
+void SoundSystem::PlaybackEndCallback(HSYNC handle, DWORD channel, DWORD data, void* user)
+{
+	SoundHandle* soundHandle = static_cast<SoundHandle*>(user);
+	if (soundHandle && soundHandle->bLooping) {
+		soundHandle->PlaySound();
+	}
+}
+
 SoundHandle::SoundHandle(const UINT handle, const float freq)
 	: streamHandle(handle)
 	, defaultFrequency(freq)
@@ -98,7 +113,13 @@ SoundHandle::SoundHandle(const UINT handle, const float freq)
 	, volume(1.0f)
 	, maxSoundTime(0.0)
 	, bPlaying(false)
+	, bLooping(false)
 {
+}
+
+SoundHandle::~SoundHandle()
+{
+	Release();
 }
 
 //サウンドを再生
@@ -180,7 +201,8 @@ void SoundHandle::SetPosition(double toTime) const
 //サウンドの解放
 void SoundHandle::Release() const
 {
-	if (streamHandle == 0)
+	BASS_CHANNELINFO info;
+	if (streamHandle == 0 || BASS_ChannelGetInfo(streamHandle, &info))
 		return;
 
 	BASS_ChannelStop(streamHandle);

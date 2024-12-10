@@ -12,12 +12,11 @@ struct LightBuffer
 class DirectionalLight : public LightTransform
 {
 public:
-	DirectX::XMMATRIX lightViewProj;
+	DirectX::XMMATRIX m_lightViewProj;
 
-	LightBuffer lightBuffer;
+	LightBuffer m_lightBuffer;
 
-	float m_near;
-	float m_far;
+	float m_shadowDistance;
 
 	DirectionalLight();
 

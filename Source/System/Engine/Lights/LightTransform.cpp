@@ -14,6 +14,11 @@ void LightTransform::SetPosition(float x, float y, float z)
 	mPosition.z = z;
 }
 
+void LightTransform::SetPosition(DirectX::XMFLOAT3 position)
+{
+	mPosition = position;
+}
+
 const DirectX::XMFLOAT3& LightTransform::GetPosition() const
 {
 	return mPosition;

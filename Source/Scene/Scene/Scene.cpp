@@ -99,24 +99,26 @@ void Scene::Update()
 		bAnim = !bAnim;
 		if (bAnim) {
 			m_pModel1->m_animationSpeed = 1.0f;
-			//pBGMHandle->PlaySound(false);
+			pBGMHandle->PlaySound(false);
 		}
 		else {
 			m_pModel1->m_animationSpeed = 0.0f;
-			//pBGMHandle->PauseSound();
+			pBGMHandle->PauseSound();
 		}
 	}
 	if (g_Engine->GetMouseStateSync(0x01)) {
 		m_pModel1->m_rotation.x += 90.0f;
 	}
 	if (g_Engine->GetMouseStateSync(0x02)) {
-		//bBoneMode = !bBoneMode;
-		m_pModel1->SetAnimationTime(0.0f);
-		//pBGMHandle->PlaySound();
+		pBGMHandle->SetPosition(m_pModel1->m_nowAnimationTime);
 	}
 
 	if (g_Engine->GetKeyStateSync(DIK_J)) {
 		m_pModel1->m_nowAnimationTime -= 5.0f;
+		if (m_pModel1->m_nowAnimationTime < 0.0f) {
+			m_pModel1->m_nowAnimationTime = 0.0f;
+		}
+
 		pBGMHandle->SetPosition(m_pModel1->m_nowAnimationTime);
 	}
 	else if (g_Engine->GetKeyStateSync(DIK_K)) {
@@ -131,10 +133,10 @@ void Scene::Update()
 	}
 
 	if (g_Engine->GetKeyState(DIK_G)) {
-		m_pModel1->m_position.z -= 0.05f;
+		m_pModel1->GetBone("Hips")->m_position.y -= 0.05f;
 	}
 	if (g_Engine->GetKeyState(DIK_H)) {
-		m_pModel1->m_position.z += 0.05f;
+		m_pModel1->GetBone("Hips")->m_position.y += 0.05f;
 	}
 	if (g_Engine->GetKeyState(DIK_T)) {
 		m_pModel1->m_position.y -= 0.01f;
@@ -167,6 +169,8 @@ void Scene::Update()
 	//m_model1.UpdateBoneRotation("Right elbow", a);
 
 	//m_model1.Test();
+
+	printf("x=%f, y=%f, z=%f\n", m_pModel1->GetBone("Hips")->m_position.x, m_pModel1->GetBone("Hips")->m_position.y, m_pModel1->GetBone("Hips")->m_position.z);
 }
 
 void Scene::Draw()
@@ -177,8 +181,8 @@ void Scene::Draw()
 Scene::Scene() 
 {
 	m_pModel1 = g_Engine->AddCharacter(modelFile1);
-	m_pModel1->AddAnimation(g_Engine->GetAnimation("Resource\\Test2.hcs"));
-	m_pModel1->m_animationSpeed = 0.5f;
+	//m_pModel1->AddAnimation(g_Engine->GetAnimation("Resource\\Test3.hcs"));
+	m_pModel1->m_animationSpeed = 1.0f;
 
 	XMFLOAT4 a = {0.0f, 0.0f, 0.0f, 0.0f};
 	/*XMFLOAT3 a = {-10.0f, 13.5f, 0.58f};
@@ -210,7 +214,7 @@ Scene::Scene()
 	}*/
 
 	m_pModel2 = g_Engine->AddModel(modelFile3);
-	m_pModel2->m_scale = XMFLOAT3(5.0f, 0.05f, 5.0f);
+	m_pModel2->m_scale = XMFLOAT3(50.0f, 0.05f, 50.0f);
 	m_pModel2->m_position.y = -0.2f;
 	//m_pModel2->m_bVisible = false;
 
@@ -263,9 +267,10 @@ Scene::Scene()
 	m_pModel1->m_rotation.x = -90.0f;
 	m_pModel1->m_rotation.y = 180.0f;
 
-	pBGMHandle = g_Engine->GetSoundSystem()->LoadSound("Resource\\BGM\\Music.wav", false);
+	pBGMHandle = g_Engine->GetSoundSystem()->LoadSound("Resource\\BGM\\VRSuya - Doodle Dance.mp3", true);
 	pBGMHandle->volume = 0.1f;
 	pBGMHandle->speed = 1.0f;
+	pBGMHandle->bLooping = true;
 	pBGMHandle->UpdateProperty();
 }
 

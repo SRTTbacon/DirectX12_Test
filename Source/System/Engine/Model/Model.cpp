@@ -197,7 +197,7 @@ void Model::Update(UINT backBufferIndex)
     mcb.modelMatrix = scale * rot * pos;
     mcb.viewMatrix = XMMatrixLookAtRH(m_pCamera->m_eyePos, m_pCamera->m_targetPos, m_pCamera->m_upFoward);
     mcb.projectionMatrix = XMMatrixPerspectiveFovRH(m_pCamera->m_fov, m_pCamera->m_aspect, m_pCamera->m_near, m_pCamera->m_far);
-    mcb.lightViewProjMatrix = m_pDirectionalLight->lightViewProj;
+    mcb.lightViewProjMatrix = m_pDirectionalLight->m_lightViewProj;
     mcb.normalMatrix = XMMatrixTranspose(XMMatrixInverse(nullptr, mcb.modelMatrix));
 
     //定数バッファにデータを書き込む
@@ -220,7 +220,7 @@ void Model::Update(UINT backBufferIndex)
     void* p1;
     m_lightConstantBuffer->Map(0, nullptr, &p1);
     if (p1) {
-        memcpy(p1, &m_pDirectionalLight->lightBuffer, sizeof(LightBuffer));
+        memcpy(p1, &m_pDirectionalLight->m_lightBuffer, sizeof(LightBuffer));
         m_lightConstantBuffer->Unmap(0, nullptr);
     }
 

@@ -499,6 +499,10 @@ void Engine::Update()
 	//サウンドを更新
 	m_pSoundSystem->Update();
 
+	XMFLOAT3 cameraPos;
+	XMStoreFloat3(&cameraPos, m_camera.m_eyePos);
+
+	m_pDirectionalLight->SetPosition(cameraPos);
 	m_pDirectionalLight->Update();
 }
 

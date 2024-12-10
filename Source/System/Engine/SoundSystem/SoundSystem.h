@@ -15,7 +15,6 @@
 //	.wav .mp3 .ogg .flac .aac .wma などなど プラグインを導入すればプラスで対応可
 //商用利用する場合はWwiseを推奨
 
-
 //サウンドの状態を保持する構造体
 struct SoundHandle
 {
@@ -28,8 +27,10 @@ struct SoundHandle
 	float volume;			//音量 (0.0f～1.0f)
 
 	bool bPlaying;			//再生中かどうか
+	bool bLooping;			//ループさせるか
 
 	SoundHandle(const UINT handle, const float freq);
+	~SoundHandle();
 
 	//サウンドの再生
 	//引数 : bool 最初から再生するか (falseの場合、PauseSound()を呼んだ時間から再開)
@@ -74,4 +75,7 @@ public:
 private:
 	//サウンド情報一覧
 	std::vector<SoundHandle*> m_soundHandles;
+
+	// 再生終了時のコールバック関数
+	static void CALLBACK PlaybackEndCallback(HSYNC handle, DWORD channel, DWORD data, void* user);
 };

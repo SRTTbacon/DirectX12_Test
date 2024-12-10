@@ -7,6 +7,7 @@ public:
 	~LightTransform() = default;
 
 	void SetPosition(float x, float y, float z);
+	void SetPosition(DirectX::XMFLOAT3 position);
 	const DirectX::XMFLOAT3& GetPosition() const;
 
 	void SetRotation(float x, float y, float z);

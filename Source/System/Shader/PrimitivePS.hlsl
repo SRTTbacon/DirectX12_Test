@@ -22,63 +22,38 @@ struct VSOutput
 
 float ShadowCalculation(float4 shadowPos)
 {
-    // 1. 射影座標に変換
-    float3 projCoords = shadowPos.xyz / shadowPos.w;
-    projCoords.xy *= float2(1.0f, -1.0f);
-    projCoords = projCoords * 0.5f + 0.5f;
+    float3 posFromLightVP = shadowPos.xyz / shadowPos.w;
+    float2 shadowUV = (posFromLightVP.xy + float2(1.0f, -1.0f)) * float2(0.5f, -0.5f);
 
-    if (projCoords.x < 0.0f || projCoords.x > 1.0f ||
-        projCoords.y < 0.0f || projCoords.y > 1.0f)
+    //影の柔らかさを決定するための分割数(サンプリング数)
+    int numSamples = 4; //サンプル数 (多いほど滑らかだが重い)
+    float total = 0.0f;
+    float2 texelSize = float2(1.0f / 8192.0f, 1.0f / 8192.0f);
+    
+    //シャドウマップ上でのサンプリング
+    for (int i = -numSamples / 2; i < numSamples / 2; ++i)
     {
-        return 1.0f; // 範囲外は影なし
-    }
-
-    // 2. ブロッカー探索
-    float texelSize = 1.0f / 8192.0f;
-    float averageBlockerDepth = 0.0f;
-    int blockerCount = 0;
-
-    int searchRadius = 3; // ブロッカー探索範囲
-    for (int x = -searchRadius; x <= searchRadius; x++)
-    {
-        for (int y = -searchRadius; y <= searchRadius; y++)
+        for (int j = -numSamples / 2; j < numSamples / 2; ++j)
         {
-            float2 offset = float2(x, y) * texelSize;
-            float shadowDepth = shadowMap.SampleCmpLevelZero(shadowSampler, projCoords.xy + offset, projCoords.z - BIAS);
-            if (shadowDepth < projCoords.z)
-            {
-                averageBlockerDepth += shadowDepth;
-                blockerCount++;
-            }
+            //サンプルの位置
+            float2 sampleOffset = float2(i, j) * texelSize;
+
+            //サンプリング位置のUV座標
+            float2 shadowSampleUV = shadowUV + sampleOffset;
+
+            //シャドウマップから深度をサンプリング
+            float sampleDepth = shadowMap.SampleCmpLevelZero(shadowSampler, shadowSampleUV, posFromLightVP.z - BIAS);
+            
+            //サンプルを合計
+            total += sampleDepth;
         }
     }
 
-    if (blockerCount == 0)
-    {
-        return 1.0f; // 影なし
-    }
+    //平均を取る
+    float shadowFactor = total / (numSamples * numSamples);
 
-    averageBlockerDepth /= blockerCount;
-
-    // 3. 半影サイズの計算
-    float penumbraSize = (projCoords.z - averageBlockerDepth) / averageBlockerDepth * 0.05f;
-
-    // 4. PCFによるシャドウサンプリング
-    int filterRadius = saturate(penumbraSize / texelSize);
-    float shadowFactor = 0.0f;
-    int samples = 0;
-
-    for (int x1 = -filterRadius; x1 <= filterRadius; x1++)
-    {
-        for (int y = -filterRadius; y <= filterRadius; y++)
-        {
-            float2 offset = float2(x1, y) * texelSize;
-            shadowFactor += shadowMap.SampleCmpLevelZero(shadowSampler, projCoords.xy + offset, projCoords.z - BIAS);
-            samples++;
-        }
-    }
-
-    return shadowFactor / samples;
+    //シャドウの有無を決定(0.0fなら完全な影、1.0fなら影なし)
+    return shadowFactor;
 }
 
 float4 pixel(VSOutput input) : SV_TARGET
