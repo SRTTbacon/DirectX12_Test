@@ -365,26 +365,6 @@ static XMVECTOR ExtractEulerAngles(const XMMATRIX& matrix) {
     return XMVectorSet(pitch, yaw, roll, 0.0f); // ラジアン角で出力
 }
 
-static XMMATRIX ExtractOffset(const XMMATRIX& mWorld) {
-    return XMMatrixTranslation(mWorld.r[3].m128_f32[0], mWorld.r[3].m128_f32[1], mWorld.r[3].m128_f32[2]);
-}
-static XMMATRIX ExtractScaling(const XMMATRIX& mWorld) {
-    return XMMatrixScaling(
-        XMVector3Length(XMVECTOR{ mWorld.r[0].m128_f32[0],mWorld.r[0].m128_f32[1],mWorld.r[0].m128_f32[2] }).m128_f32[0],
-        XMVector3Length(XMVECTOR{ mWorld.r[1].m128_f32[0],mWorld.r[1].m128_f32[1],mWorld.r[1].m128_f32[2] }).m128_f32[0],
-        XMVector3Length(XMVECTOR{ mWorld.r[2].m128_f32[0],mWorld.r[2].m128_f32[1],mWorld.r[2].m128_f32[2] }).m128_f32[0]
-    );
-}
-//ワールド行列から回転成分のみを抽出する
-static XMMATRIX ExtractRotation(const XMMATRIX& mWorld) {
-    XMMATRIX mOffset = ExtractOffset(mWorld);
-    XMMATRIX mScaling = ExtractScaling(mWorld);
-
-    XMVECTOR det;
-    // 左からScaling、右からOffsetの逆行列をそれぞれかける。
-    return XMMatrixInverse(&det, mScaling) * mWorld * XMMatrixInverse(&det, mOffset);
-}
-
 void Character::LoadBones(const aiScene* scene, aiMesh* mesh, std::vector<Vertex>& vertices)
 {
     for (UINT i = 0; i < mesh->mNumBones; i++) {
@@ -409,10 +389,10 @@ void Character::LoadBones(const aiScene* scene, aiMesh* mesh, std::vector<Vertex
             XMMATRIX& m = boneChild.GetBoneOffset();
 
             XMVECTOR eulerAngles = ExtractEulerAngles(m);
-            // 各軸の回転角（ラジアン）
-            float pitch = XMVectorGetX(eulerAngles); // X軸の回転（ピッチ）
-            float yaw = XMVectorGetY(eulerAngles);   // Y軸の回転（ヨー）
-            float roll = XMVectorGetZ(eulerAngles);  // Z軸の回転（ロール）
+            //各軸の回転角（ラジアン）
+            float pitch = XMVectorGetX(eulerAngles); //X軸の回転（ピッチ）
+            float yaw = XMVectorGetY(eulerAngles);   //Y軸の回転（ヨー）
+            float roll = XMVectorGetZ(eulerAngles);  //Z軸の回転（ロール）
 
             if (abs(yaw) < 1.0) {
                 //Y軸とZ軸を交換  (デフォルトはZ軸が高さのため)
@@ -729,16 +709,16 @@ void Character::UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix)
         parentTransform = m_boneInfos[m_bones[boneIndex].GetParentBoneIndex()];
     }
     else {
-        /*XMMATRIX armatureScale = XMMatrixScaling(m_armatureBone.m_scale.x, m_armatureBone.m_scale.y, m_armatureBone.m_scale.z);
-        XMVECTOR armatureRotVec = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+        XMMATRIX armatureScale = XMMatrixScaling(m_armatureBone.m_scale.x, m_armatureBone.m_scale.y, m_armatureBone.m_scale.z);
+        XMVECTOR armatureRotVec = XMVectorSet(-m_armatureBone.m_rotation.x, -m_armatureBone.m_rotation.z, -m_armatureBone.m_rotation.y, m_armatureBone.m_rotation.w);
         XMMATRIX armatureRot = XMMatrixRotationQuaternion(armatureRotVec);
 
-        XMMATRIX armaturePos = XMMatrixTranslation(m_armatureBone.m_position.x, m_armatureBone.m_position.z, m_armatureBone.m_position.y);
+        XMMATRIX armaturePos = XMMatrixTranslation(-m_armatureBone.m_position.x, -m_armatureBone.m_position.z, m_armatureBone.m_position.y);
 
         XMMATRIX boneTransform = armatureScale * armatureRot * armaturePos;
 
         //親のワールド変換とローカル変換を合成
-        parentTransform = XMMatrixTranspose(boneTransform);*/
+        parentTransform = XMMatrixTranspose(boneTransform);
     }
 
     //ボーンの最終的な位置、回転、スケールを決定

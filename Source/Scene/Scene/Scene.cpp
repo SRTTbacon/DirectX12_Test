@@ -19,82 +19,11 @@ bool Scene::Init()
 bool bAnim = true;
 bool bVisible = true;
 bool bBoneMode = false;
-float x = 0.0f;
-float y = 0.0f;
-float z = 0.0f;
-float w = 0.0f;
-float x2 = 0.0f;
-float y2 = 0.0f;
-float z2 = 0.0f;
-float w2 = 0.0f;
 
 void Scene::Update()
 {
-	/*for (size_t i = 0; i < meshes.size(); i++)
-	{
-		auto size = sizeof(Vertex) * meshes[i].Vertices.size();
-		auto stride = sizeof(Vertex);
-		auto vertices = meshes[i].Vertices.data();
-		for (size_t j = 0; j < meshes[i].Vertices.size(); j++)
-			vertices[j].Position.x += 0.001f;
-
-		vertexBuffers[i]->Update(size, stride, vertices);
-	}*/
-
-	//auto currentIndex = g_Engine->CurrentBackBufferIndex(); // 現在のフレーム番号を取得
-	//auto currentTransform = m_camera.m_constantBuffer[currentIndex]->GetPtr<Transform>(); // 現在のフレーム番号に対応する定数バッファを取得
-
 	UpdateCamera();
 
-	if (g_Engine->GetKeyState(DIK_X) && g_Engine->GetKeyState(DIK_J)) {
-		x -= 0.005f;
-	}
-	if (g_Engine->GetKeyState(DIK_X) && g_Engine->GetKeyState(DIK_L)) {
-		x += 0.005f;
-	}
-	if (g_Engine->GetKeyState(DIK_C) && g_Engine->GetKeyState(DIK_J)) {
-		y -= 0.005f;
-	}
-	if (g_Engine->GetKeyState(DIK_C) && g_Engine->GetKeyState(DIK_L)) {
-		y += 0.005f;
-	}
-	if (g_Engine->GetKeyState(DIK_V) && g_Engine->GetKeyState(DIK_J)) {
-		z -= 0.005f;
-	}
-	if (g_Engine->GetKeyState(DIK_V) && g_Engine->GetKeyState(DIK_L)) {
-		z += 0.005f;
-	}
-	if (g_Engine->GetKeyState(DIK_B) && g_Engine->GetKeyState(DIK_J)) {
-		w -= 0.005f;
-	}
-	if (g_Engine->GetKeyState(DIK_B) && g_Engine->GetKeyState(DIK_L)) {
-		w += 0.005f;
-	}
-
-	if (g_Engine->GetKeyState(DIK_Y) && g_Engine->GetKeyState(DIK_J)) {
-		x2 -= 0.005f;
-	}
-	if (g_Engine->GetKeyState(DIK_Y) && g_Engine->GetKeyState(DIK_L)) {
-		x2 += 0.005f;
-	}
-	if (g_Engine->GetKeyState(DIK_U) && g_Engine->GetKeyState(DIK_J)) {
-		y2 -= 0.005f;
-	}
-	if (g_Engine->GetKeyState(DIK_U) && g_Engine->GetKeyState(DIK_L)) {
-		y2 += 0.005f;
-	}
-	if (g_Engine->GetKeyState(DIK_I) && g_Engine->GetKeyState(DIK_J)) {
-		z2 -= 0.005f;
-	}
-	if (g_Engine->GetKeyState(DIK_I) && g_Engine->GetKeyState(DIK_L)) {
-		z2 += 0.005f;
-	}
-	if (g_Engine->GetKeyState(DIK_O) && g_Engine->GetKeyState(DIK_J)) {
-		w2 -= 0.005f;
-	}
-	if (g_Engine->GetKeyState(DIK_O) && g_Engine->GetKeyState(DIK_L)) {
-		w2 += 0.005f;
-	}
 	if (g_Engine->GetMouseStateSync(0x00)) {
 		bAnim = !bAnim;
 		if (bAnim) {
@@ -125,6 +54,7 @@ void Scene::Update()
 		m_pModel1->m_nowAnimationTime += 5.0f;
 		pBGMHandle->SetPosition(m_pModel1->m_nowAnimationTime);
 	}
+
 	if (g_Engine->GetKeyState(DIK_N)) {
 		g_Engine->GetDirectionalLight()->AddRotationX(-1.0f);
 	}
@@ -133,10 +63,10 @@ void Scene::Update()
 	}
 
 	if (g_Engine->GetKeyState(DIK_G)) {
-		m_pModel1->GetBone("Hips")->m_position.x -= 0.05f;
+		m_pModel1->GetBone("Right knee")->m_rotation.x -= XMConvertToRadians(2.0f);
 	}
 	if (g_Engine->GetKeyState(DIK_H)) {
-		m_pModel1->GetBone("Hips")->m_position.x += 0.05f;
+		m_pModel1->GetBone("Right knee")->m_rotation.x += XMConvertToRadians(2.0f);
 	}
 	if (g_Engine->GetKeyState(DIK_T)) {
 		m_pModel1->m_position.y -= 0.01f;
@@ -144,9 +74,6 @@ void Scene::Update()
 	if (g_Engine->GetKeyState(DIK_Y)) {
 		m_pModel1->m_position.y += 0.01f;
 	}
-
-	//printf("x=%f, y=%f, z=%f, w=%f\n", x, y, z, w);
-	//printf("x2=%f, y2=%f, z2=%f, w2=%f\n", x2, y2, z2, w2);
 
 	if (bBoneMode) {
 		for (std::string boneName : m_pModel1->GetBoneNames()) {
@@ -161,16 +88,6 @@ void Scene::Update()
 		//m_model1.m_rotation.x = -90.0f;
 		//m_model1.m_rotation.y = 180.0f;
 	}
-
-	XMFLOAT4 a = { x, y, z, w };
-	//m_model1.UpdateBoneRotation("Hips", a);
-	//m_model1.UpdateBoneRotation("Right arm", a);
-	a = { x2, y2, z2, w2 };
-	//m_model1.UpdateBoneRotation("Right elbow", a);
-
-	//m_model1.Test();
-
-	//printf("x=%f, y=%f, z=%f\n", m_pModel1->GetBone("Hips")->m_position.x, m_pModel1->GetBone("Hips")->m_position.y, m_pModel1->GetBone("Hips")->m_position.z);
 }
 
 void Scene::Draw()
@@ -218,57 +135,11 @@ Scene::Scene()
 	m_pModel2->m_position.y = -0.2f;
 	//m_pModel2->m_bVisible = false;
 
-	x = 0.13954f;
-	y = -0.00043f;
-	z = -0.00517f;
-	w = 0.99020f;
-
-	x2 = -0.00701f;
-	y2 = 0.00789f;
-	z2 = 0.01992f;
-	w2 = 0.99975f;
-
-	/*a.x = 0.11753f;
-	a.y = 0.00093f;
-	a.z = -0.16284f;
-	a.w = -0.97963f;
-	m_model1.UpdateBoneRotation("Hips", a);
-	a.x = -0.11246f;
-	a.y = 0.03627f;
-	a.z = -0.00826f;
-	a.w = 0.99296f;
-	m_model1.UpdateBoneRotation("Spine", a);
-	a.x = 0.11456f;
-	a.y = 0.01250f;
-	a.z = -0.05481f;
-	a.w = 0.99182f;
-	m_model1.UpdateBoneRotation("Chest", a);
-	a.x = 0.48446f;
-	a.y = -0.52316f;
-	a.z = -0.44220f;
-	a.w = -0.54412f;
-	m_model1.UpdateBoneRotation("Left shoulder", a);
-	a.x = 0.10031f;
-	a.y = -0.11502f;
-	a.z = -0.23487f;
-	a.w = 0.95997f;
-	m_model1.UpdateBoneRotation("Left arm", a);
-	a.x = 0.14118f;
-	a.y = -0.03243f;
-	a.z = 0.91126f;
-	a.w = 0.38552f;
-	m_model1.UpdateBoneRotation("Left elbow", a);
-	a.x = 0.22555f;
-	a.y = -0.33024f;
-	a.z = 0.03830f;
-	a.w = 0.91575f;
-	//m_model1.UpdateBoneRotation("Left wrist", a);*/
-
 	m_pModel1->m_rotation.x = -90.0f;
 	m_pModel1->m_rotation.y = 180.0f;
 
-	pBGMHandle = g_Engine->GetSoundSystem()->LoadSound("Resource\\BGM\\VRSuya - Doodle Dance.mp3", true);
-	pBGMHandle->volume = 0.1f;
+	pBGMHandle = g_Engine->GetSoundSystem()->LoadSound("Resource\\BGM\\君色に染まる.mp3", true);
+	pBGMHandle->volume = 0.25f;
 	pBGMHandle->speed = 1.0f;
 	pBGMHandle->bLooping = true;
 	pBGMHandle->UpdateProperty();
