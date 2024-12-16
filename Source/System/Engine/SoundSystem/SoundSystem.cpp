@@ -61,13 +61,10 @@ SoundHandle* SoundSystem::LoadSound(std::string filePath, bool bPlay)
 	float freq;
 	BASS_ChannelGetAttribute(fxHandle, BASS_ATTRIB_TEMPO_FREQ, &freq);
 	SoundHandle* pHandle = new SoundHandle(fxHandle, freq);
-	pHandle->maxSoundTime = BASS_ChannelBytes2Seconds(fxHandle, BASS_ChannelGetLength(fxHandle, BASS_POS_BYTE));
-	pHandle->bPlaying = bPlay;
 
 	// 再生終了時のコールバックを設定
 	HSYNC syncHandle = BASS_ChannelSetSync(fxHandle, BASS_SYNC_END, 0, &SoundSystem::PlaybackEndCallback, pHandle);
 	if (!syncHandle) {
-		printf("aaaaaaaaaaaaaaaaaaaaaaa\n");
 		return nullptr;
 	}
 
@@ -101,17 +98,18 @@ void SoundSystem::Update()
 void SoundSystem::PlaybackEndCallback(HSYNC handle, DWORD channel, DWORD data, void* user)
 {
 	SoundHandle* soundHandle = static_cast<SoundHandle*>(user);
+	//そのサウンドがループ再生を許可していれば、再度再生
 	if (soundHandle && soundHandle->bLooping) {
 		soundHandle->PlaySound();
 	}
 }
 
 SoundHandle::SoundHandle(const UINT handle, const float freq)
-	: streamHandle(handle)
-	, defaultFrequency(freq)
-	, speed(1.0f)
-	, volume(1.0f)
-	, maxSoundTime(0.0)
+	: streamHandle(handle)		//ハンドル
+	, maxSoundTime(BASS_ChannelBytes2Seconds(handle, BASS_ChannelGetLength(handle, BASS_POS_BYTE)))	//サウンドの長さ
+	, defaultFrequency(freq)	//初期の周波数
+	, speed(1.0f)				//再生速度
+	, volume(1.0f)				//音量
 	, bPlaying(false)
 	, bLooping(false)
 {
@@ -129,16 +127,17 @@ void SoundHandle::PlaySound(bool bRestart)
 	if (streamHandle == 0)
 		return;
 
+	bPlaying = true;
 	UpdateProperty();
 
 	BASS_ChannelPlay(streamHandle, bRestart);
 
 	if (GetBassError) {
 		printf("サウンドの再生時にエラーが発生しました。エラーコード:%d\n", BASS_ErrorGetCode());
+		bPlaying = false;
 		return;
 	}
 
-	bPlaying = true;
 }
 
 //サウンドの一時停止
@@ -159,6 +158,7 @@ void SoundHandle::UpdateProperty() const
 	if (streamHandle == 0 || !bPlaying)
 		return;
 
+	//再生速度と音量を変更
 	BASS_ChannelSetAttribute(streamHandle, BASS_ATTRIB_TEMPO_FREQ, defaultFrequency * speed);
 	BASS_ChannelSetAttribute(streamHandle, BASS_ATTRIB_VOL, volume);
 }
@@ -202,6 +202,8 @@ void SoundHandle::SetPosition(double toTime) const
 void SoundHandle::Release() const
 {
 	BASS_CHANNELINFO info;
+
+	//既にサウンドが解放していれば処理を終える
 	if (streamHandle == 0 || BASS_ChannelGetInfo(streamHandle, &info))
 		return;
 

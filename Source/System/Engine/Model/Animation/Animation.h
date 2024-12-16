@@ -1,3 +1,5 @@
+//(ボーン)アニメーション情報をファイル(.hsc)から読み込む
+
 #pragma once
 #include "..\\..\\Core\\BinaryFile\\BinaryReader.h"
 #include <DirectXMath.h>
@@ -5,7 +7,7 @@
 #include <unordered_map>
 #include "..\\..\\..\\Main\\Utility.h"
 
-//ボーンごとの位置、回転
+//ボーンの位置、回転
 struct BoneAnimation
 {
 	DirectX::XMFLOAT3 position;	//位置
@@ -14,15 +16,16 @@ struct BoneAnimation
 //シェイプキー
 struct ShapeAnimation
 {
-	float time;
-	float value;
+	float time;		//フレーム時間
+	float value;	//シェイプキーの値
 };
 //フレーム
 struct AnimationFrame
 {
 	float time;		//フレーム時間
+	BoneAnimation armatureAnimation;
 	std::vector<BoneAnimation> boneAnimations;		//各ボーンの位置、回転
-	std::vector<float> shapeAnimations;	//各シェイプキーの値
+	std::vector<float> shapeAnimations;				//各シェイプキーの値(0.0f～1.0f)
 
 	AnimationFrame(float time);
 };
@@ -34,7 +37,7 @@ public:
 	Animation();
 	~Animation();
 
-	//ファイルからアニメーションをロード
+	//.hscファイルからアニメーションをロード
 	void Load(std::string animFilePath);
 
 	//指定したアニメーション時間のフレームを取得
@@ -42,8 +45,9 @@ public:
 	//フレームが最後のフレームかどうか
 	bool IsLastFrame(AnimationFrame* pAnimFrame);
 
-	//アニメーションが入っているボーン名一覧
+	//ボーン名一覧
 	std::vector<std::string> m_boneMapping;
+	//シェイプキー名一覧
 	std::vector<std::string> m_shapeNames;
 	//アニメーションのフレーム一覧
 	std::vector<AnimationFrame> m_frames;

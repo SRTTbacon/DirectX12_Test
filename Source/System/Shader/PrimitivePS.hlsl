@@ -67,7 +67,7 @@ float4 pixel(VSOutput input) : SV_TARGET
     float3 diffuse = float3(1.0f, 1.0f, 1.0f) * lightIntensity;
 
     //シャドウがかかっていれば光を減少させる (0.0f なら完全な影、1.0f なら影なし)
-    float3 lighting = ambientColor + shadowFactor * diffuse;
+    float3 lighting = float3(0.1f, 0.1f, 0.5f) + shadowFactor * diffuse;
 
     //ライティング結果とテクスチャカラーを掛け合わせる
     float4 finalColor = float4(lighting, 1.0f);

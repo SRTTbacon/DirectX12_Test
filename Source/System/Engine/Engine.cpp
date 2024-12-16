@@ -510,7 +510,7 @@ void Engine::LateUpdate()
 {
 	m_camera.Update(m_pDirectionalLight);
 
-	m_modelManager.Update(m_CurrentBackBufferIndex);
+	m_modelManager.LateUpdate(m_CurrentBackBufferIndex);
 }
 
 void Engine::ResetViewportAndScissor()

@@ -1,15 +1,20 @@
+//モデルを最適な順番で描画させるクラス
+//このクラスは、基本的にエンジンで管理するため呼び出さない
+
 #pragma once
+
 #include "Model.h"
 #include <queue>
 
 class ModelManager
 {
 public:
+	//描画させるモデルを追加
 	void AddModel(Model* pModel);
 
 	//更新
 	//深度から描画順番を決定するため、各フレームのUpdate関数の最後に実行
-	void Update(UINT backBufferIndex);
+	void LateUpdate(UINT backBufferIndex);
 
 	//深度が大きい順に影を描画
 	void RenderShadowMap(UINT backBufferIndex);

@@ -1,5 +1,7 @@
 #include "Animation.h"
 
+using namespace DirectX;
+
 Animation::Animation()
 	: m_pTempFrame(nullptr)
 {
@@ -19,29 +21,41 @@ void Animation::Load(std::string animFilePath)
 	//バイナリとして開く
 	BinaryReader br(animFilePath);
 	USHORT boneCount = br.ReadUInt16();		//アニメーションするボーン数
-	printf("boneCount = %u\n", boneCount);
 	for (USHORT i = 0; i < boneCount; i++) {
 
 		std::string boneName = br.ReadBytes(br.ReadByte());	//ボーン名
 		m_boneMapping.push_back(boneName);
 	}
 	USHORT animCount = br.ReadUInt16();		//アニメーションのフレーム数
-	printf("animCount = %u\n", animCount);
 
 	for (int i = 0; i < animCount; i++) {
 		float time = br.ReadFloat();			//フレーム時間
+
 		AnimationFrame frame(time);
+
+		//回転
+		float rotX = br.ReadFloat();
+		float rotY = br.ReadFloat();
+		float rotZ = br.ReadFloat();
+		float rotW = br.ReadFloat();
+		//初期位置からの相対位置
+		float posX = br.ReadFloat();
+		float posY = br.ReadFloat();
+		float posZ = br.ReadFloat();
+		BoneAnimation armatureBone{ XMFLOAT3(posX, posY, posZ), XMFLOAT4(rotX, rotY, rotZ, rotW) };
+		frame.armatureAnimation = armatureBone;
+
 		for (int j = 0; j < boneCount; j++) {
 			//回転
-			float rotX = br.ReadFloat();
-			float rotY = br.ReadFloat();
-			float rotZ = br.ReadFloat();
-			float rotW = br.ReadFloat();
-			//相対位置
-			float posX = br.ReadFloat();
-			float posY = br.ReadFloat();
-			float posZ = br.ReadFloat();
-			BoneAnimation bone{ DirectX::XMFLOAT3(posX, posY, posZ), DirectX::XMFLOAT4(rotX, rotY, rotZ, rotW) };
+			rotX = br.ReadFloat();
+			rotY = br.ReadFloat();
+			rotZ = br.ReadFloat();
+			rotW = br.ReadFloat();
+			//初期位置からの相対位置
+			posX = br.ReadFloat();
+			posY = br.ReadFloat();
+			posZ = br.ReadFloat();
+			BoneAnimation bone{ XMFLOAT3(posX, posY, posZ), XMFLOAT4(rotX, rotY, rotZ, rotW) };
 
 			//配列に追加
 			frame.boneAnimations.push_back(bone);
@@ -51,9 +65,9 @@ void Animation::Load(std::string animFilePath)
 	}
 
 	USHORT shapeCount = br.ReadUInt16();	//シェイプキーの数
-	printf("shapeCount = %u\n", shapeCount);
 
 	for (int i = 0; i < shapeCount; i++) {
+		//シェイプキーの名前は日本語が含まれていることがあるためShiftJISで取得 (韓国語とか中国語が含まれていると文字化け)
 		std::string shapeName = UTF8ToShiftJIS(br.ReadBytes(br.ReadByte()));
 		m_shapeNames.push_back(shapeName);		//シェイプキーの名前を保存
 		m_shapeAnimations[shapeName] = std::vector<ShapeAnimation>();
@@ -149,11 +163,18 @@ AnimationFrame* Animation::GetFrame(float nowAnimTime)
 
 	//Lerp用t (0.0f～1.0f)
 	float t = (nowAnimTime - currentFrame->time) / (nextFrame->time - currentFrame->time);
+	t = min(1.0f, t);
+	t = max(0.0f, t);
 
 	//現在のフレームと次のフレームの間を補間
 	m_pTempFrame = new AnimationFrame(nowAnimTime);
 
-	//ボーンの補間
+	BoneAnimation lerpArmatureBoneAnim{};
+	lerpArmatureBoneAnim.position = Lerp(currentFrame->armatureAnimation.position, nextFrame->armatureAnimation.position, t);
+	lerpArmatureBoneAnim.rotation = Lerp(currentFrame->armatureAnimation.rotation, nextFrame->armatureAnimation.rotation, t);
+	m_pTempFrame->armatureAnimation = lerpArmatureBoneAnim;
+
+	//ボーンの補間 (Linear)
 	for (UINT i = 0; i < currentFrame->boneAnimations.size(); i++) {
 		BoneAnimation lerpBoneAnim{};
 		lerpBoneAnim.position = Lerp(currentFrame->boneAnimations[i].position, nextFrame->boneAnimations[i].position, t);
@@ -161,7 +182,7 @@ AnimationFrame* Animation::GetFrame(float nowAnimTime)
 		m_pTempFrame->boneAnimations.push_back(lerpBoneAnim);
 	}
 
-	//シェイプキーの補間
+	//シェイプキーの補間 (Linear)
 	for (UINT i = 0; i < currentFrame->shapeAnimations.size(); i++) {
 		float shapeValue = std::lerp(currentFrame->shapeAnimations[i], nextFrame->shapeAnimations[i], t);
 		m_pTempFrame->shapeAnimations.push_back(shapeValue);

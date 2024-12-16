@@ -133,10 +133,10 @@ void Scene::Update()
 	}
 
 	if (g_Engine->GetKeyState(DIK_G)) {
-		m_pModel1->GetBone("Hips")->m_position.y -= 0.05f;
+		m_pModel1->GetBone("Hips")->m_position.x -= 0.05f;
 	}
 	if (g_Engine->GetKeyState(DIK_H)) {
-		m_pModel1->GetBone("Hips")->m_position.y += 0.05f;
+		m_pModel1->GetBone("Hips")->m_position.x += 0.05f;
 	}
 	if (g_Engine->GetKeyState(DIK_T)) {
 		m_pModel1->m_position.y -= 0.01f;
@@ -170,7 +170,7 @@ void Scene::Update()
 
 	//m_model1.Test();
 
-	printf("x=%f, y=%f, z=%f\n", m_pModel1->GetBone("Hips")->m_position.x, m_pModel1->GetBone("Hips")->m_position.y, m_pModel1->GetBone("Hips")->m_position.z);
+	//printf("x=%f, y=%f, z=%f\n", m_pModel1->GetBone("Hips")->m_position.x, m_pModel1->GetBone("Hips")->m_position.y, m_pModel1->GetBone("Hips")->m_position.z);
 }
 
 void Scene::Draw()
@@ -181,7 +181,7 @@ void Scene::Draw()
 Scene::Scene() 
 {
 	m_pModel1 = g_Engine->AddCharacter(modelFile1);
-	//m_pModel1->AddAnimation(g_Engine->GetAnimation("Resource\\Test3.hcs"));
+	m_pModel1->AddAnimation(g_Engine->GetAnimation("Resource\\Test.hcs"));
 	m_pModel1->m_animationSpeed = 1.0f;
 
 	XMFLOAT4 a = {0.0f, 0.0f, 0.0f, 0.0f};

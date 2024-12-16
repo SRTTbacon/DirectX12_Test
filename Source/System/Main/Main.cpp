@@ -5,12 +5,9 @@
 HINSTANCE g_hInst;
 HWND g_hWnd = NULL;
 
-LARGE_INTEGER str;
-std::list <LONGLONG> strTime;
-std::list <LARGE_INTEGER> mTimes;
-LONGLONG strTime_sum = 0;
-LONGLONG oldCount = 0;
-LONGLONG freq = 0;
+//FPS計算用の変数
+static int frameCount = 0;
+static float elapsedTime = 0.0f;
 
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -87,24 +84,17 @@ static void InitWindow(const TCHAR* appName)
 	}
 }
 
-//#include <time.h>
-static double GetFPS()
-{
-	double fps_result;
-	LARGE_INTEGER str;
-	QueryPerformanceCounter(&str);
-	strTime_sum = (str.QuadPart - oldCount) + strTime_sum - strTime.back();
-	strTime.push_front(str.QuadPart - oldCount);
-	strTime.pop_back();
-	oldCount = str.QuadPart;
-	QueryPerformanceFrequency(&str);
-	freq = str.QuadPart;
-	fps_result = freq * 1000.0 / strTime_sum;
-	return (double)fps_result;
-}
 static void MainLoop()
 {
 	MSG msg = {};
+
+	LARGE_INTEGER frequency;	//パフォーマンス周波数
+	LARGE_INTEGER prevTime;		//前フレームの時間
+	LARGE_INTEGER currentTime;	//現在の時間
+
+	QueryPerformanceFrequency(&frequency);
+	QueryPerformanceCounter(&prevTime);
+
 	for (;;)
 	{
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
@@ -121,15 +111,30 @@ static void MainLoop()
 		}
 		else
 		{
-			clock_t start = clock();
+			// 現在の時間を取得
+			QueryPerformanceCounter(&currentTime);
+			float deltaTime = static_cast<float>(currentTime.QuadPart - prevTime.QuadPart) / frequency.QuadPart;
+			prevTime = currentTime;
+
+			// 経過時間を加算
+			elapsedTime += deltaTime;
+			frameCount++;
+
+			// 1秒を超えたらFPSを計算
+			if (elapsedTime >= 1.0f)
+			{
+				int fps = frameCount;
+				printf("%d[FPS]\n", fps);
+				frameCount = 0;
+				elapsedTime = 0.0f;
+			}
+
 			g_Engine->Update();
 			g_Scene->Update();
 			g_Engine->LateUpdate();
 			g_Engine->BeginRender();
 			g_Scene->Draw();
 			g_Engine->EndRender();
-			clock_t end = clock();
-			const double time = static_cast<double>(end - start) / CLOCKS_PER_SEC * 1000.0;
 			//printf("%lf[FPS]\n", time);
 		}
 	}
@@ -150,17 +155,6 @@ void StartApp(const TCHAR* appName)
 	//シーン初期化
 	g_Scene = new Scene();
 	if (!g_Scene->Init())
-	{
-		return;
-	}
-
-	if (QueryPerformanceCounter(&str))
-	{
-		oldCount = str.QuadPart;
-		std::list <LONGLONG> InitstrTime(1000);
-		strTime = InitstrTime;
-	}
-	else
 	{
 		return;
 	}

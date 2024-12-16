@@ -77,6 +77,10 @@ public: //ゲッター関数
     }
 
 public: //パブリック変数
+    std::unordered_map<std::string, XMMATRIX> finalBoneTransforms;
+
+    Bone m_armatureBone;
+
     float m_animationSpeed;
     float m_nowAnimationTime;                               //現在のアニメーション時間
 
@@ -85,8 +89,8 @@ public: //パブリック変数
     float yFlip = 1.0f;
     float wFlip = 1.0f;
 
+
     void CalculateBoneTransforms(const aiNode* node, const XMMATRIX& parentTransform);
-    std::unordered_map<std::string, XMMATRIX> finalBoneTransforms;
 
 private:
     //シェーダーに渡す頂点情報

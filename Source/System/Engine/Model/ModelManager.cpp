@@ -5,7 +5,7 @@ void ModelManager::AddModel(Model* pModel)
 	m_models.push_back(pModel);
 }
 
-void ModelManager::Update(UINT backBufferIndex)
+void ModelManager::LateUpdate(UINT backBufferIndex)
 {
     //各オブジェクトの描画順番を計算
     for (Model* pModel : m_models) {

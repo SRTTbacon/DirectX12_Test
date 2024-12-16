@@ -3,6 +3,7 @@
 Character::Character(const std::string fbxFile, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, DirectionalLight* pDirectionalLight,
     ID3D12Resource* pShadowMapBuffer)
     : Model(pDevice, pCommandList, pCamera, pDirectionalLight, pShadowMapBuffer)
+    , m_armatureBone(Bone("Armature", XMMatrixIdentity()))
     , m_animationSpeed(1.0f)
     , m_nowAnimationTime(0.0f)
     , m_nowAnimationIndex(-1)
@@ -727,6 +728,18 @@ void Character::UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix)
     if (m_bones[boneIndex].GetParentBoneIndex() != UINT32_MAX) {
         parentTransform = m_boneInfos[m_bones[boneIndex].GetParentBoneIndex()];
     }
+    else {
+        /*XMMATRIX armatureScale = XMMatrixScaling(m_armatureBone.m_scale.x, m_armatureBone.m_scale.y, m_armatureBone.m_scale.z);
+        XMVECTOR armatureRotVec = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+        XMMATRIX armatureRot = XMMatrixRotationQuaternion(armatureRotVec);
+
+        XMMATRIX armaturePos = XMMatrixTranslation(m_armatureBone.m_position.x, m_armatureBone.m_position.z, m_armatureBone.m_position.y);
+
+        XMMATRIX boneTransform = armatureScale * armatureRot * armaturePos;
+
+        //親のワールド変換とローカル変換を合成
+        parentTransform = XMMatrixTranspose(boneTransform);*/
+    }
 
     //ボーンの最終的な位置、回転、スケールを決定
 
@@ -846,6 +859,9 @@ void Character::UpdateAnimation()
     if (!pFrame) {
         return;
     }
+
+    m_armatureBone.m_position = pFrame->armatureAnimation.position;
+    m_armatureBone.m_rotation = pFrame->armatureAnimation.rotation;
 
     //ボーンアニメーション
     for (UINT i = 0; i < pFrame->boneAnimations.size(); i++) {
