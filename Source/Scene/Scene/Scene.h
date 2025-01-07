@@ -1,22 +1,23 @@
 #pragma once
 #include "..\\..\\System\\Engine\\Engine.h"
+#include "..\\..\\System\\Engine\\Model\\Convert\\ConvertFromFBX.h"
 #include <DirectXMath.h>
 
 class Scene
 {
 public:
-	bool Init(); // 初期化
+	bool Init(); //初期化
 
-	void Update(); // 更新処理
-	void Draw(); // 描画処理
+	void Update(); //更新処理
+	void Draw(); //描画処理
 
 	Scene();
+	~Scene();
 
 private:
-	Character* m_pModel1;
+	std::vector<Character*> m_pModels;
 	Model* m_pModel2;
-
-	SoundHandle* pBGMHandle;
+	SoundHandle* m_pBGMHandle;
 
 	std::vector<Model*> m_spheres;
 

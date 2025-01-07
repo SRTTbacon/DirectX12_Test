@@ -21,8 +21,12 @@
   <ItemGroup>
     <ClCompile Include="Source\Scene\Scene\Scene.cpp" />
     <ClCompile Include="Source\System\Engine\Camera\Camera.cpp" />
+    <ClCompile Include="Source\System\Engine\Core\BinaryFile\BinaryCompression.cpp" />
     <ClCompile Include="Source\System\Engine\Core\BinaryFile\BinaryReader.cpp" />
+    <ClCompile Include="Source\System\Engine\Core\BinaryFile\BinaryWriter.cpp" />
     <ClCompile Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap2.cpp" />
+    <ClCompile Include="Source\System\Engine\Core\Hash\xxhash.cpp" />
+    <ClCompile Include="Source\System\Engine\Core\Raytracing\RaytracingProcess.cpp" />
     <ClCompile Include="Source\System\Engine\Engine.cpp" />
     <ClCompile Include="Source\System\Engine\Core\PipelineState\PipelineState.cpp" />
     <ClCompile Include="Source\System\Engine\Core\RootSignature\RootSignature.cpp" />
@@ -34,7 +38,13 @@
     <ClCompile Include="Source\System\Engine\Model\Animation\Animation.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Animation\AnimationManager.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Bone\Bone.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\BulletPhysics.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicAndBoneMergeMotionState.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicMotionState.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\MotionState\KinematicMotionState.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\RigidBody.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Character.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\Convert\ConvertFromFBX.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Model.cpp" />
     <ClCompile Include="Source\System\Engine\Model\ModelManager.cpp" />
     <ClCompile Include="Source\System\Engine\SoundSystem\SoundSystem.cpp" />
@@ -46,8 +56,12 @@
     <ClInclude Include="Source\Scene\Scene\Scene.h" />
     <ClInclude Include="Source\System\ComPtr.h" />
     <ClInclude Include="Source\System\Engine\Camera\Camera.h" />
+    <ClInclude Include="Source\System\Engine\Core\BinaryFile\BinaryCompression.h" />
     <ClInclude Include="Source\System\Engine\Core\BinaryFile\BinaryReader.h" />
+    <ClInclude Include="Source\System\Engine\Core\BinaryFile\BinaryWriter.h" />
     <ClInclude Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap2.h" />
+    <ClInclude Include="Source\System\Engine\Core\Hash\xxhash.h" />
+    <ClInclude Include="Source\System\Engine\Core\Raytracing\RaytracingProcess.h" />
     <ClInclude Include="Source\System\Engine\Engine.h" />
     <ClInclude Include="Source\System\Engine\Core\PipelineState\PipelineState.h" />
     <ClInclude Include="Source\System\Engine\Core\RootSignature\RootSignature.h" />
@@ -59,7 +73,15 @@
     <ClInclude Include="Source\System\Engine\Model\Animation\Animation.h" />
     <ClInclude Include="Source\System\Engine\Model\Animation\AnimationManager.h" />
     <ClInclude Include="Source\System\Engine\Model\Bone\Bone.h" />
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\BulletPhysics.h" />
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\DefaultMotionState.h" />
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicAndBoneMergeMotionState.h" />
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicMotionState.h" />
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\KinematicMotionState.h" />
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\MotionState.h" />
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\RigidBody.h" />
     <ClInclude Include="Source\System\Engine\Model\Character.h" />
+    <ClInclude Include="Source\System\Engine\Model\Convert\ConvertFromFBX.h" />
     <ClInclude Include="Source\System\Engine\Model\Model.h" />
     <ClInclude Include="Source\System\Engine\Model\ModelManager.h" />
     <ClInclude Include="Source\System\Engine\SoundSystem\SoundSystem.h" />
@@ -116,6 +138,9 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vert</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Source\System\Shader\RayTracingHelper.hlsli" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -204,15 +229,16 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>Library\Bass\Include;Library\DirectXTex\Include;Library\assimp\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Library\BulletPhysics\Include;Library\Zstandard\Include;Library\Bass\Include;Library\DirectXTex\Include;Library\assimp\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\assimp\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>F:\Projects\DirectX12_Test\Library\BulletPhysics\lib;Library\Zstandard\lib\$(Configuration);Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\PhysX\$(Configuration);Library\assimp\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <DelayLoadDLLs>assimp-vc143-mtd.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll</DelayLoadDLLs>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;winmm.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;winmm.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;BulletCollision_x64_debug.lib;BulletDynamics_x64_debug.lib;BulletSoftBody_x64_debug.lib;LinearMath_x64_debug.lib;libzstd_static.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -223,16 +249,16 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>F:\Projects\DirectX12_Test\Library\Bass\Include;Library\DirectXTex\Include;Library\assimp\Include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Library\Zstandard\Include;Library\Bass\Include;Library\DirectXTex\Include;LibraryBulletPhysics\Include;Library\assimp\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>F:\Projects\DirectX12_Test\Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\assimp\$(Configuration);</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>F:\Projects\DirectX12_Test\Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\assimp\$(Configuration)</AdditionalLibraryDirectories>
       <DelayLoadDLLs>assimp-vc143-mt.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll</DelayLoadDLLs>
-      <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

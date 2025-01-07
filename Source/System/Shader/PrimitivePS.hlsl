@@ -1,15 +1,18 @@
 #define BIAS 0.0001f     //シャギー抑制のバイアス値
+#define SHADOWSIZE 8192.0f
 
-SamplerState texSampler : register(s0); //テクスチャ用サンプラー
+SamplerState texSampler : register(s0);         //テクスチャ用サンプラー
 SamplerComparisonState shadowSampler : register(s1); //テクスチャ用サンプラー
-Texture2D<float> shadowMap : register(t1); //シャドウマップ
+Texture2D<float4> _MainTex : register(t0);      //テクスチャ
+Texture2D<float4> _NormalMap : register(t1);    //ノーマルマップ
+Texture2D<float> shadowMap : register(t2);      //シャドウマップ
 
 //定数バッファ
 cbuffer LightBuffer : register(b0)
 {
-    float3 lightDir;        //ライトの方向
-    float3 ambientColor;
-    float3 diffuseColor;
+    float4 lightDir;        //ライトの方向
+    float4 ambientColor;
+    float4 diffuseColor;
 };
 
 struct VSOutput
@@ -28,7 +31,7 @@ float ShadowCalculation(float4 shadowPos)
     //影の柔らかさを決定するための分割数(サンプリング数)
     int numSamples = 4; //サンプル数 (多いほど滑らかだが重い)
     float total = 0.0f;
-    float2 texelSize = float2(1.0f / 8192.0f, 1.0f / 8192.0f);
+    float2 texelSize = float2(1.0f / SHADOWSIZE, 1.0f / SHADOWSIZE);
     
     //シャドウマップ上でのサンプリング
     for (int i = -numSamples / 2; i < numSamples / 2; ++i)
@@ -59,18 +62,15 @@ float ShadowCalculation(float4 shadowPos)
 float4 pixel(VSOutput input) : SV_TARGET
 {
     //ライトの方向を逆に
-    float lightIntensity = saturate(dot(input.normal, -lightDir));
+    float lightIntensity = saturate(dot(input.normal, -lightDir.xyz));
 
-    // シャドウの計算
+    //シャドウの計算
     float shadowFactor = ShadowCalculation(input.shadowPos);
     
-    float3 diffuse = float3(1.0f, 1.0f, 1.0f) * lightIntensity;
+    float4 diffuse = diffuseColor * lightIntensity;
 
     //シャドウがかかっていれば光を減少させる (0.0f なら完全な影、1.0f なら影なし)
-    float3 lighting = float3(0.1f, 0.1f, 0.5f) + shadowFactor * diffuse;
+    float4 lighting = ambientColor + shadowFactor * diffuse;
 
-    //ライティング結果とテクスチャカラーを掛け合わせる
-    float4 finalColor = float4(lighting, 1.0f);
-
-    return finalColor;
+    return lighting;
 }

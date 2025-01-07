@@ -20,14 +20,37 @@ void Animation::Load(std::string animFilePath)
 {
 	//バイナリとして開く
 	BinaryReader br(animFilePath);
+	char* headerBuf = br.ReadBytes(br.ReadByte());
+	std::string header = headerBuf;
+	delete[] headerBuf;
+	if (header != ANIMATION_HEADER) {
+		br.Close();
+		return;
+	}
+
 	USHORT boneCount = br.ReadUInt16();		//アニメーションするボーン数
 	for (USHORT i = 0; i < boneCount; i++) {
 
-		std::string boneName = br.ReadBytes(br.ReadByte());	//ボーン名
+		char* boneNameBuf = br.ReadBytes(br.ReadByte());
+		std::string boneName = boneNameBuf;	//ボーン名
+		delete[] boneNameBuf;
 		m_boneMapping.push_back(boneName);
 	}
 	USHORT animCount = br.ReadUInt16();		//アニメーションのフレーム数
 
+	//アニメーションデータは圧縮されているため解凍
+	UINT animBufferOriginalSize = br.ReadUInt32();
+	UINT animBufferCompressedSize = br.ReadUInt32();
+	char* compressedBuffer = br.ReadBytes(animBufferCompressedSize);
+
+	//圧縮されているボーン情報を解凍
+	std::vector<char> animBuffer;
+	BinaryDecompress(animBuffer, animBufferOriginalSize, compressedBuffer, animBufferCompressedSize);
+
+	delete[] compressedBuffer;
+
+	br.Close();
+	br = BinaryReader(animBuffer);
 	for (int i = 0; i < animCount; i++) {
 		float time = br.ReadFloat();			//フレーム時間
 
@@ -54,7 +77,7 @@ void Animation::Load(std::string animFilePath)
 			//初期位置からの相対位置
 			posX = br.ReadFloat();
 			posY = br.ReadFloat();
-			posZ = br.ReadFloat();
+			posZ = -br.ReadFloat();
 			BoneAnimation bone{ XMFLOAT3(posX, posY, posZ), XMFLOAT4(rotX, rotY, rotZ, rotW) };
 
 			//配列に追加
@@ -68,7 +91,10 @@ void Animation::Load(std::string animFilePath)
 
 	for (int i = 0; i < shapeCount; i++) {
 		//シェイプキーの名前は日本語が含まれていることがあるためShiftJISで取得 (韓国語とか中国語が含まれていると文字化け)
-		std::string shapeName = UTF8ToShiftJIS(br.ReadBytes(br.ReadByte()));
+		char* shapeNameBuf = br.ReadBytes(br.ReadByte());
+		std::string shapeName = UTF8ToShiftJIS(shapeNameBuf);
+		delete[] shapeNameBuf;
+
 		m_shapeNames.push_back(shapeName);		//シェイプキーの名前を保存
 		m_shapeAnimations[shapeName] = std::vector<ShapeAnimation>();
 
@@ -201,5 +227,6 @@ bool Animation::IsLastFrame(AnimationFrame* pAnimFrame)
 
 AnimationFrame::AnimationFrame(float time)
 	: time(time)
+	, armatureAnimation(BoneAnimation())
 {
 }

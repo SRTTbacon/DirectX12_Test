@@ -1,18 +1,25 @@
 #include "BinaryReader.h"
 
-//いろんな型のバイト数
-constexpr DWORD DOUBLE64BYTE = 8;	//doubleやlong longなど
-constexpr DWORD INT32BYTE = 4;		//intやfloatなど
-constexpr DWORD INT16BYTE = 2;		//主にshort
-constexpr DWORD INT8BYTE = 1;		//主にchar
-
-BinaryReader::BinaryReader(std::string filePath)
+BinaryReader::BinaryReader(const std::string& filePath)
+	: bMemory(false)
 {
 	hFile = CreateFileA(filePath.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 
 	if (hFile == INVALID_HANDLE_VALUE) {
 		return;
 	}
+
+	buffer.resize(DEFAULT_BUFFER_SIZE);
+	FillBuffer();
+}
+
+BinaryReader::BinaryReader(std::vector<char>& buffer)
+	: bMemory(true)
+	, hFile(nullptr)
+{
+	this->buffer = buffer;
+	bufferSize = buffer.size();
+	bufferIndex = 0;
 }
 
 BinaryReader::~BinaryReader()
@@ -23,160 +30,208 @@ BinaryReader::~BinaryReader()
 	Close();
 }
 
-//ファイルから8バイトだけ読み取り、double型に入れる
-double BinaryReader::ReadDouble() const
+DirectX::XMMATRIX BinaryReader::ReadMatrix()
 {
-	if (hFile == nullptr || hFile == INVALID_HANDLE_VALUE) {
-		return 0.0;
+	DirectX::XMMATRIX matrix = DirectX::XMMatrixIdentity();
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			matrix.r[i].m128_f32[j] = ReadFloat();
+		}
 	}
-	char buf[DOUBLE64BYTE]{};
-	DWORD dwActualRead;
-	int rc = ReadFile(hFile, buf, DOUBLE64BYTE, &dwActualRead, NULL);
-	if (rc == 0 || DOUBLE64BYTE != dwActualRead) {
-		return 0.0;
-	}
-	double double64;
-	memcpy(&double64, &buf, DOUBLE64BYTE);
-	return double64;
+
+	return matrix;
+}
+
+//ファイルから8バイトだけ読み取り、double型に入れる
+double BinaryReader::ReadDouble()
+{
+	return Read<double>();
 }
 //ファイルから4バイトだけ読み取り、float型に入れる
-float BinaryReader::ReadFloat() const
+float BinaryReader::ReadFloat()
 {
-	if (hFile == nullptr || hFile == INVALID_HANDLE_VALUE) {
-		return 0.0f;
-	}
-	char buf[INT32BYTE]{};
-	DWORD dwActualRead;
-	int rc = ReadFile(hFile, buf, INT32BYTE, &dwActualRead, NULL);
-	if (rc == 0 || INT32BYTE != dwActualRead) {
-		return 0.0f;
-	}
-	float float32;
-	memcpy(&float32, &buf, INT32BYTE);
-	return float32;
+	return Read<float>();
 }
 //ファイルから4バイトだけ読み取り、int型に入れる
-int BinaryReader::ReadInt32() const
+int BinaryReader::ReadInt32()
 {
-	if (hFile == nullptr || hFile == INVALID_HANDLE_VALUE) {
-		return -1;
-	}
-	char buf[INT32BYTE]{};
-	DWORD dwActualRead;
-	int rc = ReadFile(hFile, buf, INT32BYTE, &dwActualRead, NULL);
-	if (rc == 0 || INT32BYTE != dwActualRead) {
-		return -1;
-	}
-	int int32;
-	memcpy(&int32, &buf, INT32BYTE);
-	return int32;
+	return Read<int>();
 }
 //ファイルから4バイトだけ読み取り、unsigned int型に入れる
-unsigned int BinaryReader::ReadUInt32() const
+UINT BinaryReader::ReadUInt32()
 {
-	if (hFile == nullptr || hFile == INVALID_HANDLE_VALUE) {
-		return 0;
-	}
-	char buf[INT32BYTE]{};
-	DWORD dwActualRead;
-	int rc = ReadFile(hFile, buf, INT32BYTE, &dwActualRead, NULL);
-	if (rc == 0 || INT32BYTE != dwActualRead) {
-		return 0;
-	}
-	unsigned int uint32;
-	memcpy(&uint32, &buf, INT32BYTE);
-	return uint32;
+	return Read<UINT>();
 }
 //ファイルから2バイトだけ読み取り、unsigned short型に入れる
-unsigned short BinaryReader::ReadUInt16() const
+USHORT BinaryReader::ReadUInt16()
 {
-	if (hFile == nullptr || hFile == INVALID_HANDLE_VALUE) {
-		return 0;
-	}
-	char buf[INT16BYTE]{};
-	DWORD dwActualRead;
-	int rc = ReadFile(hFile, buf, INT16BYTE, &dwActualRead, NULL);
-	if (rc == 0 || INT16BYTE != dwActualRead) {
-		return 0;
-	}
-	unsigned short int16;
-	memcpy(&int16, &buf, INT16BYTE);
-	return int16;
+	return Read<USHORT>();
 }
 //ファイルから2バイトだけ読み取り、short型に入れる
-short BinaryReader::ReadInt16() const
+short BinaryReader::ReadInt16()
 {
-	if (hFile == nullptr || hFile == INVALID_HANDLE_VALUE) {
-		return -1;
-	}
-	char buf[INT16BYTE]{};
-	DWORD dwActualRead;
-	int rc = ReadFile(hFile, buf, INT16BYTE, &dwActualRead, NULL);
-	if (rc == 0 || INT16BYTE != dwActualRead) {
-		return -1;
-	}
-	short int16;
-	memcpy(&int16, &buf, INT16BYTE);
-	return int16;
+	return Read<short>();
 }
 //ファイルから1バイトだけ読み取り、unsigned char型に入れる
-unsigned char BinaryReader::ReadByte() const
+unsigned char BinaryReader::ReadByte()
 {
-	if (hFile == nullptr || hFile == INVALID_HANDLE_VALUE) {
-		return 0;
+	if (bufferIndex >= bufferSize) {
+		if (!FillBuffer()) {
+			return 0x00;
+		}
 	}
-	char buf[1]{};
-	DWORD dwActualRead;
-	int rc = ReadFile(hFile, buf, INT8BYTE, &dwActualRead, NULL);
-	if (rc == 0 || INT8BYTE != dwActualRead) {
-		return 0;
+	return buffer[bufferIndex++];
+}
+char BinaryReader::ReadSByte()
+{
+	if (bufferIndex >= bufferSize) {
+		if (!FillBuffer()) {
+			return 0x00;
+		}
 	}
-	unsigned char int8;
-	memcpy(&int8, &buf, INT8BYTE);
-	return int8;
+	return (char)buffer[bufferIndex++];
+}
+bool BinaryReader::ReadBoolean()
+{
+	if (bufferIndex >= bufferSize) {
+		if (!FillBuffer()) {
+			return false;
+		}
+	}
+	return buffer[bufferIndex++] != 0;
 }
 //ファイルからreadsizeだけ読み取り、char*型に入れる
-char* BinaryReader::ReadBytes(int readsize) const
+char* BinaryReader::ReadBytes(UINT readSize)
 {
-	if (hFile == nullptr || hFile == INVALID_HANDLE_VALUE) {
-		return nullptr;
-	}
-	char* buf = (char*)malloc(static_cast<size_t>(readsize) + 1);
-	DWORD dwActualRead;
-	int rc = ReadFile(hFile, buf, readsize, &dwActualRead, NULL);
-	if (rc == 0 || readsize != (int)dwActualRead) {
-		return nullptr;
-	}
-	buf[readsize] = '\0';
-	return buf;
+	if (bufferIndex + readSize > bufferSize) {
+		if (bMemory) {
+			char* temp = new char[1];
+			return temp;
+		}
+
+		//残りのデータが足りない場合はバッファを補充
+        size_t remaining = bufferSize - bufferIndex;
+        std::vector<char> tempBuffer(readSize);
+        std::memcpy(tempBuffer.data(), &buffer[bufferIndex], remaining);
+
+        if (!FillBuffer()) {
+            //バッファ補充失敗 -> 読み取れる分だけ返す
+            char* partialData = new char[remaining + 1];
+            std::memcpy(partialData, tempBuffer.data(), remaining);
+			partialData[remaining] = '\0';
+			bufferIndex = bufferSize;
+			return partialData;
+        }
+
+        //残りデータと補充後のデータを統合
+        size_t toRead = readSize - remaining;
+        if (toRead > bufferSize) {
+            //リクエストされたサイズが補充後のバッファサイズを超える場合
+            toRead = bufferSize;
+        }
+
+        std::memcpy(tempBuffer.data() + remaining, buffer.data(), toRead);
+        char* result = new char[readSize + 1];
+        std::memcpy(result, tempBuffer.data(), readSize);
+		result[readSize] = '\0';
+		bufferIndex = toRead; //新しいバッファの位置を調整
+		return result;
+    }
+
+    //バッファ内で収まる場合
+    char* result = new char[readSize + 1];
+    std::memcpy(result, &buffer[bufferIndex], readSize);
+	result[readSize] = '\0';
+	//printf("ReadBytes = %s\n", result);
+    bufferIndex += readSize;
+    return result;
 }
 //ファイルからreadsizeだけ読み取り、unsigned char*型に入れる
-unsigned char* BinaryReader::ReadUBytes(int readsize) const
+BYTE* BinaryReader::ReadUBytes(int readsize)
 {
-	if (hFile == nullptr || hFile == INVALID_HANDLE_VALUE) {
-		return nullptr;
+	if (bufferIndex + readsize > bufferSize) {
+		if (bMemory) {
+			BYTE* temp = new BYTE[1];
+			return temp;
+		}
+
+		//残りのデータが足りない場合はバッファを補充
+		size_t remaining = bufferSize - bufferIndex;
+		std::vector<uint8_t> tempBuffer(readsize);
+		std::memcpy(tempBuffer.data(), &buffer[bufferIndex], remaining);
+
+		if (!FillBuffer()) {
+			//バッファ補充失敗 -> 読み取れる分だけ返す
+			BYTE* partialData = new BYTE[remaining];
+			std::memcpy(partialData, tempBuffer.data(), remaining);
+			bufferIndex = bufferSize; //末端
+			return partialData;
+		}
+
+		//残りデータと補充後のデータを統合
+		std::memcpy(tempBuffer.data() + remaining, buffer.data(), readsize - remaining);
+		BYTE* result = new BYTE[readsize];
+		std::memcpy(result, tempBuffer.data(), readsize);
+		bufferIndex = readsize - remaining; //新しいバッファの位置を調整
+		return result;
 	}
-	unsigned char* buf = (unsigned char*)malloc(readsize);
-	DWORD dwActualRead;
-	int rc = ReadFile(hFile, buf, readsize, &dwActualRead, NULL);
-	if (rc == 0 || readsize != (int)dwActualRead) {
-		return nullptr;
-	}
-	return buf;
+
+	//バッファ内で収まる場合
+	BYTE* result = new BYTE[readsize];
+	std::memcpy(result, &buffer[bufferIndex], readsize);
+	bufferIndex += readsize;
+	return result;
 }
-//指定した位置からseekLengthバイトだけ進める
-unsigned long BinaryReader::Seek(SetSeek seekMode, int seekLength) const
+//現在の位置からseekLengthバイトだけ進める
+void BinaryReader::Seek(UINT seekLength)
 {
-	if (hFile == nullptr || hFile == INVALID_HANDLE_VALUE) {
-		return 0;
+	if (hFile == INVALID_HANDLE_VALUE && !bMemory) {
+		return;
 	}
-	return SetFilePointer(hFile, seekLength, NULL, seekMode);
+
+	size_t bytesRemaining = bufferSize - bufferIndex;
+
+	if (bytesRemaining < seekLength) {
+		if (bMemory) {
+			return;
+		}
+
+		//バッファを補充
+		if (!FillBuffer()) {
+			return;
+		}
+
+		//インデックスを更新
+		bufferIndex = seekLength - bytesRemaining;
+	}
+	else {
+		bufferIndex += seekLength;
+	}
 }
 //バイナリファイルを閉じる
-void BinaryReader::Close() const
+void BinaryReader::Close()
 {
-	if (hFile == nullptr || hFile == INVALID_HANDLE_VALUE) {
+	if (hFile == INVALID_HANDLE_VALUE || bMemory) {
 		return;
 	}
 	CloseHandle(hFile);
+	hFile = nullptr;
+}
+
+bool BinaryReader::FillBuffer()
+{
+	if (hFile == INVALID_HANDLE_VALUE || bMemory) {
+		return false;
+	}
+
+	DWORD bytesRead = 0;
+	BOOL success = ReadFile(hFile, buffer.data(), DEFAULT_BUFFER_SIZE, &bytesRead, NULL);
+	if (!success || bytesRead == 0) {
+		printf("ErrorReadFile\n");
+		return false; //ファイルの終端
+	}
+
+	bufferIndex = 0;
+	bufferSize = bytesRead;
+	return true;
 }

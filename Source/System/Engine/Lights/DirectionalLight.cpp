@@ -22,10 +22,10 @@ void DirectionalLight::Update()
 
 	SetPosition(storeVector.x, storeVector.y, storeVector.z);
 
-	XMStoreFloat3(&m_lightBuffer.lightDirection, lightDirection);
+	XMStoreFloat4(&m_lightBuffer.lightDirection, lightDirection);
 
-	m_lightBuffer.ambientColor = XMFLOAT3(0.2f, 0.2f, 0.2f);
-	m_lightBuffer.diffuseColor = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	m_lightBuffer.ambientColor = XMFLOAT4(0.0f, 0.0f, 0.5f, 1.0f);
+	m_lightBuffer.diffuseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	XMMATRIX lightMatrix = GetViewMatrix();
 	m_lightViewProj = lightMatrix * XMMatrixOrthographicLH(50, 50, 0.1f, m_shadowDistance);

@@ -1,9 +1,15 @@
 #pragma once
 
-#include <regex>
-#include <Windows.h>
+#include <string>
 #include <cmath>
+#include <algorithm>
+#include <Windows.h>
 #include <DirectXMath.h>
+#include <vector>
+
+#include "..\\Engine\\Core\\Hash\\xxhash.h"
+
+constexpr const UINT HASH_SAMPLERATE = 10;
 
 extern std::string UTF8ToShiftJIS(std::string utf8Str);
 
@@ -20,3 +26,15 @@ extern DirectX::XMFLOAT4 Lerp(const DirectX::XMFLOAT4& a, const DirectX::XMFLOAT
 
 //ファイルパスから拡張子を抽出
 extern std::string GetFileExtension(const std::string& filePath);
+
+//stringからwstringへの変換
+extern std::wstring GetWideString(const std::string& str);
+extern std::string GetNarrowString(const std::wstring& str);
+
+//ファイル内容から一意のIDを生成
+extern UINT GenerateIDFromFile(const std::string& filePath);
+extern UINT GenerateIDFromFile(const std::wstring& filePath);
+extern UINT GenerateIDFromFile (const std::vector<char>& buffer);
+
+//RGBAからUINTへ変換
+extern UINT ColorToUINT(float r, float g, float b, float a = 1.0f);

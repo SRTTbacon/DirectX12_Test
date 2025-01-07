@@ -4,9 +4,9 @@
 
 struct LightBuffer
 {
-	DirectX::XMFLOAT3 lightDirection;
-	DirectX::XMFLOAT3 ambientColor;
-	DirectX::XMFLOAT3 diffuseColor;
+	DirectX::XMFLOAT4 lightDirection;
+	DirectX::XMFLOAT4 ambientColor;
+	DirectX::XMFLOAT4 diffuseColor;
 };
 
 class DirectionalLight : public LightTransform

@@ -41,8 +41,8 @@ void ZShadow::BeginMapping()
     m_pCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     //ルートシグネチャとパイプラインステートを設定
-    m_pCommandList->SetPipelineState(m_pShadowPipelineState->GetPipelineState());
     m_pCommandList->SetGraphicsRootSignature(m_pShadowRootSignature->GetRootSignature());
+    m_pCommandList->SetPipelineState(m_pShadowPipelineState->GetPipelineState());
 }
 
 void ZShadow::CreateBuffer()
@@ -78,7 +78,7 @@ void ZShadow::CreateBuffer()
     );
     if (FAILED(hr))
     {
-        printf("シャドウマップ用深度バッファのリソースを作成に失敗しました。\n");
+        printf("シャドウマップ用深度バッファのリソースを作成に失敗しました。%ld\n", hr);
         return;
     }
 

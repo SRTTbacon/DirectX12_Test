@@ -29,7 +29,7 @@ void ModelManager::LateUpdate(UINT backBufferIndex)
     }
 }
 
-void ModelManager::RenderShadowMap(UINT backBufferIndex)
+void ModelManager::RenderShadowMap(UINT backBufferIndex, bool bRenderShadow)
 {
     m_sortedOpaqueModels.clear();
     m_sortedTransparentModels.clear();
@@ -39,7 +39,8 @@ void ModelManager::RenderShadowMap(UINT backBufferIndex)
         Model* pModel = m_opaqueModels.top().second;
         m_opaqueModels.pop();
 
-        pModel->RenderShadowMap(backBufferIndex);
+        if (bRenderShadow)
+            pModel->RenderShadowMap(backBufferIndex);
 
         m_sortedOpaqueModels.push_back(pModel);
     }
@@ -48,7 +49,8 @@ void ModelManager::RenderShadowMap(UINT backBufferIndex)
         Model* pModel = m_transparentModels.top().second;
         m_transparentModels.pop();
 
-        pModel->RenderShadowMap(backBufferIndex);
+        if (bRenderShadow)
+            pModel->RenderShadowMap(backBufferIndex);
 
         m_sortedTransparentModels.push_back(pModel);
     }

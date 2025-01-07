@@ -57,23 +57,23 @@ public:
 	BYTE GetMouseStateSync(const BYTE keyCode);
 
 private:
-	// インプットの生成
+	//インプットの生成
 	HRESULT CreateInput();
-	// キーデバイスの生成
+	//キーデバイスの生成
 	HRESULT CreateKey();
-	// キーフォーマットのセット
+	//キーフォーマットのセット
 	HRESULT SetKeyFormat();
-	// キーの協調レベルのセット
+	//キーの協調レベルのセット
 	HRESULT SetKeyCooperative();
 	bool CreateMouseState();
 
-	// ウィンドウ
+	//ウィンドウ
 	Window* win;
-	// 参照結果
+	//参照結果
 	HRESULT result;
-	// インプット
+	//インプット
 	LPDIRECTINPUT8 input;
-	// インプットデバイス
+	//インプットデバイス
 	LPDIRECTINPUTDEVICE8 key;
 
 	//マウスデバイス
@@ -83,9 +83,9 @@ private:
 	DIMOUSESTATE m_mouseState;
 	DIMOUSESTATE m_mouseCheck;
 
-	// キー情報
+	//キー情報
 	BYTE keys[KEY_MAX];
-	// 前のキー情報
+	//前のキー情報
 	BYTE olds[KEY_MAX];
 
 	HWND m_hwnd;

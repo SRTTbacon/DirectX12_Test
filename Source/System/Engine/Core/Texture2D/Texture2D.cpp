@@ -6,23 +6,9 @@
 
 using namespace DirectX;
 
-static ID3D12Resource* g_whiteTexResource = nullptr;
+static std::vector<TextureManage*> textures;
 
-// std::string(マルチバイト文字列)からstd::wstring(ワイド文字列)を得る。AssimpLoaderと同じものだけど、共用にするのがめんどくさかったので許してください
-std::wstring Texture2D::GetWideString(const std::string& str)
-{
-	auto num1 = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, nullptr, 0);
-
-	std::wstring wstr;
-	wstr.resize(num1);
-
-	auto num2 = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, &wstr[0], num1);
-
-	assert(num1 == num2);
-	return wstr;
-}
-
-// 拡張子を返す
+//拡張子を返す
 static std::wstring FileExtension(const std::wstring& path)
 {
 	auto idx = path.rfind(L'.');
@@ -31,18 +17,41 @@ static std::wstring FileExtension(const std::wstring& path)
 
 Texture2D::Texture2D(std::string path)
 {
-	m_IsValid = Load(path);
+	Load(path);
 }
 
 Texture2D::Texture2D(std::wstring path)
 {
-	m_IsValid = Load(path);
+	Load(path);
 }
 
-Texture2D::Texture2D(ID3D12Resource* buffer)
+Texture2D::Texture2D(TextureManage* pTextureManage)
 {
-	m_pResource = buffer;
-	m_IsValid = m_pResource != nullptr;
+	pTextureManage->refCount++;
+	m_pManage = pTextureManage;
+}
+
+Texture2D::~Texture2D()
+{
+	if (m_pManage)
+	{
+		for (auto it = textures.begin(); it != textures.end(); it++)
+		{
+			if ((*it)->uniqueID == m_pManage->uniqueID)
+			{
+				(*it)->refCount--;
+				if ((*it)->refCount <= 0)
+				{
+					(*it)->pResource.Reset();
+					delete (*it);
+					textures.erase(it);
+				}
+				break;
+			}
+		}
+	}
+
+	m_pManage = nullptr;
 }
 
 bool Texture2D::Load(std::string& path)
@@ -53,6 +62,20 @@ bool Texture2D::Load(std::string& path)
 
 bool Texture2D::Load(std::wstring& path)
 {
+	UINT uniqueID = GenerateIDFromFile(path);
+
+	//既に読み込まれているテクスチャかどうかを調べる
+	for (TextureManage* tex : textures)
+	{
+		if (tex->uniqueID == uniqueID)
+		{
+			//既に読み込まれているテクスチャを参照
+			m_pManage = tex;
+			tex->refCount++;
+			return true;
+		}
+	}
+
 	//WICテクスチャのロード
 	TexMetadata meta = {};
 	ScratchImage scratch = {};
@@ -65,11 +88,16 @@ bool Texture2D::Load(std::wstring& path)
 		return false;
 	}
 
+	//テクスチャ管理配列に登録
+	TextureManage* manage = new TextureManage();
+	manage->uniqueID = uniqueID;
+	manage->refCount = 1;
+
 	const Image* img = scratch.GetImage(0, 0, 0);
 	CD3DX12_HEAP_PROPERTIES prop = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
 	CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(meta.format,
-		(UINT)meta.width,
-		(UINT)meta.height,
+		static_cast<UINT>(meta.width),
+		static_cast<UINT>(meta.height),
 		static_cast<UINT16>(meta.arraySize),
 		static_cast<UINT16>(meta.mipLevels));
 
@@ -80,26 +108,30 @@ bool Texture2D::Load(std::wstring& path)
 		&desc,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 		nullptr,
-		IID_PPV_ARGS(m_pResource.ReleaseAndGetAddressOf())
+		IID_PPV_ARGS(manage->pResource.ReleaseAndGetAddressOf())
 	);
 
 	if (FAILED(hr))
 	{
-		printf("テクスチャの読み込みに失敗 Code = %1x\n", hr);
+		printf("テクスチャの読み込みに失敗 エラーコード = %1x\n", hr);
 		return false;
 	}
 
-	hr = m_pResource->WriteToSubresource(0,
-		nullptr, //全領域へコピー
-		img->pixels, //元データアドレス
-		static_cast<UINT>(img->rowPitch), //1ラインサイズ
-		static_cast<UINT>(img->slicePitch) //全サイズ
+	hr = manage->pResource->WriteToSubresource(0,
+		nullptr,							//全領域へコピー
+		img->pixels,						//元データアドレス
+		static_cast<UINT>(img->rowPitch),	//1ラインサイズ
+		static_cast<UINT>(img->slicePitch)	//全サイズ
 	);
 	if (FAILED(hr))
 	{
 		printf("テクスチャの読み込みに失敗\n");
 		return false;
 	}
+
+	textures.push_back(manage);
+
+	m_pManage = manage;
 
 	return true;
 }
@@ -115,37 +147,58 @@ Texture2D* Texture2D::Get(std::wstring path)
 	Texture2D* tex = new Texture2D(path);
 	if (!tex->IsValid())
 	{
-		return GetWhite(); // 読み込みに失敗した時は白単色テクスチャを返す
+		return GetColor(0.0f, 0.0f, 0.0f); //読み込みに失敗した時は白単色テクスチャを返す
 	}
-	textures[path] = tex;
 	return tex;
 }
 
-Texture2D* Texture2D::GetWhite()
+Texture2D* Texture2D::GetColor(float r, float g, float b)
 {
-	if (!g_whiteTexResource) {
-		ID3D12Resource* buff = GetDefaultResource(4, 4);
+	UINT width = 16;
+	UINT height = 16;
 
-		std::vector<unsigned char> data(4 * 4 * 4);
-		std::fill(data.begin(), data.end(), 0xff);
+	std::vector<UINT> data(width * height);
+	std::fill(data.begin(), data.end(), ColorToUINT(r, g, b));
 
-		auto hr = buff->WriteToSubresource(0, nullptr, data.data(), 4 * 4, (UINT)data.size());
-		if (FAILED(hr))
+	//UINTデータをバイト単位に変換するためのstd::vector<char>
+	std::vector<char> charVector(data.size() * sizeof(UINT));
+	//データをコピー
+	std::memcpy(charVector.data(), data.data(), data.size() * sizeof(UINT));
+
+	//既に読み込まれているテクスチャかどうかを調べる
+	UINT uniqueID = GenerateIDFromFile(charVector);
+	for (TextureManage* tex : textures)
+	{
+		if (tex->uniqueID == uniqueID)
 		{
-			return nullptr;
+			return new Texture2D(tex);
 		}
-		g_whiteTexResource = buff;
 	}
 
-	return new Texture2D(g_whiteTexResource);
+	ID3D12Resource* pBuffer = GetDefaultResource(width, height);
+
+	HRESULT hr = pBuffer->WriteToSubresource(0, nullptr, data.data(), width * sizeof(UINT), static_cast<UINT>(data.size() * sizeof(UINT)));
+	if (FAILED(hr))
+	{
+		return nullptr;
+	}
+
+	TextureManage* manage = new TextureManage();
+	manage->uniqueID = uniqueID;
+	manage->refCount = 0;		//new Texture2D()で参照カウントが増えるので0
+	manage->pResource = pBuffer;
+
+	textures.push_back(manage);
+
+	return new Texture2D(manage);
 }
 
 ID3D12Resource* Texture2D::GetDefaultResource(size_t width, size_t height)
 {
-	auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, (UINT)width, (UINT)height);
+	auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, static_cast<UINT>(width), static_cast<UINT>(height));
 	auto texHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
 	ID3D12Resource* buff = nullptr;
-	auto result = g_Engine->GetDevice()->CreateCommittedResource(
+	HRESULT result = g_Engine->GetDevice()->CreateCommittedResource(
 		&texHeapProp,
 		D3D12_HEAP_FLAG_NONE, //特に指定なし
 		&resDesc,
@@ -156,7 +209,7 @@ ID3D12Resource* Texture2D::GetDefaultResource(size_t width, size_t height)
 	if (FAILED(result))
 	{
 		//assert(SUCCEEDED(result));
-		printf("GetDefaultResource : ErrorCode = %1x\n", result);
+		printf("GetDefaultResource : エラーコード = %1x\n", result);
 		return nullptr;
 	}
 	return buff;
@@ -164,20 +217,26 @@ ID3D12Resource* Texture2D::GetDefaultResource(size_t width, size_t height)
 
 bool Texture2D::IsValid() const
 {
-	return m_IsValid;
+	return m_pManage != nullptr;
 }
 
 ID3D12Resource* Texture2D::Resource()
 {
-	return m_pResource.Get();
+	if (!m_pManage) {
+		return nullptr;
+	}
+
+	return m_pManage->pResource.Get();
 }
 
 D3D12_SHADER_RESOURCE_VIEW_DESC Texture2D::ViewDesc()
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-	desc.Format = m_pResource->GetDesc().Format;
-	desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D; //2Dテクスチャ
-	desc.Texture2D.MipLevels = 1; //ミップマップは使用しないので1
+	if (m_pManage && m_pManage->pResource) {
+		desc.Format = m_pManage->pResource->GetDesc().Format;
+		desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D; //2Dテクスチャ
+		desc.Texture2D.MipLevels = 1; //ミップマップは使用しないので1
+	}
 	return desc;
 }

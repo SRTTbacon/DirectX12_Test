@@ -27,7 +27,7 @@ Camera::Camera()
     , m_aspect(static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT))
     , m_yaw(0.0f)
     , m_pitch(0.0f)
-    , m_near(0.01f)
+    , m_near(0.001f)
     , m_far(1000.0f)
 {
 }

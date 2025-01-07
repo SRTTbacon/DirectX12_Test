@@ -1,27 +1,41 @@
 #pragma once
 #include "..\\..\\..\\ComPtr.h"
+#include "..\\..\\..\\Main\\Utility.h"
 #include <string>
 #include <unordered_map>
 #include <d3dx12.h>
 
+class Texture2D;
+
+struct TextureManage
+{
+	UINT uniqueID;			//ユニークID
+	UINT refCount;			//参照カウント
+	ComPtr<ID3D12Resource> pResource; //リソース
+};
+
 class Texture2D
 {
 public:
+	~Texture2D();
+
 	static Texture2D* Get(std::string path);	//stringで受け取ったパスからテクスチャを読み込む
 	static Texture2D* Get(std::wstring path);	//wstringで受け取ったパスからテクスチャを読み込む
-	static Texture2D* GetWhite();				//白の単色テクスチャを生成する
-	static std::wstring GetWideString(const std::string& str);
+	//単色テクスチャを生成
+	//引数 : r, g, b 0.0f～1.0fの範囲で色を指定
+	static Texture2D* GetColor(float r, float g, float b);
 	bool IsValid() const; //正常に読み込まれているかどうかを返す
 
 	ID3D12Resource* Resource(); //リソースを返す
 	D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc(); //シェーダーリソースビューの設定を返す
 
 private:
-	bool m_IsValid; //正常に読み込まれているか
+	TextureManage* m_pManage;	//テクスチャ管理構造体
+
 	Texture2D(std::string path);
 	Texture2D(std::wstring path);
-	Texture2D(ID3D12Resource* buffer);
-	ComPtr<ID3D12Resource> m_pResource; //リソース
+	Texture2D(TextureManage* pTextureManage);
+
 	bool Load(std::string& path);
 	bool Load(std::wstring& path);
 
@@ -30,5 +44,3 @@ private:
 	Texture2D(const Texture2D&) = delete;
 	void operator = (const Texture2D&) = delete;
 };
-
-static std::unordered_map<std::wstring, Texture2D*> textures;

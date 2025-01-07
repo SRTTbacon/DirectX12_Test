@@ -1,11 +1,14 @@
 //(ボーン)アニメーション情報をファイル(.hsc)から読み込む
 
 #pragma once
-#include "..\\..\\Core\\BinaryFile\\BinaryReader.h"
+#include "..\\..\\Core\\BinaryFile\\BinaryCompression.h"
 #include <DirectXMath.h>
 #include <vector>
 #include <unordered_map>
 #include "..\\..\\..\\Main\\Utility.h"
+
+//アニメーションファイルのヘッダー
+constexpr const char* ANIMATION_HEADER = "HCSAnim";
 
 //ボーンの位置、回転
 struct BoneAnimation

@@ -5,18 +5,18 @@
 
 Engine* g_Engine;
 
-Engine::Engine()
+Engine::Engine(HWND hwnd)
 	: m_modelManager(ModelManager())
 	, m_camera(Camera())
 	, m_Scissor(D3D12_RECT())
 	, m_Viewport(D3D12_VIEWPORT())
-	, m_fenceValue{0, 0, 0}
+	, m_fenceValue{0}
 	, m_frameTime(0.0f)
-	, m_hWnd(nullptr)
+	, m_hWnd(hwnd)
 	, m_initTime(0)
 	, m_pDirectionalLight(nullptr)
 	, m_pKeyInput(nullptr)
-	, m_pSoundSystem(nullptr)
+	, m_soundSystem(hwnd)
 	, m_sceneTimeMS(0)
 	, m_pZShadow(nullptr)
 {
@@ -25,47 +25,55 @@ Engine::Engine()
 Engine::~Engine()
 {
 	delete m_pKeyInput;
-	delete m_pSoundSystem;
 }
 
-bool Engine::Init(HWND hwnd, UINT windowWidth, UINT windowHeight)
+bool Engine::Init(UINT windowWidth, UINT windowHeight)
 {
 	m_FrameBufferWidth = windowWidth;
 	m_FrameBufferHeight = windowHeight;
-	m_hWnd = hwnd;
+
+#ifdef _DEBUG
+	//デバッグレイヤーの設定
+	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_pDebugController)))) {
+		m_pDebugController->SetEnableGPUBasedValidation(TRUE);
+		m_pDebugController->SetEnableSynchronizedCommandQueueValidation(TRUE);
+		m_pDebugController->EnableDebugLayer();
+		printf("デバッグレイヤーを有効化しました。\n");
+	}
+#endif
 
 	if (!CreateDevice())
 	{
-		printf("デバイスの生成に失敗");
+		printf("デバイスの生成に失敗しました。GPUがレイトレーシングに対応していない可能性があります。\n");
 		return false;
 	}
 	if (!CreateCommandQueue())
 	{
-		printf("コマンドキューの生成に失敗");
+		printf("コマンドキューの生成に失敗\n");
 		return false;
 	}
 
 	if (!CreateSwapChain())
 	{
-		printf("スワップチェインの生成に失敗");
+		printf("スワップチェインの生成に失敗\n");
 		return false;
 	}
 
 	if (!CreateCommandList())
 	{
-		printf("コマンドリストの生成に失敗");
+		printf("コマンドリストの生成に失敗\n");
 		return false;
 	}
 
 	if (!CreateFence())
 	{
-		printf("フェンスの生成に失敗");
+		printf("フェンスの生成に失敗\n");
 		return false;
 	}
 
 	if (!CreateRenderTarget())
 	{
-		printf("レンダーターゲットの生成に失敗");
+		printf("レンダーターゲットの生成に失敗\n");
 		return false;
 	}
 
@@ -86,13 +94,12 @@ bool Engine::Init(HWND hwnd, UINT windowWidth, UINT windowHeight)
 	m_sceneTimeMS = 0;
 	m_frameTime = 0.0f;
 
-	//サウンドシステムを初期化
-	m_pSoundSystem = new SoundSystem(m_hWnd);
-
 	//ディレクショナルライトの初期化
 	m_pDirectionalLight = new DirectionalLight();
 
 	m_pZShadow = new ZShadow(m_pDevice.Get(), m_pCommandList.Get());
+
+	srand(static_cast<UINT>(timeGetTime()));
 
 	printf("描画エンジンの初期化に成功\n");
 	return true;
@@ -115,8 +122,34 @@ Model* Engine::AddModel(std::string modelFile)
 
 bool Engine::CreateDevice()
 {
-	auto hr = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(m_pDevice.ReleaseAndGetAddressOf()));
-	return SUCCEEDED(hr);
+	HRESULT hr = CreateDXGIFactory1(IID_PPV_ARGS(&m_pDxgiFactory));
+
+	if (FAILED(hr)) {
+		return false;
+	}
+
+	//レイトレーシングをサポートするGPUを取得
+	ComPtr<IDXGIAdapter1> adapter;
+	for (UINT i = 0; ; ++i) {
+		hr = m_pDxgiFactory->EnumAdapters1(i, &adapter);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		// レイトレーシング機能を持つアダプタか確認
+		hr = D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_pDevice));
+
+		if (SUCCEEDED(hr)) {
+			// レイトレーシングをサポートしているか確認
+			D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5{};
+			hr = m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options5, sizeof(options5));
+
+			if (SUCCEEDED(hr) && options5.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED) {
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 bool Engine::CreateCommandQueue()
@@ -125,7 +158,7 @@ bool Engine::CreateCommandQueue()
 	desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 	desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
 	desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-	desc.NodeMask = 0;
+	desc.NodeMask = 1;
 
 	auto hr = m_pDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(m_pQueue.ReleaseAndGetAddressOf()));
 
@@ -189,30 +222,15 @@ bool Engine::CreateSwapChain()
 bool Engine::CreateCommandList()
 {
 	//コマンドアロケーターの作成
-	HRESULT hr;
-	for (size_t i = 0; i < FRAME_BUFFER_COUNT; i++)
-	{
-		hr = m_pDevice->CreateCommandAllocator(
-			D3D12_COMMAND_LIST_TYPE_DIRECT,
-			IID_PPV_ARGS(m_pAllocator[i].ReleaseAndGetAddressOf()));
-	}
+	HRESULT hr = m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_pAllocator.ReleaseAndGetAddressOf()));
 
-	if (FAILED(hr))
-	{
+	if (FAILED(hr)) {
 		return false;
 	}
 
-	//コマンドリストの生成
-	hr = m_pDevice->CreateCommandList(
-		0,
-		D3D12_COMMAND_LIST_TYPE_DIRECT,
-		m_pAllocator[m_CurrentBackBufferIndex].Get(),
-		nullptr,
-		IID_PPV_ARGS(&m_pCommandList)
-	);
-
-	if (FAILED(hr))
-	{
+	//標準のグラフィックスコマンドリストを作成
+	hr = m_pDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_pAllocator.Get(), nullptr, IID_PPV_ARGS(&m_pCommandList));
+	if (FAILED(hr)) {
 		return false;
 	}
 
@@ -353,10 +371,6 @@ void Engine::BeginRender()
 	//現在のレンダーターゲットを更新
 	m_currentRenderTarget = m_pRenderTargets[m_CurrentBackBufferIndex].Get();
 
-	//コマンドを初期化してためる準備をする
-	m_pAllocator[m_CurrentBackBufferIndex]->Reset();
-	m_pCommandList->Reset(m_pAllocator[m_CurrentBackBufferIndex].Get(), nullptr);
-
 	//ビューポートとシザー矩形を設定
 	m_pCommandList->RSSetViewports(1, &m_Viewport);
 	m_pCommandList->RSSetScissorRects(1, &m_Scissor);
@@ -375,41 +389,28 @@ void Engine::BeginRender()
 
 void Engine::ModelRender()
 {
-	ID3D12GraphicsCommandList* pCommandList = m_pCommandList.Get();
-
-	//シャドウマップをレンダーターゲットとして使用する準備
-	/*CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-		m_pShadowDescriptorHeap->GetShadowMap(),
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	pCommandList->ResourceBarrier(1, &barrier);
-
-	pCommandList->ClearDepthStencilView(
-		*m_pShadowDescriptorHeap->GetShadowMapDSV(),  //シャドウマップのDSV
-		D3D12_CLEAR_FLAG_DEPTH,
-		1.0f,  //深度クリア値 (最大値に設定)
-		0,     //ステンシルクリア値
-		0, nullptr);*/
-
-	//シャドウマップ用のパイプラインステートとルートシグネチャを設定
-	
-
-	//ビューポートとシザー矩形の設定
-	//pCommandList->RSSetViewports(1, m_pShadowDescriptorHeap->GetShadowViewPort());
-	//pCommandList->RSSetScissorRects(1, m_pShadowDescriptorHeap->GetShadowScissor());
-
-	//深度バッファの設定
-	//pCommandList->OMSetRenderTargets(0, nullptr, false, m_pShadowDescriptorHeap->GetShadowMapDSV());
-
 	//モデルの影の描画
 	m_pZShadow->BeginMapping();
 	m_modelManager.RenderShadowMap(m_CurrentBackBufferIndex);
 	
 	ResetViewportAndScissor();
+
+	//深度マップを変更
+	D3D12_RESOURCE_BARRIER barrier = {};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Transition.pResource = m_pZShadow->GetZBuffer();
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	m_pCommandList->ResourceBarrier(1, &barrier);
 	
 	//モデルを描画
-	//m_modelManager.RenderShadowMap(m_CurrentBackBufferIndex);
 	m_modelManager.RenderModel(m_CurrentBackBufferIndex);
+
+	//深度マップを変更
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	m_pCommandList->ResourceBarrier(1, &barrier);
 }
 
 void Engine::WaitRender()
@@ -460,6 +461,10 @@ void Engine::EndRender()
 
 	//描画完了を待つ
 	WaitRender();
+
+	//コマンドを初期化してためる準備をする
+	m_pAllocator->Reset();
+	m_pCommandList->Reset(m_pAllocator.Get(), nullptr);
 }
 
 BYTE Engine::GetMouseState(BYTE keyCode)
@@ -470,6 +475,11 @@ BYTE Engine::GetMouseState(BYTE keyCode)
 BYTE Engine::GetMouseStateSync(BYTE keyCode)
 {
 	return m_pKeyInput->GetMouseStateSync(keyCode);
+}
+
+POINT Engine::GetMouseMove()
+{
+	return m_pKeyInput->GetMouseMove();
 }
 
 bool Engine::GetKeyState(UINT key)
@@ -497,7 +507,7 @@ void Engine::Update()
 	m_pKeyInput->UpdateMouseState();
 
 	//サウンドを更新
-	m_pSoundSystem->Update();
+	m_soundSystem.Update();
 
 	XMFLOAT3 cameraPos;
 	XMStoreFloat3(&cameraPos, m_camera.m_eyePos);

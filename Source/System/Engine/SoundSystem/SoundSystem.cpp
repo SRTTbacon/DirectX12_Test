@@ -19,7 +19,7 @@ SoundSystem::~SoundSystem()
 {
 	//すべてのロードされているサウンドを解放
 	for (UINT i = 0; i < m_soundHandles.size(); i++) {
-		if (m_soundHandles[i] && m_soundHandles[i]->streamHandle > 0) {
+		if (m_soundHandles[i] && m_soundHandles[i]->m_streamHandle > 0) {
 			m_soundHandles[i]->Release();
 
 			delete m_soundHandles[i];
@@ -62,7 +62,7 @@ SoundHandle* SoundSystem::LoadSound(std::string filePath, bool bPlay)
 	BASS_ChannelGetAttribute(fxHandle, BASS_ATTRIB_TEMPO_FREQ, &freq);
 	SoundHandle* pHandle = new SoundHandle(fxHandle, freq);
 
-	// 再生終了時のコールバックを設定
+	//再生終了時のコールバックを設定
 	HSYNC syncHandle = BASS_ChannelSetSync(fxHandle, BASS_SYNC_END, 0, &SoundSystem::PlaybackEndCallback, pHandle);
 	if (!syncHandle) {
 		return nullptr;
@@ -81,9 +81,9 @@ void SoundSystem::Update()
 {
 	for (UINT i = 0; i < m_soundHandles.size(); i++) {
 		SoundHandle* pSound = m_soundHandles[i];
-		if (pSound->streamHandle > 0) {
+		if (pSound->m_streamHandle > 0) {
 			//LoadSoundでBASS_CONFIG_BUFFERを100に設定する関係で、PCによっては音がブツブツするのを防ぐ
-			BASS_ChannelUpdate(pSound->streamHandle, 300);
+			BASS_ChannelUpdate(pSound->m_streamHandle, 300);
 		}
 		else {
 			//サウンドがReleaseされていたらメモリから削除
@@ -97,21 +97,26 @@ void SoundSystem::Update()
 
 void SoundSystem::PlaybackEndCallback(HSYNC handle, DWORD channel, DWORD data, void* user)
 {
-	SoundHandle* soundHandle = static_cast<SoundHandle*>(user);
+	SoundHandle* pSoundHandle = static_cast<SoundHandle*>(user);
 	//そのサウンドがループ再生を許可していれば、再度再生
-	if (soundHandle && soundHandle->bLooping) {
-		soundHandle->PlaySound();
+	if (pSoundHandle && pSoundHandle->m_bLooping) {
+		if (pSoundHandle->m_bLooping) {
+			pSoundHandle->PlaySound();
+		}
+		else {
+			pSoundHandle->PauseSound();
+		}
 	}
 }
 
 SoundHandle::SoundHandle(const UINT handle, const float freq)
-	: streamHandle(handle)		//ハンドル
-	, maxSoundTime(BASS_ChannelBytes2Seconds(handle, BASS_ChannelGetLength(handle, BASS_POS_BYTE)))	//サウンドの長さ
-	, defaultFrequency(freq)	//初期の周波数
-	, speed(1.0f)				//再生速度
-	, volume(1.0f)				//音量
-	, bPlaying(false)
-	, bLooping(false)
+	: m_streamHandle(handle)		//ハンドル
+	, m_maxSoundTime(BASS_ChannelBytes2Seconds(handle, BASS_ChannelGetLength(handle, BASS_POS_BYTE)))	//サウンドの長さ
+	, m_defaultFrequency(freq)	//初期の周波数
+	, m_speed(1.0f)				//再生速度
+	, m_volume(1.0f)				//音量
+	, m_bLooping(false)
+	, m_bPlaying(false)
 {
 }
 
@@ -124,17 +129,14 @@ SoundHandle::~SoundHandle()
 //引数 : 最初から再生するか (falseの場合、PauseSound()を呼んだ時間から再開)
 void SoundHandle::PlaySound(bool bRestart)
 {
-	if (streamHandle == 0)
+	if (m_streamHandle == 0)
 		return;
 
-	bPlaying = true;
-	UpdateProperty();
-
-	BASS_ChannelPlay(streamHandle, bRestart);
+	BASS_ChannelPlay(m_streamHandle, bRestart);
 
 	if (GetBassError) {
 		printf("サウンドの再生時にエラーが発生しました。エラーコード:%d\n", BASS_ErrorGetCode());
-		bPlaying = false;
+		m_bPlaying = false;
 		return;
 	}
 
@@ -143,36 +145,36 @@ void SoundHandle::PlaySound(bool bRestart)
 //サウンドの一時停止
 void SoundHandle::PauseSound()
 {
-	if (streamHandle == 0)
+	if (m_streamHandle == 0)
 		return;
 
-	BASS_ChannelPause(streamHandle);
+	BASS_ChannelPause(m_streamHandle);
 
-	bPlaying = false;
+	m_bPlaying = false;
 }
 
 //プロパティ(速度や音量など)を更新
 void SoundHandle::UpdateProperty() const
 {
 	//ハンドルがなかったり、再生が停止している場合は処理を終える (再生開始時に呼ばれるため)
-	if (streamHandle == 0 || !bPlaying)
+	if (m_streamHandle == 0)
 		return;
 
 	//再生速度と音量を変更
-	BASS_ChannelSetAttribute(streamHandle, BASS_ATTRIB_TEMPO_FREQ, defaultFrequency * speed);
-	BASS_ChannelSetAttribute(streamHandle, BASS_ATTRIB_VOL, volume);
+	BASS_ChannelSetAttribute(m_streamHandle, BASS_ATTRIB_TEMPO_FREQ, m_defaultFrequency * m_speed);
+	BASS_ChannelSetAttribute(m_streamHandle, BASS_ATTRIB_VOL, m_volume);
 }
 
 //再生位置を変更
 //引数 : float 現在の再生位置からの相対位置(秒)
 void SoundHandle::ChangePosition(double relativeTime) const
 {
-	if (streamHandle == 0)
+	if (m_streamHandle == 0)
 		return;
 
 	//現在の再生時間を取得
-	QWORD position = BASS_ChannelGetPosition(streamHandle, BASS_POS_BYTE);
-	double nowPosition = BASS_ChannelBytes2Seconds(streamHandle, position);
+	QWORD position = BASS_ChannelGetPosition(m_streamHandle, BASS_POS_BYTE);
+	double nowPosition = BASS_ChannelBytes2Seconds(m_streamHandle, position);
 
 	//相対時間を追加
 	nowPosition += relativeTime;
@@ -185,17 +187,17 @@ void SoundHandle::ChangePosition(double relativeTime) const
 //引数 : double 移動後の位置 (秒)
 void SoundHandle::SetPosition(double toTime) const
 {
-	if (streamHandle == 0)
+	if (m_streamHandle == 0)
 		return;
 
 	//範囲制限
 	if (toTime < 0.0)
 		toTime = 0.0f;
-	else if (toTime > maxSoundTime)
-		toTime = maxSoundTime;
+	else if (toTime > m_maxSoundTime)
+		toTime = m_maxSoundTime;
 
 	//再生位置をtoTimeに変更 (秒での指定はできないため、秒からBASS_POS_BYTEへ変換)
-	BASS_ChannelSetPosition(streamHandle, BASS_ChannelSeconds2Bytes(streamHandle, toTime), BASS_POS_BYTE);
+	BASS_ChannelSetPosition(m_streamHandle, BASS_ChannelSeconds2Bytes(m_streamHandle, toTime), BASS_POS_BYTE);
 }
 
 //サウンドの解放
@@ -204,9 +206,9 @@ void SoundHandle::Release() const
 	BASS_CHANNELINFO info;
 
 	//既にサウンドが解放していれば処理を終える
-	if (streamHandle == 0 || BASS_ChannelGetInfo(streamHandle, &info))
+	if (m_streamHandle == 0 || BASS_ChannelGetInfo(m_streamHandle, &info))
 		return;
 
-	BASS_ChannelStop(streamHandle);
-	BASS_StreamFree(streamHandle);
+	BASS_ChannelStop(m_streamHandle);
+	BASS_StreamFree(m_streamHandle);
 }

@@ -1,8 +1,6 @@
 #include "PipelineState.h"
 #include <d3dcompiler.h>
 
-#pragma comment(lib, "d3dcompiler.lib")
-
 PipelineState::PipelineState(ID3D12Device* device, RootSignature* rootSignature) 
     : m_elementCount(0)
 {
@@ -26,13 +24,13 @@ PipelineState::PipelineState(ID3D12Device* device, RootSignature* rootSignature)
     ComPtr<ID3DBlob> pVsBlob, pPsBlob;
     HRESULT hr = 0;
     if (rootSignature->m_shaderKind == ShaderKinds::BoneShader) {
-        hr = D3DReadFileToBlob(KeyString::SHADER_BONE_VERTEX, pVsBlob.GetAddressOf());
+        hr = D3DReadFileToBlob(KeyString::SHADER_BONE_VERTEX, &pVsBlob);
     }
     else if (rootSignature->m_shaderKind == ShaderKinds::PrimitiveShader) {
-        hr = D3DReadFileToBlob(KeyString::SHADER_PRIMITIVE_VERTEX, pVsBlob.GetAddressOf());
+        hr = D3DReadFileToBlob(KeyString::SHADER_PRIMITIVE_VERTEX, &pVsBlob);
     }
     else if (rootSignature->m_shaderKind == ShaderKinds::ShadowShader) {
-        hr = D3DReadFileToBlob(KeyString::SHADER_SHADOW_VERTEX, pVsBlob.GetAddressOf());
+        hr = D3DReadFileToBlob(KeyString::SHADER_SHADOW_VERTEX, &pVsBlob);
     }
     if (FAILED(hr) || !pVsBlob)
     {
@@ -41,10 +39,10 @@ PipelineState::PipelineState(ID3D12Device* device, RootSignature* rootSignature)
     }
 
     if (rootSignature->m_shaderKind == ShaderKinds::BoneShader) {
-        hr = D3DReadFileToBlob(KeyString::SHADER_TEXTURE_PIXEL, pPsBlob.GetAddressOf());
+        hr = D3DReadFileToBlob(KeyString::SHADER_TEXTURE_PIXEL, &pPsBlob);
     }
     else if (rootSignature->m_shaderKind == ShaderKinds::PrimitiveShader) {
-        hr = D3DReadFileToBlob(KeyString::SHADER_PRIMITIVE_PIXEL, pPsBlob.GetAddressOf());
+        hr = D3DReadFileToBlob(KeyString::SHADER_PRIMITIVE_PIXEL, &pPsBlob);
     }
     if (rootSignature->m_shaderKind != ShaderKinds::ShadowShader && (FAILED(hr) || !pPsBlob))
     {
@@ -62,7 +60,7 @@ PipelineState::PipelineState(ID3D12Device* device, RootSignature* rootSignature)
 
     //ラスタライザーステート（デフォルト）
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE; // カリングはなし
+    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE; //カリングはなし
 
     //ブレンドステート（デフォルト）
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
@@ -75,12 +73,13 @@ PipelineState::PipelineState(ID3D12Device* device, RootSignature* rootSignature)
 
     if (rootSignature->m_shaderKind == ShaderKinds::ShadowShader) {
         psoDesc.NumRenderTargets = 0;   //影はレンダーターゲット不要
-        psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+        psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
     }
     else {
         //レンダーターゲットの設定（1つのレンダーターゲット、RGBA8フォーマット）
         psoDesc.NumRenderTargets = 1;
         psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+        psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
     }
 
     //マルチサンプリングの設定
@@ -103,7 +102,7 @@ ID3D12PipelineState* PipelineState::GetPipelineState() const {
 D3D12_INPUT_ELEMENT_DESC* PipelineState::GetInputElement(ShaderKinds shaderKind)
 {
     if (shaderKind == ShaderKinds::BoneShader) {
-        m_elementCount = 6;
+        m_elementCount = 8;
 
         D3D12_INPUT_ELEMENT_DESC* pInputLayout = new D3D12_INPUT_ELEMENT_DESC[m_elementCount];
         pInputLayout[0] = D3D12_INPUT_ELEMENT_DESC{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
@@ -111,18 +110,22 @@ D3D12_INPUT_ELEMENT_DESC* PipelineState::GetInputElement(ShaderKinds shaderKind)
         pInputLayout[2] = D3D12_INPUT_ELEMENT_DESC{ "BONEIDS", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
         pInputLayout[3] = D3D12_INPUT_ELEMENT_DESC{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
         pInputLayout[4] = D3D12_INPUT_ELEMENT_DESC{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-        pInputLayout[5] = D3D12_INPUT_ELEMENT_DESC{ "VERTEXID", 0, DXGI_FORMAT_R32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+        pInputLayout[5] = D3D12_INPUT_ELEMENT_DESC{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+        pInputLayout[6] = D3D12_INPUT_ELEMENT_DESC{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+        pInputLayout[7] = D3D12_INPUT_ELEMENT_DESC{ "VERTEXID", 0, DXGI_FORMAT_R32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 
         return pInputLayout;
     }
     else if (shaderKind == ShaderKinds::PrimitiveShader) {
-        m_elementCount = 5;
+        m_elementCount = 7;
         D3D12_INPUT_ELEMENT_DESC* pInputLayout = new D3D12_INPUT_ELEMENT_DESC[m_elementCount];
         pInputLayout[0] = D3D12_INPUT_ELEMENT_DESC{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
         pInputLayout[1] = D3D12_INPUT_ELEMENT_DESC{ "BONEWEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
         pInputLayout[2] = D3D12_INPUT_ELEMENT_DESC{ "BONEIDS", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
         pInputLayout[3] = D3D12_INPUT_ELEMENT_DESC{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
         pInputLayout[4] = D3D12_INPUT_ELEMENT_DESC{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+        pInputLayout[5] = D3D12_INPUT_ELEMENT_DESC{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+        pInputLayout[6] = D3D12_INPUT_ELEMENT_DESC{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 
         return pInputLayout;
     }

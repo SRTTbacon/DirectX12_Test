@@ -83,7 +83,7 @@ CD3DX12_ROOT_PARAMETER* RootSignature::GetRootParameter()
 
 		m_pTableRange1 = new CD3DX12_DESCRIPTOR_RANGE[1];				//ディスクリプタテーブル
 		//テクスチャ用をスロットt0に設定
-		m_pTableRange1[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0);	//シェーダーリソースビュー
+		m_pTableRange1[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, CHARACTER_DISCRIPTOR_HEAP_SIZE, 0);	//シェーダーリソースビュー
 		rootParam[2].InitAsDescriptorTable(1, m_pTableRange1, D3D12_SHADER_VISIBILITY_PIXEL);
 
 		rootParam[3].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb1の定数バッファを設定
@@ -105,7 +105,7 @@ CD3DX12_ROOT_PARAMETER* RootSignature::GetRootParameter()
 
 		m_pTableRange1 = new CD3DX12_DESCRIPTOR_RANGE[1];				//ディスクリプタテーブル
 		//テクスチャ用をスロットt0に設定
-		m_pTableRange1[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0);	//シェーダーリソースビュー
+		m_pTableRange1[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, MODEL_DISCRIPTOR_HEAP_SIZE, 0);	//シェーダーリソースビュー
 		rootParam[2].InitAsDescriptorTable(1, m_pTableRange1, D3D12_SHADER_VISIBILITY_PIXEL);
 		
 		return rootParam;

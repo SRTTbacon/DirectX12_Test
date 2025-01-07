@@ -1,9 +1,10 @@
 #include "DescriptorHeap2.h"
 
-DescriptorHeap::DescriptorHeap(ID3D12Device* device, UINT descriptorCount, ShadowSize shadowSize)
+DescriptorHeap::DescriptorHeap(ID3D12Device* device, UINT meshCount, UINT heapSize, ShadowSize shadowSize)
     : m_pDevice(device)
     , m_descriptorSize(0)
     , textureCount(0)
+    , heapSize(heapSize)
     , m_shadowViewport(D3D12_VIEWPORT())
     , m_shadowScissorRect(D3D12_RECT())
     , m_cpuDescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE())
@@ -11,7 +12,7 @@ DescriptorHeap::DescriptorHeap(ID3D12Device* device, UINT descriptorCount, Shado
     , m_shadowMapDSV(D3D12_CPU_DESCRIPTOR_HANDLE())
 {
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-    heapDesc.NumDescriptors = descriptorCount;
+    heapDesc.NumDescriptors = meshCount * heapSize;
     heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
@@ -25,12 +26,12 @@ DescriptorHeap::~DescriptorHeap()
 {
 }
 
-void DescriptorHeap::SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* pShadowMap)
+void DescriptorHeap::SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* normalMap, ID3D12Resource* pShadowMap)
 {
     m_cpuDescriptorHandle = m_descriptorHeap->GetCPUDescriptorHandleForHeapStart();
     m_gpuDescriptorHandle = m_descriptorHeap->GetGPUDescriptorHandleForHeapStart();
-    m_cpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(textureCount) * 2ULL;
-    m_gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(textureCount) * 2ULL;
+    m_cpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(textureCount) * heapSize;
+    m_gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(textureCount) * heapSize;
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -40,6 +41,14 @@ void DescriptorHeap::SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* pSh
 
     m_pDevice->CreateShaderResourceView(mainTex, &srvDesc, m_cpuDescriptorHandle);
 
+    m_cpuDescriptorHandle.ptr += m_descriptorSize;
+    m_gpuDescriptorHandle.ptr += m_descriptorSize;
+    if (normalMap) {
+        srvDesc.Format = normalMap->GetDesc().Format;
+        srvDesc.Texture2D.MipLevels = normalMap->GetDesc().MipLevels;
+        m_pDevice->CreateShaderResourceView(normalMap, &srvDesc, m_cpuDescriptorHandle);
+    }
+
     srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
     srvDesc.Texture2D.MipLevels = 1;
     srvDesc.Texture2D.MostDetailedMip = 0;
@@ -48,7 +57,9 @@ void DescriptorHeap::SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* pSh
     m_cpuDescriptorHandle.ptr += m_descriptorSize;
     m_gpuDescriptorHandle.ptr += m_descriptorSize;
 
-    m_pDevice->CreateShaderResourceView(pShadowMap, &srvDesc, m_cpuDescriptorHandle);
+    if (pShadowMap) {
+        m_pDevice->CreateShaderResourceView(pShadowMap, &srvDesc, m_cpuDescriptorHandle);
+    }
 
     textureCount++;
 }
@@ -57,8 +68,8 @@ void DescriptorHeap::CreateShadowMap(const ShadowSize shadowSize)
 {
     D3D12_RESOURCE_DESC texDesc = {};
     texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    texDesc.Width = (UINT)shadowSize;
-    texDesc.Height = (UINT)shadowSize;
+    texDesc.Width = static_cast<UINT>(shadowSize);
+    texDesc.Height = static_cast<UINT>(shadowSize);
     texDesc.DepthOrArraySize = 1;
     texDesc.MipLevels = 1;
     texDesc.Format = DXGI_FORMAT_R32_TYPELESS;                //SRVおよびDSVと互換性を持つタイプレスフォーマット
@@ -88,7 +99,7 @@ void DescriptorHeap::CreateShadowMap(const ShadowSize shadowSize)
         return;
     }
 
-    // 深度ステンシルビュー (DSV) 用ディスクリプタヒープの作成
+    //深度ステンシルビュー (DSV) 用ディスクリプタヒープの作成
     D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
     dsvHeapDesc.NumDescriptors = 1;
     dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
@@ -97,7 +108,7 @@ void DescriptorHeap::CreateShadowMap(const ShadowSize shadowSize)
 
     m_shadowMapDSV = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-    // DSV の作成
+    //DSV の作成
     D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
     dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
     dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
@@ -111,7 +122,7 @@ void DescriptorHeap::CreateShadowMap(const ShadowSize shadowSize)
     m_shadowViewport.MinDepth = 0.0f;
     m_shadowViewport.MaxDepth = 1.0f;
 
-    // シザー矩形の設定
+    //シザー矩形の設定
     m_shadowScissorRect.left = 0;
     m_shadowScissorRect.top = 0;
     m_shadowScissorRect.right = static_cast<LONG>(shadowSize);
@@ -121,7 +132,7 @@ void DescriptorHeap::CreateShadowMap(const ShadowSize shadowSize)
 D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeap::GetGpuDescriptorHandle(int index)
 {
     D3D12_GPU_DESCRIPTOR_HANDLE  gpuDescriptorHandle = m_descriptorHeap->GetGPUDescriptorHandleForHeapStart();
-    gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(index) * 2ULL;
+    gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(index) * heapSize;
     return gpuDescriptorHandle;
 }
 

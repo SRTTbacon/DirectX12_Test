@@ -8,6 +8,7 @@ cbuffer TransformBuffer : register(b0)
     matrix projectionMatrix; //プロジェクションマトリックス
     matrix lightViewProjMatrix; //ディレクショナルライトの情報
     matrix normalMatrix; //モデルのスケール、回転などをinput.normalにも適応する用
+    float4 eyePos;              //カメラの位置
 };
 
 cbuffer BoneMatrices : register(b1)

@@ -4,16 +4,20 @@ cbuffer ModelConstantBuffer : register(b0)
     matrix viewMatrix;          //ビューマトリックス
     matrix projectionMatrix;    //プロジェクションマトリックス
     matrix lightViewProjMatrix; //ディレクショナルライトの情報
-    matrix normalMatrix; //モデルのスケール、回転などをinput.normalにも適応する用
+    matrix normalMatrix;        //モデルのスケール、回転などをinput.normalにも適応する用
+    float4 eyePos;              //カメラの位置
+    float4 lightPos;            //ライトの位置
 }
 
 struct VSInput
 {
     float3 pos : POSITION;  //頂点座標
     float4 boneWeights : BONEWEIGHTS; //各頂点のボーンの影響度
-    uint4 boneIDs : BONEIDS; //各頂点に影響を与えるボーンのインデックス
-    float3 normal : NORMAL; // 法線
-    float2 uv : TEXCOORD; // UV
+    uint4 boneIDs : BONEIDS; //各頂点に影響を与えるボーンのインデックス (ボーンがないモデルはすべて0)
+    float3 normal : NORMAL; //法線
+    float2 uv : TEXCOORD;   //UV
+    float3 tangent : TANGENT;   //接線
+    float3 binormal : BINORMAL; //従法線
 };
 
 struct VSOutput

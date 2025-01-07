@@ -1,10 +1,12 @@
 #pragma once
-#include <dxgi1_4.h>
+
+#include <dxgi1_6.h>
 #include <vector>
-#include "Input\\Input.h"
 #include <filesystem>
 
 #include "Lights\ZShadow.h"
+
+#include "Input\\Input.h"
 
 #include "SoundSystem\\SoundSystem.h"
 
@@ -12,19 +14,16 @@
 #include "Model\\ModelManager.h"
 #include "Model\\Character.h"
 
-#pragma comment(lib, "d3d12.lib")	//d3d12ライブラリをリンクする
-#pragma comment(lib, "dxgi.lib")	//dxgiライブラリをリンクする
-
 class Character;
 
 class Engine
 {
 public:
-	Engine();
+	Engine(HWND hwnd);
 	~Engine();
 
 	//エンジン初期化
-	bool Init(HWND hwnd, UINT windowWidth, UINT windowHeight);
+	bool Init(UINT windowWidth, UINT windowHeight);
 
 	Character* AddCharacter(std::string modelFile);
 	Model* AddModel(std::string modelFile);
@@ -50,6 +49,8 @@ public: //ゲッター関数
 	BYTE GetMouseState(BYTE keyCode);
 	//マウスのボタン状態を取得 (押した瞬間のみ)
 	BYTE GetMouseStateSync(BYTE keyCode);
+	//マウスの移動量を取得
+	POINT GetMouseMove();
 	//キーの状態を取得
 	bool GetKeyState(UINT key);
 	bool GetKeyStateSync(UINT key);
@@ -69,7 +70,7 @@ public: //ゲッター関数
 	//サウンドシステム
 	inline SoundSystem* GetSoundSystem()
 	{
-		return m_pSoundSystem;
+		return &m_soundSystem;
 	}
 
 	//ディレクショナルライト
@@ -121,8 +122,10 @@ private: //描画に使うDirectX12のオブジェクト
 	ComPtr<ID3D12Device6> m_pDevice = nullptr;		//デバイス
 	ComPtr<ID3D12CommandQueue> m_pQueue = nullptr;	//コマンドキュー
 	ComPtr<IDXGISwapChain3> m_pSwapChain = nullptr; //スワップチェイン
-	ComPtr<ID3D12CommandAllocator> m_pAllocator[FRAME_BUFFER_COUNT] = { nullptr };	//コマンドアロケーター
-	ComPtr<ID3D12GraphicsCommandList> m_pCommandList = nullptr;						//コマンドリスト
+	ComPtr<IDXGIFactory6> m_pDxgiFactory = nullptr;	//ファクトリ(GPUの解析)
+	ComPtr<ID3D12CommandAllocator> m_pAllocator = nullptr;	//コマンドアロケーター
+	ComPtr<ID3D12GraphicsCommandList4> m_pCommandList = nullptr; //コマンドリスト
+	ComPtr<ID3D12Debug1> m_pDebugController;			//デバッグコントローラー
 
 	HANDLE m_fenceEvent = nullptr;				//フェンスで使うイベント
 	ComPtr<ID3D12Fence> m_pFence = nullptr;		//フェンス
@@ -167,7 +170,7 @@ private: //プライベート変数
 
 	AnimationManager animManager;
 
-	SoundSystem* m_pSoundSystem;
+	SoundSystem m_soundSystem;
 
 	DirectionalLight* m_pDirectionalLight;
 

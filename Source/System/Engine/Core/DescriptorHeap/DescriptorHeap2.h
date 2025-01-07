@@ -13,13 +13,16 @@ enum ShadowSize
     ShadowSizeEpic = 4096
 };
 
+constexpr const UINT CHARACTER_DISCRIPTOR_HEAP_SIZE = 3;
+constexpr const UINT MODEL_DISCRIPTOR_HEAP_SIZE = 3;
+
 class DescriptorHeap
 {
 public:
-    DescriptorHeap(ID3D12Device* device, UINT descriptorCount, ShadowSize shadowSize);
+    DescriptorHeap(ID3D12Device* device, UINT meshCount, UINT heapSize, ShadowSize shadowSize);
     ~DescriptorHeap();
 
-    void SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* pShadowMap);
+    void SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* normalMap, ID3D12Resource* pShadowMap);
 
     D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(int index);
     ID3D12DescriptorHeap* GetHeap() const;
@@ -37,13 +40,14 @@ private:
     ComPtr<ID3D12Resource> m_shadowMap;
     ID3D12Device* m_pDevice;
 
-    ComPtr<ID3D12DescriptorHeap> m_dsvHeap;  // DSV用のディスクリプタヒープ
+    ComPtr<ID3D12DescriptorHeap> m_dsvHeap;  //DSV用のディスクリプタヒープ
     D3D12_CPU_DESCRIPTOR_HANDLE m_shadowMapDSV;
 
     D3D12_VIEWPORT m_shadowViewport;
     D3D12_RECT m_shadowScissorRect;
 
     int textureCount;
+    int heapSize;
 
     void CreateShadowMap(const ShadowSize shadowSize);
 };

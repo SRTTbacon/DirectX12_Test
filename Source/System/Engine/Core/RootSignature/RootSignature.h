@@ -2,6 +2,7 @@
 #include <d3d12.h>
 #include <d3dx12.h>
 #include "..\\..\\..\\ComPtr.h"
+#include "..\\DescriptorHeap\\DescriptorHeap2.h"
 
 enum ShaderKinds
 {

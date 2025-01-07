@@ -17,13 +17,13 @@ public:
 	void LateUpdate(UINT backBufferIndex);
 
 	//[“x‚ª‘å‚«‚¢‡‚É‰e‚ğ•`‰æ
-	void RenderShadowMap(UINT backBufferIndex);
+	void RenderShadowMap(UINT backBufferIndex, bool bRenderShadow = true);
 
 	//[“x‚ª‘å‚«‚¢‡‚É–{‘Ì‚ğ•`‰æ
 	void RenderModel(UINT backBufferIndex);
 
 private:
-	// ”äŠrŠÖ”: [“x‚Ì‘å‚«‚¢‡‚É•À‚×‚é
+	//”äŠrŠÖ”: [“x‚Ì‘å‚«‚¢‡‚É•À‚×‚é
 	struct DepthComparator {
 		bool operator()(const std::pair<float, Model*>& a, const std::pair<float, Model*>& b) {
 			return a.first < b.first;  //[“x‚ª‘å‚«‚¢‡‚Éƒ\[ƒg

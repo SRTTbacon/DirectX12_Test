@@ -16,18 +16,17 @@
 //商用利用する場合はXAudio2かWwiseを推奨
 
 //サウンドの状態を保持する構造体
-struct SoundHandle
+class SoundHandle
 {
+public:
+	const UINT m_streamHandle;		//サウンドハンドル
+	const double m_maxSoundTime;	//サウンドの長さ (秒単位)
+	const float m_defaultFrequency;	//初期の周波数
 
-	const UINT streamHandle;		//サウンドハンドル
-	const double maxSoundTime;		//サウンドの長さ (秒単位)
-	const float defaultFrequency;	//初期の周波数
+	float m_speed;			//速度 (0.0f～)
+	float m_volume;			//音量 (0.0f～1.0f)
 
-	float speed;			//速度 (0.0f～)
-	float volume;			//音量 (0.0f～1.0f)
-
-	bool bPlaying;			//再生中かどうか
-	bool bLooping;			//ループさせるか
+	bool m_bLooping;		//ループさせるか
 
 	SoundHandle(const UINT handle, const float freq);
 	~SoundHandle();
@@ -53,6 +52,12 @@ struct SoundHandle
 	//サウンドを解放
 	//この関数実行後は使用不可になる
 	void Release() const;
+
+	inline bool IsPlaying() const { return m_bPlaying; }
+
+private:
+	bool m_bPlaying;			//再生中かどうか
+
 };
 
 class SoundSystem

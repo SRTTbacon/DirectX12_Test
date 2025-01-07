@@ -62,6 +62,24 @@
     <Filter Include="Source\System\Engine\Lights">
       <UniqueIdentifier>{e39f0946-1bdf-4ca3-8bff-0ce93478eabb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\System\Engine\Model\Convert">
+      <UniqueIdentifier>{61239708-62d8-4562-9b59-3f32d0c34494}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\Raytracing">
+      <UniqueIdentifier>{cf3a27c6-c49e-4686-8453-a053400af060}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="リソース ファイル\Raytracing">
+      <UniqueIdentifier>{d88eb98e-6668-47bc-b28d-c7918d2cfa17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\Hash">
+      <UniqueIdentifier>{d459cdf5-27dd-4b7a-bab1-f81238ee5ea4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Model\BulletPhysics">
+      <UniqueIdentifier>{72a7cffc-f083-4d32-b3ae-90785a982cfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Model\BulletPhysics\MotionState">
+      <UniqueIdentifier>{31c6347b-4753-4bf0-bb48-51b936aafc98}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\System\Main\Main.cpp">
@@ -126,6 +144,34 @@
     </ClCompile>
     <ClCompile Include="Source\System\Engine\Lights\ZShadow.cpp">
       <Filter>Source\System\Engine\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Model\Convert\ConvertFromFBX.cpp">
+      <Filter>Source\System\Engine\Model\Convert</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\BinaryFile\BinaryWriter.cpp">
+      <Filter>Source\System\Engine\Core\BinaryFile</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\Raytracing\RaytracingProcess.cpp">
+      <Filter>Source\System\Engine\Core\Raytracing</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\BinaryFile\BinaryCompression.cpp">
+      <Filter>Source\System\Engine\Core\BinaryFile</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\Hash\xxhash.cpp">
+      <Filter>Source\System\Engine\Core\Hash</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\BulletPhysics.cpp">
+      <Filter>Source\System\Engine\Model\BulletPhysics</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicMotionState.cpp">
+      <Filter>Source\System\Engine\Model\BulletPhysics\MotionState</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicAndBoneMergeMotionState.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\MotionState\KinematicMotionState.cpp">
+      <Filter>Source\System\Engine\Model\BulletPhysics\MotionState</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\RigidBody.cpp">
+      <Filter>Source\System\Engine\Model\BulletPhysics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -198,6 +244,42 @@
     <ClInclude Include="Source\System\Engine\Lights\ZShadow.h">
       <Filter>Source\System\Engine\Lights</Filter>
     </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\Convert\ConvertFromFBX.h">
+      <Filter>Source\System\Engine\Model\Convert</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\BinaryFile\BinaryWriter.h">
+      <Filter>Source\System\Engine\Core\BinaryFile</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\Raytracing\RaytracingProcess.h">
+      <Filter>Source\System\Engine\Core\Raytracing</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\BinaryFile\BinaryCompression.h">
+      <Filter>Source\System\Engine\Core\BinaryFile</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\Hash\xxhash.h">
+      <Filter>Source\System\Engine\Core\Hash</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\BulletPhysics.h">
+      <Filter>Source\System\Engine\Model\BulletPhysics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\MotionState.h">
+      <Filter>Source\System\Engine\Model\BulletPhysics\MotionState</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\DefaultMotionState.h">
+      <Filter>Source\System\Engine\Model\BulletPhysics\MotionState</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicMotionState.h">
+      <Filter>Source\System\Engine\Model\BulletPhysics\MotionState</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicAndBoneMergeMotionState.h">
+      <Filter>Source\System\Engine\Model\BulletPhysics\MotionState</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\KinematicMotionState.h">
+      <Filter>Source\System\Engine\Model\BulletPhysics\MotionState</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\RigidBody.h">
+      <Filter>Source\System\Engine\Model\BulletPhysics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Source\System\Shader\TexturePS.hlsl">
@@ -215,5 +297,10 @@
     <FxCompile Include="Source\System\Shader\ShadowVS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Source\System\Shader\RayTracingHelper.hlsli">
+      <Filter>リソース ファイル\Raytracing</Filter>
+    </None>
   </ItemGroup>
 </Project>

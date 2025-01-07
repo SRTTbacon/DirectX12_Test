@@ -55,7 +55,7 @@ static void InitWindow(const TCHAR* appName)
 	auto style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU;
 	AdjustWindowRect(&rect, style, FALSE);
 
-	// ウィンドウの生成
+	//ウィンドウの生成
 	g_hWnd = CreateWindowEx(
 		0,
 		appName,
@@ -71,7 +71,7 @@ static void InitWindow(const TCHAR* appName)
 		nullptr
 	);
 
-	// ウィンドウを表示
+	//ウィンドウを表示
 	ShowWindow(g_hWnd, SW_SHOW);
 
 	//ウィンドウにフォーカスする
@@ -111,20 +111,20 @@ static void MainLoop()
 		}
 		else
 		{
-			// 現在の時間を取得
+			//現在の時間を取得
 			QueryPerformanceCounter(&currentTime);
 			float deltaTime = static_cast<float>(currentTime.QuadPart - prevTime.QuadPart) / frequency.QuadPart;
 			prevTime = currentTime;
 
-			// 経過時間を加算
+			//経過時間を加算
 			elapsedTime += deltaTime;
 			frameCount++;
 
-			// 1秒を超えたらFPSを計算
+			//1秒を超えたらFPSを計算
 			if (elapsedTime >= 1.0f)
 			{
 				int fps = frameCount;
-				printf("%d[FPS]\n", fps);
+				//printf("%d[FPS]\n", fps);
 				frameCount = 0;
 				elapsedTime = 0.0f;
 			}
@@ -135,7 +135,6 @@ static void MainLoop()
 			g_Engine->BeginRender();
 			g_Scene->Draw();
 			g_Engine->EndRender();
-			//printf("%lf[FPS]\n", time);
 		}
 	}
 }
@@ -146,8 +145,8 @@ void StartApp(const TCHAR* appName)
 	InitWindow(appName);
 
 	//描画エンジンの初期化を行う
-	g_Engine = new Engine();
-	if (!g_Engine->Init(g_hWnd, WINDOW_WIDTH, WINDOW_HEIGHT))
+	g_Engine = new Engine(g_hWnd);
+	if (!g_Engine->Init(WINDOW_WIDTH, WINDOW_HEIGHT))
 	{
 		return;
 	}
@@ -159,7 +158,7 @@ void StartApp(const TCHAR* appName)
 		return;
 	}
 
-	// メイン処理ループ
+	//メイン処理ループ
 	MainLoop();
 }
 
