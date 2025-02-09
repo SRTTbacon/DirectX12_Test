@@ -103,48 +103,39 @@ bool BinaryReader::ReadBoolean()
 //ファイルからreadsizeだけ読み取り、char*型に入れる
 char* BinaryReader::ReadBytes(UINT readSize)
 {
-	if (bufferIndex + readSize > bufferSize) {
+	std::vector<char> tempBuffer;
+	size_t remaining = bufferSize - bufferIndex;
+
+	// まず、バッファ内にある分だけコピー
+	if (remaining > 0) {
+		size_t copySize = min(remaining, static_cast<size_t>(readSize));
+		tempBuffer.insert(tempBuffer.end(), buffer.begin() + bufferIndex, buffer.begin() + bufferIndex + copySize);
+		bufferIndex += copySize;
+	}
+
+	// 必要なデータがまだ足りない場合、バッファを補充しながらループ
+	while (tempBuffer.size() < readSize) {
 		if (bMemory) {
 			char* temp = new char[1];
 			return temp;
 		}
 
-		//残りのデータが足りない場合はバッファを補充
-        size_t remaining = bufferSize - bufferIndex;
-        std::vector<char> tempBuffer(readSize);
-        std::memcpy(tempBuffer.data(), &buffer[bufferIndex], remaining);
+		if (!FillBuffer()) {
+			break; // バッファ補充が失敗（ファイル終端等）
+		}
 
-        if (!FillBuffer()) {
-            //バッファ補充失敗 -> 読み取れる分だけ返す
-            char* partialData = new char[remaining + 1];
-            std::memcpy(partialData, tempBuffer.data(), remaining);
-			partialData[remaining] = '\0';
-			bufferIndex = bufferSize;
-			return partialData;
-        }
+		size_t toRead = min(bufferSize, readSize - tempBuffer.size());
+		tempBuffer.insert(tempBuffer.end(), buffer.begin(), buffer.begin() + toRead);
+		bufferIndex = toRead; // 読み取った分だけバッファ位置を更新
+	}
 
-        //残りデータと補充後のデータを統合
-        size_t toRead = readSize - remaining;
-        if (toRead > bufferSize) {
-            //リクエストされたサイズが補充後のバッファサイズを超える場合
-            toRead = bufferSize;
-        }
+	// 読み取れたサイズに応じてメモリ確保
+	size_t actualSize = tempBuffer.size();
+	char* result = new char[actualSize + 1];
+	std::memcpy(result, tempBuffer.data(), actualSize);
+	result[actualSize] = '\0';
 
-        std::memcpy(tempBuffer.data() + remaining, buffer.data(), toRead);
-        char* result = new char[readSize + 1];
-        std::memcpy(result, tempBuffer.data(), readSize);
-		result[readSize] = '\0';
-		bufferIndex = toRead; //新しいバッファの位置を調整
-		return result;
-    }
-
-    //バッファ内で収まる場合
-    char* result = new char[readSize + 1];
-    std::memcpy(result, &buffer[bufferIndex], readSize);
-	result[readSize] = '\0';
-	//printf("ReadBytes = %s\n", result);
-    bufferIndex += readSize;
-    return result;
+	return result;
 }
 //ファイルからreadsizeだけ読み取り、unsigned char*型に入れる
 BYTE* BinaryReader::ReadUBytes(int readsize)

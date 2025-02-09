@@ -1,9 +1,28 @@
 #include "ZShadow.h"
 
-ZShadow::ZShadow(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
-	: m_pDevice(pDevice)
-    , m_pCommandList(pCommandList)
+ZShadow::ZShadow()
+	: m_pDevice(nullptr)
+    , m_pCommandList(nullptr)
 {
+}
+
+ZShadow::~ZShadow()
+{
+    if (m_pShadowPipelineState) {
+        delete m_pShadowPipelineState;
+        m_pShadowPipelineState = nullptr;
+    }
+    if (m_pShadowRootSignature) {
+        delete m_pShadowRootSignature;
+        m_pShadowRootSignature = nullptr;
+    }
+}
+
+void ZShadow::Init(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
+{
+    m_pDevice = pDevice;
+    m_pCommandList = pCommandList;
+
     CreateBuffer();
 
     //影用のルートシグネチャ、パイプラインステートの作成

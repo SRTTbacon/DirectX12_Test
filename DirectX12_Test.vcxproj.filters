@@ -77,9 +77,6 @@
     <Filter Include="Source\System\Engine\Model\BulletPhysics">
       <UniqueIdentifier>{72a7cffc-f083-4d32-b3ae-90785a982cfd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\System\Engine\Model\BulletPhysics\MotionState">
-      <UniqueIdentifier>{31c6347b-4753-4bf0-bb48-51b936aafc98}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\System\Main\Main.cpp">
@@ -163,14 +160,7 @@
     <ClCompile Include="Source\System\Engine\Model\BulletPhysics\BulletPhysics.cpp">
       <Filter>Source\System\Engine\Model\BulletPhysics</Filter>
     </ClCompile>
-    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicMotionState.cpp">
-      <Filter>Source\System\Engine\Model\BulletPhysics\MotionState</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicAndBoneMergeMotionState.cpp" />
-    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\MotionState\KinematicMotionState.cpp">
-      <Filter>Source\System\Engine\Model\BulletPhysics\MotionState</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\RigidBody.cpp">
+    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\DynamicBone.cpp">
       <Filter>Source\System\Engine\Model\BulletPhysics</Filter>
     </ClCompile>
   </ItemGroup>
@@ -262,22 +252,7 @@
     <ClInclude Include="Source\System\Engine\Model\BulletPhysics\BulletPhysics.h">
       <Filter>Source\System\Engine\Model\BulletPhysics</Filter>
     </ClInclude>
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\MotionState.h">
-      <Filter>Source\System\Engine\Model\BulletPhysics\MotionState</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\DefaultMotionState.h">
-      <Filter>Source\System\Engine\Model\BulletPhysics\MotionState</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicMotionState.h">
-      <Filter>Source\System\Engine\Model\BulletPhysics\MotionState</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicAndBoneMergeMotionState.h">
-      <Filter>Source\System\Engine\Model\BulletPhysics\MotionState</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\KinematicMotionState.h">
-      <Filter>Source\System\Engine\Model\BulletPhysics\MotionState</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\RigidBody.h">
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\DynamicBone.h">
       <Filter>Source\System\Engine\Model\BulletPhysics</Filter>
     </ClInclude>
   </ItemGroup>

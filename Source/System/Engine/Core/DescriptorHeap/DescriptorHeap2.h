@@ -22,9 +22,9 @@ public:
     DescriptorHeap(ID3D12Device* device, UINT meshCount, UINT heapSize, ShadowSize shadowSize);
     ~DescriptorHeap();
 
-    void SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* normalMap, ID3D12Resource* pShadowMap);
+    void SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* normalMap, ID3D12Resource* pShadowMap, ID3D12Resource* pShapeBuffer);
 
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(int index);
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(UINT index, UINT offset = 0);
     ID3D12DescriptorHeap* GetHeap() const;
     D3D12_CPU_DESCRIPTOR_HANDLE* GetShadowMapDSV();
     D3D12_VIEWPORT* GetShadowViewPort();
@@ -33,8 +33,6 @@ public:
 
 private:
     ComPtr<ID3D12DescriptorHeap> m_descriptorHeap;
-    D3D12_CPU_DESCRIPTOR_HANDLE m_cpuDescriptorHandle;
-    D3D12_GPU_DESCRIPTOR_HANDLE m_gpuDescriptorHandle;
     UINT m_descriptorSize;
 
     ComPtr<ID3D12Resource> m_shadowMap;
@@ -46,8 +44,8 @@ private:
     D3D12_VIEWPORT m_shadowViewport;
     D3D12_RECT m_shadowScissorRect;
 
-    int textureCount;
-    int heapSize;
+    int m_textureCount;
+    int m_heapSize;
 
     void CreateShadowMap(const ShadowSize shadowSize);
 };

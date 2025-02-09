@@ -31,6 +31,8 @@ extern std::string GetFileExtension(const std::string& filePath);
 extern std::wstring GetWideString(const std::string& str);
 extern std::string GetNarrowString(const std::wstring& str);
 
+extern std::vector<std::string> GetSprits(std::string& str, char delim);
+
 //ファイル内容から一意のIDを生成
 extern UINT GenerateIDFromFile(const std::string& filePath);
 extern UINT GenerateIDFromFile(const std::wstring& filePath);

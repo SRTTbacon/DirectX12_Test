@@ -2,7 +2,6 @@
 #include "bass.h"
 #include "bassflac.h"
 #include "bass_fx.h"
-#include "string"
 #include "unordered_map"
 
 #include "..\\..\\Main\\Utility.h"
@@ -39,7 +38,7 @@ public:
 	void PauseSound();
 
 	//プロパティ(速度や音量など) を更新
-	void UpdateProperty() const;
+	void UpdateProperty();
 
 	//再生位置を変更 (相対的に)
 	//引数 : double 現在の再生位置からの相対位置(秒)
@@ -58,6 +57,7 @@ public:
 private:
 	bool m_bPlaying;			//再生中かどうか
 
+	bool IsVaild() const;
 };
 
 class SoundSystem

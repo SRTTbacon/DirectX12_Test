@@ -1,10 +1,11 @@
 #include "Scene.h"
 
-Scene* g_Scene;
+Scene* g_Scene = nullptr;
 
 using namespace DirectX;
 
-const std::string modelFile1 = "Resource/Model/FBX_Moe.hcs";
+const std::string modelFile1 = "Resource/Model/Milltina/Milltina.hcs";
+//const std::string modelFile1 = "Resource/Model/FBX_Moe.hcs";
 const std::string modelFile2 = "Resource/Model/Sphere.fbx";
 const std::string modelFile3 = "Resource/Model/Plane.fbx";
 
@@ -20,24 +21,53 @@ bool Scene::Init()
 	for (int i = 0; i < 1; i++) {
 		Character* pCharacter = g_Engine->AddCharacter(modelFile1);
 		m_pModels.push_back(pCharacter);
-		pCharacter->AddAnimation(g_Engine->GetAnimation("Resource\\Test5.hcs"));
+		pCharacter->AddAnimation(g_Engine->GetAnimation("Resource\\Test.hcs"));
 		pCharacter->m_animationSpeed = animSpeed;
 
-		pCharacter->SetShapeWeight("Big breasts.Big breasts", 1.0f);
+		pCharacter->SetShapeWeight("Foot_heel", 1.0f);
 
-		std::vector meshNames = { "Shirt", "Skirt", "Outer", "Brassiere", "Underwear"};
-		for (const std::string& meshName : meshNames) {
-			Character::HumanoidMesh* pMesh = pCharacter->GetHumanMesh(meshName);
-			if (pMesh) {
-				//pMesh->pMesh->bDraw = false;
+		std::vector meshNames = { "Body", "Milltina_body", "Milltina_hair_base", "Milltina_hair_front", "Milltina_hair_front_side", "Milltina_hair_side", "Milltina_hair_twintail"};
+		for (Character::HumanoidMesh& mesh : pCharacter->GetHumanMeshes()) {
+			mesh.pMesh->bDraw = false;
+			for (const std::string& meshName : meshNames) {
+				if (mesh.pMesh->meshName == meshName) {
+					if (mesh.pMesh) {
+						mesh.pMesh->bDraw = true;
+					}
+				}
 			}
 		}
+
+		//m_pDynamicBone = new DynamicBone(m_bullet.GetDynamicWorld(), &pCharacter->m_boneManager);
+		//m_pDynamicBone->Initialize(m_pModels[0]->m_boneManager.GetBone("Hair Root"), 0.5f, 0.2f);
 	}
 
+	/*for (UINT i = 0; i < m_pModels[0]->m_boneManager.m_bones.size(); i++) {
+		if (i > 200) {
+			break;
+		}
+		Bone& bone = m_pModels[0]->m_boneManager.m_bones[i];
+		Model* pSphere = g_Engine->AddModel(modelFile2);
+		pSphere->m_scale = XMFLOAT3(0.01f, 0.01f, 0.01f);
+		XMMATRIX m = m_pModels[0]->m_boneManager.m_finalBoneTransforms[bone.GetBoneName()];
+		XMMATRIX rotX = XMMatrixRotationX(XMConvertToRadians(-90.0f));
+		XMMATRIX rotY = XMMatrixRotationY(XMConvertToRadians(180.0f));
+		XMMATRIX rot = rotX * rotY;
+		m *= rot;
+		pSphere->m_position.x = m.r[3].m128_f32[0];
+		pSphere->m_position.y = m.r[3].m128_f32[1];
+		pSphere->m_position.z = m.r[3].m128_f32[2];
+		m_spheres.push_back(pSphere);
+		
+	}*/
 	//地面
 	m_pModel2 = g_Engine->AddModel(modelFile3);
 	m_pModel2->m_scale = XMFLOAT3(50.0f, 0.05f, 50.0f);
 	m_pModel2->m_position.y = -0.05f;
+
+	m_pModel3 = g_Engine->AddModel(modelFile3);
+	m_pModel3->m_scale = XMFLOAT3(0.5f, 0.5f, 0.5f);
+	m_pModel3->m_position = XMFLOAT3(-1.0f, 0.5f, 1.0f);
 
 	for (int i = 0; i < 1; i++) {
 		m_pModels[i]->m_rotation.x = -90.0f;
@@ -52,9 +82,6 @@ bool Scene::Init()
 	m_pBGMHandle->m_speed = animSpeed;
 	m_pBGMHandle->m_bLooping = true;
 	m_pBGMHandle->UpdateProperty();
-
-	//ConvertFromFBX convert;
-	//convert.ConvertFromCharacter(m_pModels[0], "Resource/Model/FBX_Moe.fbx", "Resource/Model/FBX_Moe.hcs");
 
 	printf("シーンの初期化に成功\n");
 	return true;
@@ -75,8 +102,8 @@ void Scene::Update()
 			m_pBGMHandle->PauseSound();
 		}
 	}
-	if (g_Engine->GetMouseStateSync(0x01)) {
-		m_pModels[0]->m_rotation.x += 90.0f;
+	if (g_Engine->GetMouseState(0x01)) {
+		m_pModels[0]->m_rotation.y += 2.0f;
 	}
 	if (g_Engine->GetMouseStateSync(0x02)) {
 		m_pBGMHandle->SetPosition(m_pModels[0]->m_nowAnimationTime);
@@ -95,19 +122,18 @@ void Scene::Update()
 		m_pBGMHandle->SetPosition(m_pModels[0]->m_nowAnimationTime);
 	}
 
-	UINT shapeIndex = 331;
 	if (g_Engine->GetKeyState(DIK_N)) {
-		float weight = m_pModels[0]->GetShapeWeight("ウィンク");
+		float weight = m_pModels[0]->GetShapeWeight("Breasts_Flat");
 		//float weight = m_pModels[0]->GetShapeWeight("Body", shapeIndex);
 		weight -= g_Engine->GetFrameTime();
-		m_pModels[0]->SetShapeWeight("ウィンク", weight);
+		m_pModels[0]->SetShapeWeight("Breasts_Flat", weight);
 		//m_pModels[0]->SetShapeWeight("Body", shapeIndex, weight);
 	}
 	if (g_Engine->GetKeyState(DIK_M)) {
-		float weight = m_pModels[0]->GetShapeWeight("ウィンク");
+		float weight = m_pModels[0]->GetShapeWeight("Breasts_Flat");
 		//float weight = m_pModels[0]->GetShapeWeight("Body", shapeIndex);
 		weight += g_Engine->GetFrameTime();
-		m_pModels[0]->SetShapeWeight("ウィンク", weight);
+		m_pModels[0]->SetShapeWeight("Breasts_Flat", weight);
 		//m_pModels[0]->SetShapeWeight("Body", shapeIndex, weight);
 	}
 
@@ -134,7 +160,31 @@ void Scene::Update()
 		m_pModels[0]->m_position.y += 0.01f;
 	}
 
-	//m_physicsManager.UpdatePhysics(g_Engine->GetFrameTime());
+	if (g_Engine->GetKeyState(DIK_UP)) {
+		m_pModel3->m_position.z -= 0.01f;
+	}
+	if (g_Engine->GetKeyState(DIK_DOWN)) {
+		m_pModel3->m_position.z += 0.01f;
+	}
+	if (g_Engine->GetKeyState(DIK_LEFT)) {
+		m_pModel3->m_position.x -= 0.01f;
+	}
+	if (g_Engine->GetKeyState(DIK_RIGHT)) {
+		m_pModel3->m_position.x += 0.01f;
+	}
+
+	if (g_Engine->GetKeyStateSync(DIK_C)) {
+		ConvertFromFBX convert;
+		//convert.ConvertFromCharacter(m_pModels[0], modelFile1, "Resource/Model/Milltina/Milltina.hcs");
+		Character::HumanoidMesh* a = m_pModels[0]->GetHumanMesh("Milltina_body");
+		for (std::pair<std::string, UINT> keyValue : a->shapeMapping) {
+			printf("%s\n", keyValue.first.c_str());
+		}
+	}
+
+	m_pModels[0]->Update();
+	m_bullet.Update(g_Engine->GetFrameTime());
+	//m_pDynamicBone->Update();
 }
 
 void Scene::Draw()
@@ -144,13 +194,19 @@ void Scene::Draw()
 
 Scene::Scene()
 	: m_pModel2(nullptr)
+	, m_pModel3(nullptr)
 	, m_pBGMHandle(nullptr)
+	, m_pDynamicBone(nullptr)
+	, m_bullet(XMFLOAT3(0.0f, -9.81f, 0.0f))
 {
 }
 
 Scene::~Scene()
 {
-	
+	for (size_t i = 0; i < m_pModels.size(); i++) {
+		//delete m_pModels[i];
+	}
+	//m_pModels.clear();
 }
 
 void Scene::UpdateCamera()

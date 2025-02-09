@@ -11,7 +11,7 @@ cbuffer ModelConstantBuffer : register(b0)
 
 cbuffer BoneMatrices : register(b1)
 {
-	matrix boneMatrices[512];	//ボーンマトリックス（最大512個)
+	matrix boneMatrices[512];	    //ボーンマトリックス（最大512個)
 }
 
 cbuffer Constants : register(b2)	//初期化時に1度だけしか実行しないもの
@@ -20,8 +20,8 @@ cbuffer Constants : register(b2)	//初期化時に1度だけしか実行しないもの
     uint shapeCount;				//シェイプキーの数
 };
 
-StructuredBuffer<float3> ShapeDeltasTexture : register(t0);		//シェイプキーごとの位置変位データ
-StructuredBuffer<float> ShapeWeights : register(t1);			//各シェイプキーのウェイト
+Texture2D<float4> ShapeDeltasTexture : register(t0);        //シェイプキーごとの位置変位データ
+StructuredBuffer<float> ShapeWeights : register(t1);		//各シェイプキーのウェイト
 
 float4x4 InvTangentMatrix(float3 tangent, float3 binormal, float3 normal);
 
@@ -30,27 +30,40 @@ struct VSInput
 	float3 pos : POSITION;				//頂点座標
     float4 boneWeights : BONEWEIGHTS;	//各頂点のボーンの影響度
     uint4 boneIDs : BONEIDS;			//各頂点に影響を与えるボーンのインデックス
-	float3 normal : NORMAL;				//法線
+	uint vertexID : VERTEXID;			//頂点のID
+    float3 normal : NORMAL;             //法線
 	float2 uv : TEXCOORD;				//UV
     float3 tangent : TANGENT;           //接線
     float3 binormal : BINORMAL;         //従法線
-	uint vertexID : VERTEXID;			//頂点のID
 };
 
 struct VSOutput
 {
-	float4 svpos : SV_POSITION; //座標
-    float3 normal : NORMAL;		//ノーマルマップ
-	float2 uv : TEXCOORD0;		//UV
-    float4 shadowPos : TEXCOORD1;
-    float3 tanLightDir : TEXCOORD2; //接線
-    float3 tanHalfWayVec : TEXCOORD3; //従法線
+	float4 svpos : SV_POSITION;         //座標
+    float3 normal : NORMAL;		        //ノーマルマップ
+	float2 uv : TEXCOORD0;		        //UV
+    float4 shadowPos : TEXCOORD1;       //セルフシャドウの投影位置
+    float4 tanLightDir : TEXCOORD2;     //接線
+    float3 tanHalfWayVec : TEXCOORD3;   //従法線
 };
 
 //頂点IDとシェイプキーのIDから相対位置を取得
 float3 GetShapeDelta(uint vertexID, uint shapeID)
 {
-    return ShapeDeltasTexture[vertexID + shapeID * vertexCount] * ShapeWeights[shapeID];
+    //ウェイトが非常に小さい場合は無視
+    float weight = ShapeWeights[shapeID];
+    if (weight < 0.001f)
+        return float3(0.0f, 0.0f, 0.0f);
+    
+    //シェイプキーのテクスチャサイズを取得
+    uint width = 0, height = 0;
+    ShapeDeltasTexture.GetDimensions(width, height);
+
+    //座標
+    uint x = vertexID % width;
+    uint y = (vertexID / width) * shapeCount + shapeID;
+
+    return ShapeDeltasTexture.Load(int3(x, y, 0)).xyz * weight;
 }
 
 VSOutput vert(VSInput input)
@@ -61,9 +74,8 @@ VSOutput vert(VSInput input)
     matrix skinMatrix = input.boneWeights.x * boneMatrices[input.boneIDs.x] + input.boneWeights.y * boneMatrices[input.boneIDs.y] +
 		input.boneWeights.z * boneMatrices[input.boneIDs.z] + input.boneWeights.w * boneMatrices[input.boneIDs.w];
 
-    float3 shapePos = input.pos;
-
 	//シェイプキーの影響を加算
+    float3 shapePos = input.pos;
     for (uint i = 0; i < shapeCount; i++)
     {
         shapePos += GetShapeDelta(input.vertexID, i);
@@ -91,7 +103,7 @@ VSOutput vert(VSInput input)
     float4x4 invMat = InvTangentMatrix(tan, bi, nor);
 
     //output.tanLightDir = mul(lightViewProjMatrix._41_42_43_44, invMat).xyz;
-    output.tanLightDir = mul(lightPos, invMat).xyz;
+    output.tanLightDir = mul(lightPos, invMat);
     
     float4 halfWayVec = normalize(normalize(eyePos - projPos) + lightPos);
     output.tanHalfWayVec = mul(halfWayVec, invMat).xyz;

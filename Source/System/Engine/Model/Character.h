@@ -25,8 +25,8 @@ public:
         std::unordered_map<std::string, UINT> shapeMapping;     //シェイプキー名からインデックスを取得
         std::vector<XMFLOAT3> shapeDeltas;                      //各頂点のシェイプキー適応後の位置を格納 (頂点の数 * シェイプキーの数だけ要素数を確保)
         std::vector<float> shapeWeights;                        //メッシュごとのシェイプキーのウェイト一覧
-        std::string meshName;                                   //メッシュ名
         UINT vertexCount;                                       //メッシュの頂点数
+        bool bChangeShapeValue;                                 //ウェイトを変更したらtrue
 
         HumanoidMesh();
     };
@@ -43,8 +43,11 @@ public:
     //戻り値 : 追加されたアニメーションのインデックス
     UINT AddAnimation(Animation animation);
 
-    //位置関係やアニメーションを更新
-    void Update(UINT backBufferIndex);
+    //アニメーションを更新
+    void Update();
+
+    //フレームの最後に実行 (エンジンから呼ばれる)
+    void LateUpdate(UINT backBufferIndex);
 
     //ボーンの位置を更新
     void UpdateBonePosition(std::string boneName, XMFLOAT3& position);
@@ -93,7 +96,7 @@ public: //ゲッター関数
     inline float GetShapeWeight(std::string meshName, UINT shapeIndex)
     {
         for (HumanoidMesh& mesh : m_humanoidMeshes) {
-            if (mesh.meshName != meshName)
+            if (mesh.pMesh->meshName != meshName)
                 continue;
 
             return mesh.shapeWeights[shapeIndex];
@@ -102,20 +105,32 @@ public: //ゲッター関数
         return 0.0f;
     }
 
+    //メッシュ情報をすべて取得
     inline std::vector<HumanoidMesh>& GetHumanMeshes()
     {
         return m_humanoidMeshes;
     }
-
+    //メッシュ名からメッシュ情報を取得
 	inline HumanoidMesh* GetHumanMesh(std::string meshName)
 	{
 		for (HumanoidMesh& mesh : m_humanoidMeshes) {
-			if (mesh.meshName == meshName) {
+			if (mesh.pMesh->meshName == meshName) {
 				return &mesh;
 			}
 		}
 		return nullptr;
 	}
+
+    //現在のアニメーションの長さを取得
+    inline float GetAnimationLength() const
+    {
+        if (m_animations.size() > m_nowAnimationIndex) {
+            return 0.0f;
+        }
+
+        size_t frameCount = m_animations[m_nowAnimationIndex].m_frames.size();
+        return m_animations[m_nowAnimationIndex].m_frames[frameCount - 1].time;
+    }
 
 public: //パブリック変数
     BoneManager m_boneManager;  //ボーンに関する情報を保持する構造体   
@@ -129,16 +144,11 @@ private:
         XMFLOAT3 position;      //頂点の位置 (Tポーズ)
         XMFLOAT4 boneWeights;   //ボーンの影響度
         UINT boneIDs[4];        //4つのボーンから影響を受ける
+        UINT vertexID;          //頂点ID
         XMFLOAT3 normal;        //法線
         XMFLOAT2 texCoords;     //UV
 		XMFLOAT3 tangent;       //接線
 		XMFLOAT3 bitangent;     //従法線
-        UINT vertexID;          //頂点ID
-    };
-    //シェーダーに渡す頂点数の情報 (構造体で渡す必要?)
-    struct Contents {
-        UINT vertexCount;
-        UINT shapeCount;
     };
 
     //ボーンが存在するFBXファイルをロード
@@ -151,7 +161,7 @@ private:
     //メッシュ情報を.fbxファイルから取得
     Mesh* ProcessMesh(aiMesh* mesh, HumanoidMesh& humanoidMesh);
     //メッシュ情報を.hcsファイルから取得
-    Mesh* ProcessMesh(BinaryReader& br, HumanoidMesh& humanoidMesh);
+    void ProcessMesh(BinaryReader& br, HumanoidMesh& humanoidMesh);
 
     //各ボーンのワールド座標を算出
     void CalculateBoneTransforms(const aiNode* node, const XMMATRIX& parentTransform);
@@ -169,12 +179,8 @@ private:
     void LoadHumanoidMesh(BinaryReader& br);
 
     //ファイルからテクスチャを作成
-    void SetTexture(const std::string nameOnly);
+    void SetTexture(const Mesh* pMesh, const std::string nameOnly);
 
-    //シェーダーに渡すボーンの座標を計算
-    void UpdateBoneTransform(UINT boneIndex, XMMATRIX& parentMatrix);
-    //シェーダーに渡すすべてのボーンの座標を計算
-    void UpdateBoneTransform();
     //シェイプキーのウェイトを更新
     void UpdateShapeKeys();
     //アニメーションを更新

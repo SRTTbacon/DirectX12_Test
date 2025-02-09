@@ -175,7 +175,7 @@ Texture2D* Texture2D::GetColor(float r, float g, float b)
 		}
 	}
 
-	ID3D12Resource* pBuffer = GetDefaultResource(width, height);
+	ID3D12Resource* pBuffer = GetDefaultResource(DXGI_FORMAT_R8G8B8A8_UNORM, true, width, height);
 
 	HRESULT hr = pBuffer->WriteToSubresource(0, nullptr, data.data(), width * sizeof(UINT), static_cast<UINT>(data.size() * sizeof(UINT)));
 	if (FAILED(hr))
@@ -193,16 +193,17 @@ Texture2D* Texture2D::GetColor(float r, float g, float b)
 	return new Texture2D(manage);
 }
 
-ID3D12Resource* Texture2D::GetDefaultResource(size_t width, size_t height)
+ID3D12Resource* Texture2D::GetDefaultResource(DXGI_FORMAT format, bool bPixelShader, size_t width, size_t height)
 {
-	auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, static_cast<UINT>(width), static_cast<UINT>(height));
-	auto texHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
+	CD3DX12_RESOURCE_DESC resDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, static_cast<UINT>(width), static_cast<UINT>(height), 1, 1);
+	CD3DX12_HEAP_PROPERTIES texHeapProp = bPixelShader ? CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0) : CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	ID3D12Resource* buff = nullptr;
+	D3D12_RESOURCE_STATES state = bPixelShader ? D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_COPY_DEST;
 	HRESULT result = g_Engine->GetDevice()->CreateCommittedResource(
 		&texHeapProp,
-		D3D12_HEAP_FLAG_NONE, //“Á‚ÉŽw’è‚È‚µ
+		D3D12_HEAP_FLAG_NONE,
 		&resDesc,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		state,
 		nullptr,
 		IID_PPV_ARGS(&buff)
 	);

@@ -2,8 +2,8 @@
 #define SHADOWSIZE 8192.0f  //シャドウマップのサイズ
 
 SamplerState texSampler : register(s0);                 //テクスチャ用サンプラー
-SamplerComparisonState shadowSampler : register(s1);    //テクスチャ用サンプラー
-Texture2D<float4> _MainTex : register(t0);              //テクスチャ
+SamplerComparisonState shadowSampler : register(s1);    //影用サンプラー
+Texture2D<float4> _MainTex : register(t0);              //ベーステクスチャ
 Texture2D<float4> _NormalMap : register(t1);            //ノーマルマップ
 Texture2D<float> shadowMap : register(t2);              //シャドウマップ
 
@@ -17,12 +17,12 @@ cbuffer LightBuffer : register(b0)
 
 struct VSOutput
 {
-    float4 svpos : SV_POSITION;     //座標
-    float3 normal : NORMAL;         //ノーマル
-    float2 uv : TEXCOORD0;           //UV
-    float4 shadowPos : TEXCOORD1;   //影の位置
-    float3 tanLightDir : TEXCOORD2; //従法線
-    float3 tanHalfWayVec : TEXCOORD3; //接線
+    float4 svpos : SV_POSITION;         //座標
+    float3 normal : NORMAL;             //ノーマル
+    float2 uv : TEXCOORD0;              //UV
+    float4 shadowPos : TEXCOORD1;       //影の位置
+    float4 tanLightDir : TEXCOORD2;     //従法線
+    float3 tanHalfWayVec : TEXCOORD3;   //接線
 };
 
 float ShadowCalculation(float4 shadowPos)
@@ -69,15 +69,10 @@ float4 pixel(VSOutput input) : SV_TARGET
     //法線マップ
     float2 tiledUV = input.uv * float2(5.0f, 10.0f);
     float4 normalTexColor = _NormalMap.Sample(texSampler, tiledUV);
-    float3 normal = normalTexColor.xyz * 2 - 1.0f;
-
-    normal = normalize(normal);
     
-    //normal *= 0.1f;
-
     //ライトの方向を逆に
-    float lightIntensity = saturate(dot(input.normal, -lightDir.xyz));
-    //float lightIntensity = saturate(dot(normal, input.tanLightDir));
+    float3 lightVec = lightDir.xyz;
+    float lightIntensity = saturate(dot(input.normal, -lightVec));
     
     //シャドウの計算
     float shadowFactor = ShadowCalculation(input.shadowPos);
@@ -90,15 +85,18 @@ float4 pixel(VSOutput input) : SV_TARGET
     //ライティング結果とテクスチャカラーを掛け合わせる
     float4 finalColor = lighting * tex;
     
-    //スペキュラ
-    float specularIntensity = pow(saturate(dot(normal, -input.tanHalfWayVec)), 1.0f);
-    float4 specular = float4(1.0f, 1.0f, 1.0f, 1.0f) * specularIntensity * 0.25f;
-    specular.r = saturate(specular.r);
-    specular.g = saturate(specular.g);
-    specular.b = saturate(specular.b);
-    specular.a = saturate(specular.a);
-    //float4 specular = float4(1.0f, 1.0f, 1.0f, 1.0f) * pow(saturate(dot(input.tanHalfWayVec, normal)), 0.5f) * 0.15f;
-    //finalColor -= specular;
+    //float3 E = normalize(input.eyePos); // 視線ベクトル
+
+    float3 N = 2.0f * normalTexColor.xyz - 1.0; // 法線マップからの法線
+    N *= 0.15f;
+
+    float3 blendedNormal = normalize(lerp(input.normal, N, saturate(0.5f)));
+
+    //float3 R = reflect(-E, N); // 反射ベクトル
+    //float amb = input.tanLightDir.w; // 環境光の強さ
+    
+    //finalColor *= max(0, dot(blendedNormal, -lightVec));
+    //finalColor += 0.3f * pow(max(0, dot(R, L)), 8);
 
     return finalColor;
 }

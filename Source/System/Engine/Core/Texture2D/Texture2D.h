@@ -24,6 +24,8 @@ public:
 	//単色テクスチャを生成
 	//引数 : r, g, b 0.0f～1.0fの範囲で色を指定
 	static Texture2D* GetColor(float r, float g, float b);
+	static ID3D12Resource* GetDefaultResource(DXGI_FORMAT format, bool bPixelShader, size_t width, size_t height);
+
 	bool IsValid() const; //正常に読み込まれているかどうかを返す
 
 	ID3D12Resource* Resource(); //リソースを返す
@@ -38,8 +40,6 @@ private:
 
 	bool Load(std::string& path);
 	bool Load(std::wstring& path);
-
-	static ID3D12Resource* GetDefaultResource(size_t width, size_t height);
 
 	Texture2D(const Texture2D&) = delete;
 	void operator = (const Texture2D&) = delete;

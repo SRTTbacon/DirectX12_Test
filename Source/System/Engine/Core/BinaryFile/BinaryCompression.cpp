@@ -2,9 +2,9 @@
 
 void BinaryCompress(const char* src, size_t srcSize, std::vector<char>& dst, int compressionLevel)
 {
-	size_t const cBuffSize = ZSTD_compressBound(srcSize);
+	size_t cBuffSize = ZSTD_compressBound(srcSize);
 	dst.resize(cBuffSize);
-	size_t const cSize = ZSTD_compress(dst.data(), cBuffSize, src, srcSize, compressionLevel);
+	size_t cSize = ZSTD_compress(dst.data(), cBuffSize, src, srcSize, compressionLevel);
 
     if (ZSTD_isError(cSize)) {
         printf("à≥èkíÜÇ…ÉGÉâÅ[Ç™î≠ê∂ÇµÇ‹ÇµÇΩÅB%s\n", ZSTD_getErrorName(cSize));

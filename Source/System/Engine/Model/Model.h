@@ -21,6 +21,13 @@ constexpr const char* MODEL_HEADER = "HCSModel";
 //モデルファイルがキャラクターの場合は0
 constexpr BYTE MODEL_CHARACTER = 0;
 
+enum ModelType
+{
+    ModelType_Unknown,      //未指定
+    ModelType_Primitive,    //普通のモデル
+    ModelType_Character,    //ボーンが存在するモデル
+};
+
 //メッシュごとに必要な情報
 struct Mesh {
     ComPtr<ID3D12Resource> vertexBuffer;            //頂点バッファ(GPUメモリに頂点情報を保存)
@@ -30,9 +37,13 @@ struct Mesh {
     ComPtr<ID3D12Resource> shapeDeltasBuffer;       //各頂点に対するシェイプキーの位置情報                   (ヒューマノイドモデルのみ設定)
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView;      //頂点バッファのデータ内容とサイズを保持
     D3D12_INDEX_BUFFER_VIEW indexBufferView;        //インデックスバッファのデータ内容とサイズを保持
+    std::string meshName;                           //メッシュ名
     UINT vertexCount;                               //頂点数
     UINT indexCount;                                //インデックス数 (GPU側で、この数ぶん描画させる)
 	bool bDraw;                                     //描画するかどうか
+
+    Mesh();
+    ~Mesh();
 };
 
 class Model
@@ -45,7 +56,7 @@ public:
     void LoadModel(const std::string fbxFile);
 
     //更新 (エンジンから実行されるため、ユーザーが実行する必要はない)
-    virtual void Update(UINT backBufferIndex);
+    virtual void LateUpdate(UINT backBufferIndex);
 
     //シャドウマップに描画 (エンジンから実行されるため、ユーザーが実行する必要はない)
     void RenderShadowMap(UINT backBufferIndex);
@@ -81,6 +92,7 @@ protected:
         XMFLOAT3 position;
         XMFLOAT4 boneWeights;   //影用のシェーダーと合わせる必要があるためダミー
         UINT boneIDs[4];        //影用のシェーダーと合わせる必要があるためダミー
+        UINT vertexID;          //頂点ID
         XMFLOAT3 normal;
         XMFLOAT2 texCoords;
 		XMFLOAT3 tangent;
@@ -98,6 +110,12 @@ protected:
         XMFLOAT4 lightPos;
     };
 
+    //シェーダーに渡す頂点数の情報
+    struct Contents {
+        UINT vertexCount;
+        UINT shapeCount;
+    };
+
     ID3D12Device* m_pDevice;                                            //エンジンのデバイス
     ID3D12Resource* m_pShadowMapBuffer;                                 //影のテクスチャ(エンジンから貰う)
     ID3D12GraphicsCommandList* m_pCommandList;                          //エンジンのコマンドリスト
@@ -112,16 +130,16 @@ protected:
     std::vector<Texture2D*> m_textures;                      //テクスチャ情報
 
     const Camera* m_pCamera;        //カメラ情報
-    const DirectionalLight* m_pDirectionalLight;    //ディレクショナルライト
+    DirectionalLight* m_pDirectionalLight;    //ディレクショナルライト
 
     XMMATRIX m_modelMatrix;         //位置、回転、スケールをMatrixで保持
+
+    ModelType m_modelType;
 
     void CreateConstantBuffer();
 
     template <typename VertexType>
     void CreateBuffer(Mesh* pMesh, std::vector<VertexType>& vertices, std::vector<UINT>& indices, UINT vertexStructSize);
-
-    void OnLoaded();
 
 private:
     void ProcessNode(const aiScene* scene, aiNode* node);   //ノードを読み込み
@@ -189,4 +207,21 @@ void Model::CreateBuffer(Mesh* pMesh, std::vector<VertexType>& vertices, std::ve
     pMesh->indexBufferView.SizeInBytes = indexBufferSize;
 
     pMesh->indexCount = static_cast<UINT>(indices.size());
+
+    //頂点数を保持する用のリソースを作成
+    CD3DX12_RESOURCE_DESC contentsBuffer = CD3DX12_RESOURCE_DESC::Buffer(sizeof(Contents));
+    hr = m_pDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &contentsBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&pMesh->contentsBuffer));
+    if (FAILED(hr)) {
+        printf("コンテンツバッファの生成に失敗しました。\n");
+    }
+
+    //頂点数とシェイプキー数を保持
+    Contents contents{};
+    contents.vertexCount = 1;
+    contents.shapeCount = 0;
+    void* pContentsBuffer;
+    pMesh->contentsBuffer->Map(0, nullptr, &pContentsBuffer);
+    if (pContentsBuffer)
+        memcpy(pContentsBuffer, &contents, sizeof(Contents));
+    pMesh->contentsBuffer->Unmap(0, nullptr);
 }

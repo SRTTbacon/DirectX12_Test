@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -39,10 +39,7 @@
     <ClCompile Include="Source\System\Engine\Model\Animation\AnimationManager.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Bone\Bone.cpp" />
     <ClCompile Include="Source\System\Engine\Model\BulletPhysics\BulletPhysics.cpp" />
-    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicAndBoneMergeMotionState.cpp" />
-    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicMotionState.cpp" />
-    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\MotionState\KinematicMotionState.cpp" />
-    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\RigidBody.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\DynamicBone.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Character.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Convert\ConvertFromFBX.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Model.cpp" />
@@ -74,12 +71,7 @@
     <ClInclude Include="Source\System\Engine\Model\Animation\AnimationManager.h" />
     <ClInclude Include="Source\System\Engine\Model\Bone\Bone.h" />
     <ClInclude Include="Source\System\Engine\Model\BulletPhysics\BulletPhysics.h" />
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\DefaultMotionState.h" />
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicAndBoneMergeMotionState.h" />
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\DynamicMotionState.h" />
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\KinematicMotionState.h" />
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\MotionState\MotionState.h" />
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\RigidBody.h" />
+    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\DynamicBone.h" />
     <ClInclude Include="Source\System\Engine\Model\Character.h" />
     <ClInclude Include="Source\System\Engine\Model\Convert\ConvertFromFBX.h" />
     <ClInclude Include="Source\System\Engine\Model\Model.h" />

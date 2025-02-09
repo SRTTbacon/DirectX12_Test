@@ -165,7 +165,7 @@ void ConvertFromFBX::ProcessHumanMesh(Character* pCharacter)
         Character::HumanoidMesh& humanoidMesh = humanoidMeshes[i];
 
         //ƒƒbƒVƒ…–¼
-        humanoidWriter.Write(humanoidMesh.meshName);
+        humanoidWriter.Write(humanoidMesh.pMesh->meshName);
 
         //shapeMapping
         std::unordered_map<std::string, UINT>& shapeMappings = humanoidMesh.shapeMapping;
@@ -201,7 +201,6 @@ void ConvertFromFBX::ProcessHumanMesh(Character* pCharacter)
             humanoidWriter.Write(shapeDelta.z);
         }
     }
-
     std::vector<char> humanoidBuffer = humanoidWriter.GetBuffer();
     WriteCompression(humanoidBuffer);
 }

@@ -5,6 +5,7 @@
 
 Model::Model(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, DirectionalLight* pDirectionalLight, ID3D12Resource* pShadowMapBuffer)
     : m_modelMatrix(XMMatrixIdentity())
+    , m_modelType(ModelType_Primitive)
     , m_pCamera(pCamera)
     , m_pDevice(pDevice)
     , m_pCommandList(pCommandList)
@@ -24,6 +25,7 @@ Model::Model(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, con
 
 Model::~Model()
 {
+    /*
     //テクスチャを解放
     for (Texture2D* pTexture : m_textures) {
         delete pTexture;
@@ -37,13 +39,16 @@ Model::~Model()
 
 	if (m_pDescriptorHeap) {
 		delete m_pDescriptorHeap;
+        m_pDescriptorHeap = nullptr;
 	}
 
 	if (m_pPipelineState) {
 		delete m_pPipelineState;
+        m_pPipelineState = nullptr;
 	}
 	if (m_pRootSignature) {
 		delete m_pRootSignature;
+        m_pRootSignature = nullptr;
 	}
 
 	for (int i = 0; i < FRAME_BUFFER_COUNT; i++) {
@@ -51,6 +56,17 @@ Model::~Model()
 			m_modelConstantBuffer[i]->Release();
 		}
 	}
+
+    if (m_boneMatricesBuffer) {
+        m_boneMatricesBuffer->Release();
+    }
+    if (m_shadowBoneMatricesBuffer) {
+        m_shadowBoneMatricesBuffer->Release();
+    }
+    if (m_lightConstantBuffer) {
+        m_lightConstantBuffer->Release();
+    }
+    */
 }
 
 void Model::LoadModel(const std::string fbxFile)
@@ -78,27 +94,20 @@ void Model::LoadModel(const std::string fbxFile)
 
     m_pRootSignature = new RootSignature(m_pDevice, ShaderKinds::PrimitiveShader);
     m_pPipelineState = new PipelineState(m_pDevice, m_pRootSignature);
-
-    OnLoaded();
 }
 
-void Model::OnLoaded()
-{
-    for (Mesh* pMesh : m_meshes) {
-        pMesh->bDraw = true;
-    }
-}
-
-void Model::ProcessNode(const aiScene* scene, aiNode* node) {
-    //メッシュを処理
-    for (UINT i = 0; i < node->mNumMeshes; i++) {
-        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        m_meshes.push_back(ProcessMesh(scene, mesh));
+void Model::ProcessNode(const aiScene* pScene, aiNode* pNode) {
+    //ノードにメッシュが含まれていたら読み込む
+    for (UINT j = 0; j < pNode->mNumMeshes; j++) {
+        aiMesh* pAiMesh = pScene->mMeshes[pNode->mMeshes[j]];
+        Mesh* pMesh = ProcessMesh(pScene, pAiMesh);
+        pMesh->meshName = UTF8ToShiftJIS(pNode->mName.C_Str());
+        m_meshes.push_back(pMesh);
     }
 
-    //子ノードも再帰的に処理
-    for (UINT i = 0; i < node->mNumChildren; i++) {
-        ProcessNode(scene, node->mChildren[i]);
+    for (UINT i = 0; i < pNode->mNumChildren; i++) {
+        aiNode* childNode = pNode->mChildren[i];
+        ProcessNode(pScene, childNode);
     }
 }
 
@@ -113,6 +122,7 @@ Mesh* Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
         vertex.position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
 		vertex.boneWeights = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);                              //ボーンウェイトは使わない
 		vertex.boneIDs[0] = vertex.boneIDs[1] = vertex.boneIDs[2] = vertex.boneIDs[3] = 0;  //ボーンIDは使わない
+        vertex.vertexID = i;
         vertex.normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
         if (mesh->mTextureCoords[0]) {
             vertex.texCoords = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
@@ -140,7 +150,7 @@ Mesh* Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
 
     //テクスチャが存在しない場合は白単色テクスチャを使用
     Texture2D* pTexture = Texture2D::GetColor(1.0f, 1.0f, 1.0f);
-    m_pDescriptorHeap->SetMainTexture(pTexture->Resource(), pTexture->Resource(), m_pShadowMapBuffer);
+    m_pDescriptorHeap->SetMainTexture(pTexture->Resource(), pTexture->Resource(), m_pShadowMapBuffer, nullptr);
     m_textures.push_back(pTexture);
 
     return meshData;
@@ -174,9 +184,6 @@ void Model::CreateConstantBuffer()
         if (FAILED(hr)) {
             printf("コンスタントバッファの生成に失敗:エラーコード%d\n", hr);
         }
-        else {
-            printf("コンスタントバッファを生成しました。%s\n", m_modelFile.c_str());
-        }
     }
 
     //ディレクショナルライトの情報
@@ -193,11 +200,11 @@ void Model::CreateConstantBuffer()
         printf("ボーンバッファの生成に失敗しました。\n");
     }
 
-    void* pContentsBuffer;
-    XMMATRIX identity = XMMatrixIdentity();
-    m_shadowBoneMatricesBuffer->Map(0, nullptr, &pContentsBuffer);
-    if (pContentsBuffer)
-        memcpy(pContentsBuffer, &identity, sizeof(XMMATRIX));
+    void* pBoneBuffer;
+    std::vector<XMMATRIX> temp = std::vector<XMMATRIX>(MAX_BONE_COUNT, XMMatrixIdentity());
+    m_shadowBoneMatricesBuffer->Map(0, nullptr, &pBoneBuffer);
+    if (pBoneBuffer)
+        memcpy(pBoneBuffer, temp.data(), sizeof(XMMATRIX) * MAX_BONE_COUNT);
     m_shadowBoneMatricesBuffer->Unmap(0, nullptr);
 }
 
@@ -213,12 +220,29 @@ void Model::RenderShadowMap(UINT backBufferIndex)
         m_pCommandList->SetGraphicsRootConstantBufferView(1, m_boneMatricesBuffer->GetGPUVirtualAddress());   //ボーンを送信
     }
     else {
-        m_pCommandList->SetGraphicsRootConstantBufferView(1, m_shadowBoneMatricesBuffer->GetGPUVirtualAddress());   //ボーンを送信 (0で初期化済み)
+        //m_pCommandList->SetGraphicsRootConstantBufferView(1, m_shadowBoneMatricesBuffer->GetGPUVirtualAddress());   //ボーンを送信 (0で初期化済み)
     }
 
+    ID3D12DescriptorHeap* heap = m_pDescriptorHeap->GetHeap();
+    m_pCommandList->SetDescriptorHeaps(1, &heap);
+
     //メッシュの深度情報をシャドウマップに描画
-    for (const Mesh* pMesh : m_meshes)
+    for (size_t i = 0; i < m_meshes.size(); i++)
     {
+        Mesh* pMesh = m_meshes[i];
+
+        if (pMesh->contentsBuffer) {
+            m_pCommandList->SetGraphicsRootConstantBufferView(2, pMesh->contentsBuffer->GetGPUVirtualAddress());      //頂点数を送信
+        }
+
+        if (pMesh->shapeDeltasBuffer) {
+            m_pCommandList->SetGraphicsRootDescriptorTable(3, m_pDescriptorHeap->GetGpuDescriptorHandle(static_cast<UINT>(i), 3));  //頂点シェーダーのシェイプキー
+        }
+
+        if (pMesh->shapeWeightsBuffer) {
+            m_pCommandList->SetGraphicsRootShaderResourceView(4, pMesh->shapeWeightsBuffer->GetGPUVirtualAddress());  //シェイプキーのウェイト情報を送信
+        }
+
         DrawMesh(pMesh); //深度のみを描画
     }
 }
@@ -237,7 +261,7 @@ void Model::RenderSceneWithShadow(UINT backBufferIndex)
     m_pCommandList->SetGraphicsRootConstantBufferView(1, m_lightConstantBuffer->GetGPUVirtualAddress()); //ディレクショナルライトの情報を送信
 
     if (m_boneMatricesBuffer) {
-        m_pCommandList->SetGraphicsRootConstantBufferView(3, m_boneMatricesBuffer->GetGPUVirtualAddress());   //ボーンを送信
+        m_pCommandList->SetGraphicsRootConstantBufferView(4, m_boneMatricesBuffer->GetGPUVirtualAddress());   //ボーンを送信
     }
 
     //ディスクリプタヒープを設定し、シャドウマップをサンプリングできるようにする
@@ -247,27 +271,32 @@ void Model::RenderSceneWithShadow(UINT backBufferIndex)
     //カメラ視点からシーンを描画 (シャドウを計算し、カラー出力)
     for (size_t i = 0; i < m_meshes.size(); i++)
     {
-        m_pCommandList->SetGraphicsRootDescriptorTable(2, m_pDescriptorHeap->GetGpuDescriptorHandle(static_cast<int>(i)));
+        if (!m_meshes[i]->bDraw) {
+            continue;
+        }
 
         Mesh* pMesh = m_meshes[i];
 
-        if (pMesh->contentsBuffer) {
-            m_pCommandList->SetGraphicsRootConstantBufferView(4, pMesh->contentsBuffer->GetGPUVirtualAddress());      //頂点数を送信
-        }
+        m_pCommandList->SetGraphicsRootDescriptorTable(2, m_pDescriptorHeap->GetGpuDescriptorHandle(static_cast<UINT>(i)));     //ピクセルシェーダのテクスチャ
+        if (m_modelType == ModelType_Character) {
+            if (pMesh->shapeDeltasBuffer) {
+                m_pCommandList->SetGraphicsRootDescriptorTable(3, m_pDescriptorHeap->GetGpuDescriptorHandle(static_cast<UINT>(i), 3));  //頂点シェーダーのシェイプキー
+            }
 
-        if (pMesh->shapeDeltasBuffer) {
-            m_pCommandList->SetGraphicsRootShaderResourceView(5, pMesh->shapeDeltasBuffer->GetGPUVirtualAddress());   //シェイプキーの位置情報を送信
-        }
+            if (pMesh->contentsBuffer) {
+                m_pCommandList->SetGraphicsRootConstantBufferView(5, pMesh->contentsBuffer->GetGPUVirtualAddress());      //頂点数を送信
+            }
 
-        if (pMesh->shapeWeightsBuffer) {
-            m_pCommandList->SetGraphicsRootShaderResourceView(6, pMesh->shapeWeightsBuffer->GetGPUVirtualAddress());  //シェイプキーのウェイト情報を送信
+            if (pMesh->shapeWeightsBuffer) {
+                m_pCommandList->SetGraphicsRootShaderResourceView(6, pMesh->shapeWeightsBuffer->GetGPUVirtualAddress());  //シェイプキーのウェイト情報を送信
+            }
         }
 
         DrawMesh(m_meshes[i]); //カラーとシャドウを計算し描画
     }
 }
 
-void Model::Update(UINT backBufferIndex)
+void Model::LateUpdate(UINT backBufferIndex)
 {
     if (!m_bVisible) {
         return;
@@ -326,4 +355,17 @@ void Model::Update(UINT backBufferIndex)
     XMVECTOR objPos = XMLoadFloat3(&m_position);
     XMVECTOR camPos = m_pCamera->m_eyePos;
     m_depth = XMVectorGetZ(XMVector3Length(objPos - camPos)); //Z成分を深度として取得
+}
+
+Mesh::Mesh()
+    : indexBufferView(D3D12_INDEX_BUFFER_VIEW())
+    , vertexBufferView(D3D12_VERTEX_BUFFER_VIEW())
+    , vertexCount(0)
+    , indexCount(0)
+    , bDraw(true)
+{
+}
+
+Mesh::~Mesh()
+{
 }

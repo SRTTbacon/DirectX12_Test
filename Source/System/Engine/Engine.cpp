@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <Windows.h>
 
-Engine* g_Engine;
+Engine* g_Engine = nullptr;
 
 Engine::Engine(HWND hwnd)
 	: m_modelManager(ModelManager())
@@ -15,16 +15,20 @@ Engine::Engine(HWND hwnd)
 	, m_hWnd(hwnd)
 	, m_initTime(0)
 	, m_pDirectionalLight(nullptr)
-	, m_pKeyInput(nullptr)
+	, m_keyInput(hwnd)
 	, m_soundSystem(hwnd)
 	, m_sceneTimeMS(0)
-	, m_pZShadow(nullptr)
+	, m_zShadow(ZShadow())
 {
 }
 
 Engine::~Engine()
 {
-	delete m_pKeyInput;
+}
+
+void Engine::Release()
+{
+	m_pCommandList->Close();
 }
 
 bool Engine::Init(UINT windowWidth, UINT windowHeight)
@@ -87,8 +91,6 @@ bool Engine::Init(UINT windowWidth, UINT windowHeight)
 	CreateViewPort();
 	CreateScissorRect();
 
-	m_pKeyInput = new Input(m_hWnd);
-
 	//FrameTime計測用
 	m_initTime = timeGetTime();
 	m_sceneTimeMS = 0;
@@ -97,7 +99,11 @@ bool Engine::Init(UINT windowWidth, UINT windowHeight)
 	//ディレクショナルライトの初期化
 	m_pDirectionalLight = new DirectionalLight();
 
-	m_pZShadow = new ZShadow(m_pDevice.Get(), m_pCommandList.Get());
+	m_zShadow.Init(m_pDevice.Get(), m_pCommandList.Get());
+
+	//コマンドを初期化してためる準備をする
+	m_pAllocator->Reset();
+	m_pCommandList->Reset(m_pAllocator.Get(), nullptr);
 
 	srand(static_cast<UINT>(timeGetTime()));
 
@@ -107,14 +113,14 @@ bool Engine::Init(UINT windowWidth, UINT windowHeight)
 
 Character* Engine::AddCharacter(std::string modelFile)
 {
-	Character* pCharacter = new Character(modelFile, m_pDevice.Get(), m_pCommandList.Get(), &m_camera, m_pDirectionalLight, m_pZShadow->GetZBuffer());
+	Character* pCharacter = new Character(modelFile, m_pDevice.Get(), m_pCommandList.Get(), &m_camera, m_pDirectionalLight, m_zShadow.GetZBuffer());
 	m_modelManager.AddModel(pCharacter);
 	return pCharacter;
 }
 
 Model* Engine::AddModel(std::string modelFile)
 {
-	Model* pModel = new Model(m_pDevice.Get(), m_pCommandList.Get(), &m_camera, m_pDirectionalLight, m_pZShadow->GetZBuffer());
+	Model* pModel = new Model(m_pDevice.Get(), m_pCommandList.Get(), &m_camera, m_pDirectionalLight, m_zShadow.GetZBuffer());
 	pModel->LoadModel(modelFile);
 	m_modelManager.AddModel(pModel);
 	return pModel;
@@ -369,7 +375,7 @@ bool Engine::CreateDepthStencil()
 void Engine::BeginRender()
 {
 	//現在のレンダーターゲットを更新
-	m_currentRenderTarget = m_pRenderTargets[m_CurrentBackBufferIndex].Get();
+	ID3D12Resource* pCurrentRenderTarget = m_pRenderTargets[m_CurrentBackBufferIndex].Get();
 
 	//ビューポートとシザー矩形を設定
 	m_pCommandList->RSSetViewports(1, &m_Viewport);
@@ -383,14 +389,14 @@ void Engine::BeginRender()
 	auto currentDsvHandle = m_pDsvHeap->GetCPUDescriptorHandleForHeapStart();
 
 	//レンダーターゲットが使用可能になるまで待つ
-	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_currentRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(pCurrentRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_pCommandList->ResourceBarrier(1, &barrier);
 }
 
 void Engine::ModelRender()
 {
 	//モデルの影の描画
-	m_pZShadow->BeginMapping();
+	m_zShadow.BeginMapping();
 	m_modelManager.RenderShadowMap(m_CurrentBackBufferIndex);
 	
 	ResetViewportAndScissor();
@@ -398,7 +404,7 @@ void Engine::ModelRender()
 	//深度マップを変更
 	D3D12_RESOURCE_BARRIER barrier = {};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier.Transition.pResource = m_pZShadow->GetZBuffer();
+	barrier.Transition.pResource = m_zShadow.GetZBuffer();
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
@@ -426,14 +432,14 @@ void Engine::WaitRender()
 	//次のフレームの描画準備がまだであれば待機する.
 	if (m_pFence->GetCompletedValue() < currentFanceValue)
 	{
-		//完了時にイベントを設定.
-		auto hr = m_pFence->SetEventOnCompletion(currentFanceValue, m_fenceEvent);
+		//完了時にイベントを設定
+		HRESULT hr = m_pFence->SetEventOnCompletion(currentFanceValue, m_fenceEvent);
 		if (FAILED(hr))
 		{
 			return;
 		}
 
-		//待機処理.
+		//待機処理
 		if (WAIT_OBJECT_0 != WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE))
 		{
 			return;
@@ -446,7 +452,8 @@ void Engine::WaitRender()
 void Engine::EndRender()
 {
 	//レンダーターゲットに書き込み終わるまで待つ
-	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_currentRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	ID3D12Resource* pCurrentRenderTarget = m_pRenderTargets[m_CurrentBackBufferIndex].Get();
+	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(pCurrentRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	m_pCommandList->ResourceBarrier(1, &barrier);
 
 	//コマンドの記録を終了
@@ -469,27 +476,27 @@ void Engine::EndRender()
 
 BYTE Engine::GetMouseState(BYTE keyCode)
 {
-	return m_pKeyInput->GetMouseState(keyCode);
+	return m_keyInput.GetMouseState(keyCode);
 }
 
 BYTE Engine::GetMouseStateSync(BYTE keyCode)
 {
-	return m_pKeyInput->GetMouseStateSync(keyCode);
+	return m_keyInput.GetMouseStateSync(keyCode);
 }
 
 POINT Engine::GetMouseMove()
 {
-	return m_pKeyInput->GetMouseMove();
+	return m_keyInput.GetMouseMove();
 }
 
 bool Engine::GetKeyState(UINT key)
 {
-	return m_pKeyInput->CheckKey(key);
+	return m_keyInput.CheckKey(key);
 }
 
 bool Engine::GetKeyStateSync(UINT key)
 {
-	return m_pKeyInput->TriggerKey(key);
+	return m_keyInput.TriggerKey(key);
 }
 
 void Engine::Update()
@@ -504,7 +511,7 @@ void Engine::Update()
 	m_sceneTimeMS = timeNow - m_initTime;
 
 	//マウスの状態を更新
-	m_pKeyInput->UpdateMouseState();
+	m_keyInput.UpdateMouseState();
 
 	//サウンドを更新
 	m_soundSystem.Update();

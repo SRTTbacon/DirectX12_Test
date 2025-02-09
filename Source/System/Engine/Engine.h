@@ -22,6 +22,8 @@ public:
 	Engine(HWND hwnd);
 	~Engine();
 
+	void Release();
+
 	//エンジン初期化
 	bool Init(UINT windowWidth, UINT windowHeight);
 
@@ -91,7 +93,7 @@ public: //ゲッター関数
 		return m_CurrentBackBufferIndex;
 	}
 
-	//前回のフレームから何ミリ秒経過したかを取得
+	//前回のフレームから何秒経過したかを取得
 	inline float GetFrameTime() const
 	{
 		return m_frameTime;
@@ -132,7 +134,7 @@ private: //描画に使うDirectX12のオブジェクト
 	UINT64 m_fenceValue[FRAME_BUFFER_COUNT];	//フェンスの値（トリプルバッファリング用に3個）
 	D3D12_VIEWPORT m_Viewport;					//ビューポート
 	D3D12_RECT m_Scissor;						//シザー矩形
-	Input* m_pKeyInput;							//キー状態
+	Input m_keyInput;							//キー状態
 
 private: //描画に使うオブジェクト
 	//レンダーターゲットを生成
@@ -154,12 +156,9 @@ private: //描画に使うオブジェクト
 	ComPtr<ID3D12Resource> m_pDepthStencilBuffer = nullptr;
 
 	ModelManager m_modelManager;
-	ZShadow* m_pZShadow;
+	ZShadow m_zShadow;
 
 private: //描画ループで使用するもの
-	//現在のフレームのレンダーターゲットを一時的に保存
-	ID3D12Resource* m_currentRenderTarget = nullptr;
-
 	//描画完了を待つ処理
 	void WaitRender();
 

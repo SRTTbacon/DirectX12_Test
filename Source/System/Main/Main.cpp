@@ -124,7 +124,7 @@ static void MainLoop()
 			if (elapsedTime >= 1.0f)
 			{
 				int fps = frameCount;
-				//printf("%d[FPS]\n", fps);
+				printf("%d[FPS]\n", fps);
 				frameCount = 0;
 				elapsedTime = 0.0f;
 			}
@@ -136,6 +136,16 @@ static void MainLoop()
 			g_Scene->Draw();
 			g_Engine->EndRender();
 		}
+	}
+
+	//I—¹
+	if (g_Scene) {
+		//delete g_Scene;
+		g_Scene = nullptr;
+	}
+	if (g_Engine) {
+		//delete g_Engine;
+		g_Engine = nullptr;
 	}
 }
 

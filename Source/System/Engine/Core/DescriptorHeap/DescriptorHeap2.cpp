@@ -3,16 +3,14 @@
 DescriptorHeap::DescriptorHeap(ID3D12Device* device, UINT meshCount, UINT heapSize, ShadowSize shadowSize)
     : m_pDevice(device)
     , m_descriptorSize(0)
-    , textureCount(0)
-    , heapSize(heapSize)
+    , m_textureCount(0)
+    , m_heapSize(heapSize + 1)
     , m_shadowViewport(D3D12_VIEWPORT())
     , m_shadowScissorRect(D3D12_RECT())
-    , m_cpuDescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE())
-    , m_gpuDescriptorHandle(D3D12_GPU_DESCRIPTOR_HANDLE())
     , m_shadowMapDSV(D3D12_CPU_DESCRIPTOR_HANDLE())
 {
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-    heapDesc.NumDescriptors = meshCount * heapSize;
+    heapDesc.NumDescriptors = meshCount * m_heapSize;
     heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
@@ -26,12 +24,10 @@ DescriptorHeap::~DescriptorHeap()
 {
 }
 
-void DescriptorHeap::SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* normalMap, ID3D12Resource* pShadowMap)
+void DescriptorHeap::SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* normalMap, ID3D12Resource* pShadowMap, ID3D12Resource* pShapeBuffer)
 {
-    m_cpuDescriptorHandle = m_descriptorHeap->GetCPUDescriptorHandleForHeapStart();
-    m_gpuDescriptorHandle = m_descriptorHeap->GetGPUDescriptorHandleForHeapStart();
-    m_cpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(textureCount) * heapSize;
-    m_gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(textureCount) * heapSize;
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorHandle = m_descriptorHeap->GetCPUDescriptorHandleForHeapStart();
+    cpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(m_textureCount) * m_heapSize;
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -39,14 +35,13 @@ void DescriptorHeap::SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* nor
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
     srvDesc.Texture2D.MipLevels = mainTex->GetDesc().MipLevels;
 
-    m_pDevice->CreateShaderResourceView(mainTex, &srvDesc, m_cpuDescriptorHandle);
+    m_pDevice->CreateShaderResourceView(mainTex, &srvDesc, cpuDescriptorHandle);
 
-    m_cpuDescriptorHandle.ptr += m_descriptorSize;
-    m_gpuDescriptorHandle.ptr += m_descriptorSize;
+    cpuDescriptorHandle.ptr += m_descriptorSize;
     if (normalMap) {
         srvDesc.Format = normalMap->GetDesc().Format;
         srvDesc.Texture2D.MipLevels = normalMap->GetDesc().MipLevels;
-        m_pDevice->CreateShaderResourceView(normalMap, &srvDesc, m_cpuDescriptorHandle);
+        m_pDevice->CreateShaderResourceView(normalMap, &srvDesc, cpuDescriptorHandle);
     }
 
     srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
@@ -54,14 +49,21 @@ void DescriptorHeap::SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* nor
     srvDesc.Texture2D.MostDetailedMip = 0;
     srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
-    m_cpuDescriptorHandle.ptr += m_descriptorSize;
-    m_gpuDescriptorHandle.ptr += m_descriptorSize;
+    cpuDescriptorHandle.ptr += m_descriptorSize;
 
     if (pShadowMap) {
-        m_pDevice->CreateShaderResourceView(pShadowMap, &srvDesc, m_cpuDescriptorHandle);
+        m_pDevice->CreateShaderResourceView(pShadowMap, &srvDesc, cpuDescriptorHandle);
     }
 
-    textureCount++;
+    srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+
+    cpuDescriptorHandle.ptr += m_descriptorSize;
+
+    if (pShapeBuffer) {
+        m_pDevice->CreateShaderResourceView(pShapeBuffer, &srvDesc, cpuDescriptorHandle);
+    }
+
+    m_textureCount++;
 }
 
 void DescriptorHeap::CreateShadowMap(const ShadowSize shadowSize)
@@ -108,7 +110,7 @@ void DescriptorHeap::CreateShadowMap(const ShadowSize shadowSize)
 
     m_shadowMapDSV = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-    //DSV �̍쐬
+    //DSV�̍쐬
     D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
     dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
     dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
@@ -129,10 +131,10 @@ void DescriptorHeap::CreateShadowMap(const ShadowSize shadowSize)
     m_shadowScissorRect.bottom = static_cast<LONG>(shadowSize);
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeap::GetGpuDescriptorHandle(int index)
+D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeap::GetGpuDescriptorHandle(UINT index, UINT offset)
 {
-    D3D12_GPU_DESCRIPTOR_HANDLE  gpuDescriptorHandle = m_descriptorHeap->GetGPUDescriptorHandleForHeapStart();
-    gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(index) * heapSize;
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorHandle = m_descriptorHeap->GetGPUDescriptorHandleForHeapStart();
+    gpuDescriptorHandle.ptr += m_descriptorSize * static_cast<unsigned long long>(index) * m_heapSize + (static_cast<unsigned long long>(offset) * m_descriptorSize);
     return gpuDescriptorHandle;
 }
 

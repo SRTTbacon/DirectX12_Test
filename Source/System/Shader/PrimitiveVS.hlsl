@@ -11,21 +11,22 @@ cbuffer ModelConstantBuffer : register(b0)
 
 struct VSInput
 {
-    float3 pos : POSITION;  //頂点座標
-    float4 boneWeights : BONEWEIGHTS; //各頂点のボーンの影響度
-    uint4 boneIDs : BONEIDS; //各頂点に影響を与えるボーンのインデックス (ボーンがないモデルはすべて0)
-    float3 normal : NORMAL; //法線
-    float2 uv : TEXCOORD;   //UV
-    float3 tangent : TANGENT;   //接線
-    float3 binormal : BINORMAL; //従法線
+    float3 pos : POSITION;              //頂点座標
+    float4 boneWeights : BONEWEIGHTS;   //各頂点のボーンの影響度
+    uint4 boneIDs : BONEIDS;            //各頂点に影響を与えるボーンのインデックス (ボーンがないモデルはすべて0)
+    uint vertexID : VERTEXID;           //頂点のID
+    float3 normal : NORMAL;             //法線
+    float2 uv : TEXCOORD;               //UV
+    float3 tangent : TANGENT;           //接線
+    float3 binormal : BINORMAL;         //従法線
 };
 
 struct VSOutput
 {
-    float4 svpos : SV_POSITION; //座標
-    float3 normal : NORMAL; //ノーマルマップ
-    float2 uv : TEXCOORD; //UV
-    float4 shadowPos : TEXCOORD1; //ディレクショナルライト
+    float4 svpos : SV_POSITION;     //座標
+    float3 normal : NORMAL;         //法線
+    float2 uv : TEXCOORD;           //UV
+    float4 shadowPos : TEXCOORD1;   //影の位置
 };
 
 VSOutput vert(VSInput input)
@@ -38,7 +39,7 @@ VSOutput vert(VSInput input)
     float4 projPos = mul(projectionMatrix, viewPos);    //投影変換
 
     output.svpos = projPos; //投影変換された座標
-    output.normal = normalize(mul(float4(input.normal, 1.0f), normalMatrix).xyz); //ノーマルマップ
+    output.normal = normalize(mul(normalMatrix, float4(input.normal, 1.0f)).xyz);
     output.uv = input.uv; //UV
     output.shadowPos = mul(lightViewProjMatrix, worldPos);
     return output; //ピクセルシェーダーに渡す

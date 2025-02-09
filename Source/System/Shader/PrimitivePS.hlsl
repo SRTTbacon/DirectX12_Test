@@ -11,16 +11,16 @@ Texture2D<float> shadowMap : register(t2);      //シャドウマップ
 cbuffer LightBuffer : register(b0)
 {
     float4 lightDir;        //ライトの方向
-    float4 ambientColor;
-    float4 diffuseColor;
+    float4 ambientColor;    //影色
+    float4 diffuseColor;    //標準の色
 };
 
 struct VSOutput
 {
-    float4 svpos : SV_POSITION; //頂点シェーダーから来た座標
-    float3 normal : NORMAL; //頂点シェーダーから北ノーマルマップ
-    float2 uv : TEXCOORD; //頂点シェーダーから来たUV
-    float4 shadowPos : TEXCOORD1;
+    float4 svpos : SV_POSITION;     //頂点シェーダーから来た座標
+    float3 normal : NORMAL;         //頂点シェーダーから北ノーマルマップ
+    float2 uv : TEXCOORD;           //頂点シェーダーから来たUV
+    float4 shadowPos : TEXCOORD1;   //影の位置
 };
 
 float ShadowCalculation(float4 shadowPos)

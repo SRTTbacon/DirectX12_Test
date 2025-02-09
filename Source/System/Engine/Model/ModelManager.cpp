@@ -15,7 +15,7 @@ void ModelManager::LateUpdate(UINT backBufferIndex)
         }
 
         //モデルの更新
-        pModel->Update(backBufferIndex);
+        pModel->LateUpdate(backBufferIndex);
 
         //深度を取得
         float depth = pModel->GetZBuffer();

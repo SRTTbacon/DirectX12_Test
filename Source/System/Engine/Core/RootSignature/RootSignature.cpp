@@ -3,6 +3,8 @@
 RootSignature::RootSignature(ID3D12Device* device, ShaderKinds shaderKind)
 	: m_shaderKind(shaderKind)
 	, m_rootParamSize(0)
+	, m_pPixelDiscriptor(nullptr)
+	, m_pVertexDiscriptor(nullptr)
 {
 	auto flag = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;	//アプリケーションの入力アセンブラを使用する
 	flag |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;			//ドメインシェーダーのルートシグネチャへのアクセスを拒否する
@@ -18,13 +20,15 @@ RootSignature::RootSignature(ID3D12Device* device, ShaderKinds shaderKind)
 	//スタティックサンプラーの設定
 	int samplerCount = 0;
 	CD3DX12_STATIC_SAMPLER_DESC* samplers = nullptr;
+
+	//影用のシェーダー以外
 	if (shaderKind != ShaderKinds::ShadowShader) {
 		samplerCount = 2;
 		samplers = new CD3DX12_STATIC_SAMPLER_DESC[samplerCount];
 		samplers[0] = CD3DX12_STATIC_SAMPLER_DESC(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR);
 		samplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 		samplers[1] = CD3DX12_STATIC_SAMPLER_DESC(1, D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP);
-		samplers[1].MaxAnisotropy = 1;
+		samplers[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 		samplers[1].ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	}
 
@@ -40,14 +44,19 @@ RootSignature::RootSignature(ID3D12Device* device, ShaderKinds shaderKind)
 	ComPtr<ID3DBlob> pErrorBlob;
 
 	//シリアライズ
-	auto hr = D3D12SerializeRootSignature(
+	HRESULT hr = D3D12SerializeRootSignature(
 		&desc,
 		D3D_ROOT_SIGNATURE_VERSION_1_0,
 		pBlob.GetAddressOf(),
 		pErrorBlob.GetAddressOf());
 	if (FAILED(hr))
 	{
-		printf("ルートシグネチャシリアライズに失敗\n");
+		if (pErrorBlob) {
+			printf("ルートシグネチャシリアライズに失敗 - %s\n", (char*)pErrorBlob->GetBufferPointer());
+		}
+		else {
+			printf("ルートシグネチャシリアライズに失敗\n");
+		}
 		return;
 	}
 
@@ -59,12 +68,20 @@ RootSignature::RootSignature(ID3D12Device* device, ShaderKinds shaderKind)
 		IID_PPV_ARGS(rootSignature.GetAddressOf()));	//ルートシグニチャ格納先のポインタ
 	if (FAILED(hr))
 	{
-		printf("ルートシグネチャの生成に失敗。 シェーダー : %d\n", shaderKind);
+		HRESULT hr2 = device->GetDeviceRemovedReason();
+		printf("ルートシグネチャの生成に失敗。 %u, %u, シェーダー : %d\n", (UINT)hr, (UINT)hr2, shaderKind);
 		return;
 	}
 
-	if (m_pTableRange1)
-		delete[] m_pTableRange1;
+	if (m_pPixelDiscriptor) {
+		delete m_pPixelDiscriptor;
+		m_pPixelDiscriptor = nullptr;
+	}
+	if (m_pVertexDiscriptor) {
+		delete m_pVertexDiscriptor;
+		m_pVertexDiscriptor = nullptr;
+	}
+
 	delete[] rootParam;
 }
 
@@ -81,17 +98,19 @@ CD3DX12_ROOT_PARAMETER* RootSignature::GetRootParameter()
 		rootParam[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb0の定数バッファを設定
 		rootParam[1].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);		//ピクセルシェーダーのb0の定数バッファを設定
 
-		m_pTableRange1 = new CD3DX12_DESCRIPTOR_RANGE[1];				//ディスクリプタテーブル
 		//テクスチャ用をスロットt0に設定
-		m_pTableRange1[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, CHARACTER_DISCRIPTOR_HEAP_SIZE, 0);	//シェーダーリソースビュー
-		rootParam[2].InitAsDescriptorTable(1, m_pTableRange1, D3D12_SHADER_VISIBILITY_PIXEL);
+		m_pPixelDiscriptor = new CD3DX12_DESCRIPTOR_RANGE();
+		m_pPixelDiscriptor->Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, CHARACTER_DISCRIPTOR_HEAP_SIZE, 0);	//シェーダーリソースビュー
+		rootParam[2].InitAsDescriptorTable(1, m_pPixelDiscriptor, D3D12_SHADER_VISIBILITY_PIXEL);	//t0、t1、t2
+		//シェイプキー
+		m_pVertexDiscriptor = new CD3DX12_DESCRIPTOR_RANGE();
+		m_pVertexDiscriptor->Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);	//t0
+		rootParam[3].InitAsDescriptorTable(1, m_pVertexDiscriptor, D3D12_SHADER_VISIBILITY_VERTEX);
 
-		rootParam[3].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb1の定数バッファを設定
-		rootParam[4].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb2の定数バッファを設定
+		rootParam[4].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb1の定数バッファを設定
+		rootParam[5].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb2の定数バッファを設定
 
-		//シェイプキー用をスロットt1に設定
-		rootParam[5].InitAsShaderResourceView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-		//シェイプキーのウェイト用をスロットt2に設定
+		//シェイプキーのウェイト用をスロットt1に設定
 		rootParam[6].InitAsShaderResourceView(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
 		return rootParam;
@@ -103,20 +122,29 @@ CD3DX12_ROOT_PARAMETER* RootSignature::GetRootParameter()
 		rootParam[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb0の定数バッファを設定
 		rootParam[1].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);		//ピクセルシェーダーのb0の定数バッファを設定
 
-		m_pTableRange1 = new CD3DX12_DESCRIPTOR_RANGE[1];				//ディスクリプタテーブル
 		//テクスチャ用をスロットt0に設定
-		m_pTableRange1[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, MODEL_DISCRIPTOR_HEAP_SIZE, 0);	//シェーダーリソースビュー
-		rootParam[2].InitAsDescriptorTable(1, m_pTableRange1, D3D12_SHADER_VISIBILITY_PIXEL);
+		m_pPixelDiscriptor = new CD3DX12_DESCRIPTOR_RANGE();
+		m_pPixelDiscriptor->Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, MODEL_DISCRIPTOR_HEAP_SIZE, 0);	//シェーダーリソースビュー
+		rootParam[2].InitAsDescriptorTable(1, m_pPixelDiscriptor, D3D12_SHADER_VISIBILITY_PIXEL);
 		
 		return rootParam;
 	}
 	//影のみのシェーダー
 	else if (m_shaderKind == ShaderKinds::ShadowShader) {
-		m_rootParamSize = 2;
+		m_rootParamSize = 5;
 		CD3DX12_ROOT_PARAMETER* rootParam = new CD3DX12_ROOT_PARAMETER[m_rootParamSize];
 		//定数バッファをルートパラメータとして設定 (メッシュごとのワールド変換行列用)
-		rootParam[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+		rootParam[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb0の定数バッファを設定
 		rootParam[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb1の定数バッファを設定
+		rootParam[2].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb2の定数バッファを設定
+
+		//シェイプキー
+		m_pVertexDiscriptor = new CD3DX12_DESCRIPTOR_RANGE();
+		m_pVertexDiscriptor->Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);	//t0
+		rootParam[3].InitAsDescriptorTable(1, m_pVertexDiscriptor, D3D12_SHADER_VISIBILITY_VERTEX);
+
+		//シェイプキーのウェイト用をスロットt1に設定
+		rootParam[4].InitAsShaderResourceView(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
 		return rootParam;
 	}

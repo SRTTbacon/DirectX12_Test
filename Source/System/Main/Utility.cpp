@@ -1,6 +1,8 @@
 #include "Utility.h"
 
-std::string UTF8ToShiftJIS(std::string utf8Str)
+using namespace std;
+
+string UTF8ToShiftJIS(string utf8Str)
 {
     //Unicodeへ変換後の文字列長を得る
     int lenghtUnicode = MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), (int)(utf8Str.size()) + 1, NULL, 0);
@@ -20,7 +22,7 @@ std::string UTF8ToShiftJIS(std::string utf8Str)
     //UnicodeからShiftJISへ変換
     WideCharToMultiByte(CP_THREAD_ACP, 0, bufUnicode, lenghtUnicode + 1, bufShiftJis, lengthSJis, NULL, NULL);
 
-    std::string strSJis(bufShiftJis);
+    string strSJis(bufShiftJis);
 
     delete[] bufUnicode;
     delete[] bufShiftJis;
@@ -30,11 +32,11 @@ std::string UTF8ToShiftJIS(std::string utf8Str)
 
 //指定した文字列特有のIDを生成
 //超極まれに別の文字列から同じIDが生成される (数億分の1)
-UINT HashString(const std::string& str, bool use32bits)
+UINT HashString(const string& str, bool use32bits)
 {
-    std::string lowerName = str;
-    std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), [](unsigned char c) { return std::tolower(c); });
-    std::vector<BYTE> bytes(lowerName.begin(), lowerName.end());
+    string lowerName = str;
+    transform(lowerName.begin(), lowerName.end(), lowerName.begin(), [](unsigned char c) { return tolower(c); });
+    vector<BYTE> bytes(lowerName.begin(), lowerName.end());
 
     const UINT prime = 16777619;
     const UINT offset = 2166136261;
@@ -55,9 +57,9 @@ UINT HashString(const std::string& str, bool use32bits)
 DirectX::XMFLOAT3 Lerp(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b, float t)
 {
     DirectX::XMFLOAT3 temp{};
-    temp.x = std::lerp(a.x, b.x, t);
-    temp.y = std::lerp(a.y, b.y, t);
-    temp.z = std::lerp(a.z, b.z, t);
+    temp.x = lerp(a.x, b.x, t);
+    temp.y = lerp(a.y, b.y, t);
+    temp.z = lerp(a.z, b.z, t);
 
     return temp;
 }
@@ -67,32 +69,32 @@ DirectX::XMFLOAT3 Lerp(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b, f
 DirectX::XMFLOAT4 Lerp(const DirectX::XMFLOAT4& a, const DirectX::XMFLOAT4& b, float t)
 {
     DirectX::XMFLOAT4 temp{};
-    temp.x = std::lerp(a.x, b.x, t);
-    temp.y = std::lerp(a.y, b.y, t);
-    temp.z = std::lerp(a.z, b.z, t);
-    temp.w = std::lerp(a.w, b.w, t);
+    temp.x = lerp(a.x, b.x, t);
+    temp.y = lerp(a.y, b.y, t);
+    temp.z = lerp(a.z, b.z, t);
+    temp.w = lerp(a.w, b.w, t);
 
     return temp;
 }
 
-std::string GetFileExtension(const std::string& filePath)
+string GetFileExtension(const string& filePath)
 {
     //ファイルパス内で最後のドットを検索
     size_t dotPos = filePath.find_last_of(".");
 
     //ドットが見つからない場合、または最後にない場合は空文字を返す
-    if (dotPos == std::string::npos || dotPos == filePath.length() - 1) {
+    if (dotPos == string::npos || dotPos == filePath.length() - 1) {
         return "";
     }
 
     return filePath.substr(dotPos);
 }
 
-std::wstring GetWideString(const std::string& str)
+wstring GetWideString(const string& str)
 {
     int num1 = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, nullptr, 0);
 
-    std::wstring wstr;
+    wstring wstr;
     wstr.resize(num1);
 
     int num2 = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, &wstr[0], num1);
@@ -101,11 +103,11 @@ std::wstring GetWideString(const std::string& str)
     return wstr;
 }
 
-std::string GetNarrowString(const std::wstring& str)
+string GetNarrowString(const wstring& str)
 {
     int num1 = WideCharToMultiByte(CP_ACP, 0, str.c_str(), -1, nullptr, 0, nullptr, nullptr);
 
-    std::string narrowStr;
+    string narrowStr;
     narrowStr.resize(num1);
 
     int num2 = WideCharToMultiByte(CP_ACP, 0, str.c_str(), -1, &narrowStr[0], num1, nullptr, nullptr);
@@ -114,7 +116,26 @@ std::string GetNarrowString(const std::wstring& str)
     return narrowStr;
 }
 
-UINT GenerateIDFromFile(const std::string& filePath)
+vector<string> GetSprits(string& str, char delim)
+{
+    vector<string> elems;
+    string item;
+    for (char ch : str) {
+        if (ch == delim) {
+            if (!item.empty())
+                elems.push_back(item);
+            item.clear();
+        }
+        else {
+            item += ch;
+        }
+    }
+    if (!item.empty())
+        elems.push_back(item);
+    return elems;
+}
+
+UINT GenerateIDFromFile(const string& filePath)
 {
     char buffer[_MAX_PATH];
     if (!_fullpath(buffer, filePath.c_str(), _MAX_PATH)) {
@@ -124,12 +145,12 @@ UINT GenerateIDFromFile(const std::string& filePath)
     return HashString(buffer);
 }
 
-UINT GenerateIDFromFile(const std::wstring& filePath)
+UINT GenerateIDFromFile(const wstring& filePath)
 {
     return GenerateIDFromFile(GetNarrowString(filePath));
 }
 
-UINT GenerateIDFromFile(const std::vector<char>& buffer)
+UINT GenerateIDFromFile(const vector<char>& buffer)
 {
     //XXH32の状態を作成
     XXH32_state_t* state = XXH32_createState();
@@ -144,7 +165,7 @@ UINT GenerateIDFromFile(const std::vector<char>& buffer)
     size_t step = buffer.size() / HASH_SAMPLERATE;
     if (step == 0) step = 1;
 
-    std::vector<char> sampledData;
+    vector<char> sampledData;
     for (size_t i = 0; i < buffer.size(); i += step) {
         sampledData.push_back(buffer[i]);
     }
@@ -154,10 +175,10 @@ UINT GenerateIDFromFile(const std::vector<char>& buffer)
 
 UINT ColorToUINT(float r, float g, float b, float a)
 {
-    BYTE red = static_cast<BYTE>(std::clamp(r, 0.0f, 1.0f) * 255.0f);
-    BYTE green = static_cast<BYTE>(std::clamp(g, 0.0f, 1.0f) * 255.0f);
-    BYTE blue = static_cast<BYTE>(std::clamp(b, 0.0f, 1.0f) * 255.0f);
-    BYTE alpha = static_cast<BYTE>(std::clamp(a, 0.0f, 1.0f) * 255.0f);
+    BYTE red = static_cast<BYTE>(clamp(r, 0.0f, 1.0f) * 255.0f);
+    BYTE green = static_cast<BYTE>(clamp(g, 0.0f, 1.0f) * 255.0f);
+    BYTE blue = static_cast<BYTE>(clamp(b, 0.0f, 1.0f) * 255.0f);
+    BYTE alpha = static_cast<BYTE>(clamp(a, 0.0f, 1.0f) * 255.0f);
 
     //RGBAの順番で32ビット値にエンコード
     return (alpha << 24) | (blue << 16) | (green << 8) | red;

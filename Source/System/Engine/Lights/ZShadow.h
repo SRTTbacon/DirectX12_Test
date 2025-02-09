@@ -7,8 +7,10 @@ constexpr int SHADOW_SIZE = 8192;
 class ZShadow
 {
 public:
-	ZShadow(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
+	ZShadow();
+	~ZShadow();
 
+	void Init(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
 	void BeginMapping();
 
 	inline ID3D12Resource* GetZBuffer() const

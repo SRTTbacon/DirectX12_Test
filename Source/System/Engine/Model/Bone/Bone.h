@@ -22,7 +22,7 @@ class Bone
 public:
     //コンストラクタ
     //引数 : ボーン名、ボーンのオフセット
-    Bone(const std::string boneName, DirectX::XMMATRIX offset);
+    Bone(const std::string boneName, DirectX::XMMATRIX offset, UINT boneIndex);
 
     //子ボーンを追加
     //引数 : 子ボーンのポインタ, 子ボーンが存在するインデックス
@@ -36,8 +36,6 @@ public:
 
     DirectX::XMMATRIX& GetGlobalTransform();
     void SetGlobalTransform(DirectX::XMMATRIX& globalTransform);
-
-    void UpdateChildTransform();
 
     inline UINT GetChildBoneCount() const
     {
@@ -67,6 +65,11 @@ public:
     {
         return m_initRotation;
     }
+    //ボーンのインデックスを取得
+    inline UINT GetBoneIndex() const
+    {
+        return m_boneIndex;
+    }
 
 public:
     btRigidBody* m_pRigidBody;
@@ -74,6 +77,7 @@ public:
     DirectX::XMFLOAT3 m_position;           //ボーンの位置
     DirectX::XMFLOAT4 m_rotation;           //ボーンの回転 (デグリー角)
     DirectX::XMFLOAT3 m_scale;              //ボーンのスケール
+    DirectX::XMFLOAT3 m_initPos;
     DirectX::XMMATRIX m_boneOffset;         //Tポーズ時から見て原点との差
 
     BoneType m_bType;
@@ -91,14 +95,16 @@ private:
     Bone* m_pParentBone;                    //親ボーン
 
     UINT m_parentBoneIndex;
+    UINT m_boneIndex;
 
     DirectX::XMMATRIX m_boneWorldMatrix;
     DirectX::XMFLOAT3 m_initPosition;
     DirectX::XMFLOAT4 m_initRotation;
 };
 
-struct BoneManager
+class BoneManager
 {
+public:
     std::vector<Bone> m_bones;                              //ボーン情報
     std::vector<DirectX::XMMATRIX> m_boneInfos;             //シェーダーに送信するボーンのマトリックス
     std::unordered_map<std::string, UINT> m_boneMapping;    //ボーン名からインデックスを取得
@@ -108,6 +114,12 @@ struct BoneManager
 
     BoneManager();
 
+    //すべてのボーンのワールド座標を計算
+    void UpdateBoneMatrix();
+    //特定のボーンのワールド座標を計算
+    void UpdateBoneMatrix(UINT boneIndex);
+
+public: //ゲッター
     //ボーンが存在するかどうか
     inline bool Exist(std::string boneName) const
     {
