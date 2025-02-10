@@ -4,10 +4,12 @@ Scene* g_Scene = nullptr;
 
 using namespace DirectX;
 
-const std::string modelFile1 = "Resource/Model/Milltina/Milltina.hcs";
-//const std::string modelFile1 = "Resource/Model/FBX_Moe.hcs";
+//const std::string modelFile1 = "Resource/Model/Milltina/Milltina.hcs";
+const std::string modelFile1 = "Resource/Model/FBX_Moe.hcs";
 const std::string modelFile2 = "Resource/Model/Sphere.fbx";
 const std::string modelFile3 = "Resource/Model/Plane.fbx";
+const std::string modelFile4 = "Resource/Model/Gun.fbx";
+const std::string modelFile5 = "Resource/Model/êÓïóã@.fbx";
 
 bool bAnim = true;
 bool bVisible = true;
@@ -21,14 +23,15 @@ bool Scene::Init()
 	for (int i = 0; i < 1; i++) {
 		Character* pCharacter = g_Engine->AddCharacter(modelFile1);
 		m_pModels.push_back(pCharacter);
-		pCharacter->AddAnimation(g_Engine->GetAnimation("Resource\\Test.hcs"));
+		pCharacter->AddAnimation(g_Engine->GetAnimation("Resource\\Test2.hcs"));
 		pCharacter->m_animationSpeed = animSpeed;
 
 		pCharacter->SetShapeWeight("Foot_heel", 1.0f);
 
 		std::vector meshNames = { "Body", "Milltina_body", "Milltina_hair_base", "Milltina_hair_front", "Milltina_hair_front_side", "Milltina_hair_side", "Milltina_hair_twintail"};
+		//std::vector meshNames = { "Body", "Body all", "Hair"};
 		for (Character::HumanoidMesh& mesh : pCharacter->GetHumanMeshes()) {
-			mesh.pMesh->bDraw = false;
+			//mesh.pMesh->bDraw = false;
 			for (const std::string& meshName : meshNames) {
 				if (mesh.pMesh->meshName == meshName) {
 					if (mesh.pMesh) {
@@ -68,6 +71,11 @@ bool Scene::Init()
 	m_pModel3 = g_Engine->AddModel(modelFile3);
 	m_pModel3->m_scale = XMFLOAT3(0.5f, 0.5f, 0.5f);
 	m_pModel3->m_position = XMFLOAT3(-1.0f, 0.5f, 1.0f);
+
+	m_pModel4 = g_Engine->AddModel(modelFile4);
+	m_pModel4->m_rotation.x = -90.0f;
+	m_pModel4->m_position.y = 1.0f;
+	m_pModel4->m_scale = XMFLOAT3(0.25f, 0.25f, 0.25f);
 
 	for (int i = 0; i < 1; i++) {
 		m_pModels[i]->m_rotation.x = -90.0f;
@@ -123,18 +131,23 @@ void Scene::Update()
 	}
 
 	if (g_Engine->GetKeyState(DIK_N)) {
-		float weight = m_pModels[0]->GetShapeWeight("Breasts_Flat");
+		float weight = m_pModels[0]->GetShapeWeight("High heeled_ON");
 		//float weight = m_pModels[0]->GetShapeWeight("Body", shapeIndex);
 		weight -= g_Engine->GetFrameTime();
-		m_pModels[0]->SetShapeWeight("Breasts_Flat", weight);
-		//m_pModels[0]->SetShapeWeight("Body", shapeIndex, weight);
+		m_pModels[0]->SetShapeWeight("High heeled_ON", weight);
+
+		weight = m_pModels[0]->GetShapeWeight("High heeled_OFF");
+		weight += g_Engine->GetFrameTime();
+		m_pModels[0]->SetShapeWeight("High heeled_OFF", weight);
 	}
 	if (g_Engine->GetKeyState(DIK_M)) {
-		float weight = m_pModels[0]->GetShapeWeight("Breasts_Flat");
-		//float weight = m_pModels[0]->GetShapeWeight("Body", shapeIndex);
+		float weight = m_pModels[0]->GetShapeWeight("High heeled_ON");
 		weight += g_Engine->GetFrameTime();
-		m_pModels[0]->SetShapeWeight("Breasts_Flat", weight);
-		//m_pModels[0]->SetShapeWeight("Body", shapeIndex, weight);
+		m_pModels[0]->SetShapeWeight("High heeled_ON", weight);
+
+		weight = m_pModels[0]->GetShapeWeight("High heeled_OFF");
+		weight -= g_Engine->GetFrameTime();
+		m_pModels[0]->SetShapeWeight("High heeled_OFF", weight);
 	}
 
 	if (g_Engine->GetKeyState(DIK_G)) {
@@ -161,22 +174,27 @@ void Scene::Update()
 	}
 
 	if (g_Engine->GetKeyState(DIK_UP)) {
-		m_pModel3->m_position.z -= 0.01f;
+		m_pModel4->m_position.z -= 0.01f;
 	}
 	if (g_Engine->GetKeyState(DIK_DOWN)) {
-		m_pModel3->m_position.z += 0.01f;
+		m_pModel4->m_position.z += 0.01f;
 	}
 	if (g_Engine->GetKeyState(DIK_LEFT)) {
-		m_pModel3->m_position.x -= 0.01f;
+		m_pModel4->m_position.x -= 0.01f;
 	}
 	if (g_Engine->GetKeyState(DIK_RIGHT)) {
-		m_pModel3->m_position.x += 0.01f;
+		m_pModel4->m_position.x += 0.01f;
 	}
 
 	if (g_Engine->GetKeyStateSync(DIK_C)) {
 		ConvertFromFBX convert;
 		//convert.ConvertFromCharacter(m_pModels[0], modelFile1, "Resource/Model/Milltina/Milltina.hcs");
-		Character::HumanoidMesh* a = m_pModels[0]->GetHumanMesh("Milltina_body");
+		std::vector<Character::HumanoidMesh>& meshes = m_pModels[0]->GetHumanMeshes();
+		for (Character::HumanoidMesh& mesh : meshes) {
+			//printf("MeshName = %s\n", mesh.pMesh->meshName.c_str());
+		}
+
+		Character::HumanoidMesh* a = m_pModels[0]->GetHumanMesh("Body all");
 		for (std::pair<std::string, UINT> keyValue : a->shapeMapping) {
 			printf("%s\n", keyValue.first.c_str());
 		}

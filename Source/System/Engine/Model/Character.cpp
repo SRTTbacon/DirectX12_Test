@@ -873,7 +873,8 @@ void Character::LoadHumanoidMesh(BinaryReader& br)
 
 void Character::SetTexture(const Mesh* pMesh, const std::string nameOnly)
 {
-    std::string dir = "Resource\\Model\\Milltina\\";
+    //std::string dir = "Resource\\Model\\Milltina\\";
+    std::string dir = "Resource\\Model\\";
 
     std::string texPath = dir + nameOnly;
     //std::string normalPath = dir + "Skin_Normal Map.png";

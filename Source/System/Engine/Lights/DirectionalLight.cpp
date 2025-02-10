@@ -24,7 +24,7 @@ void DirectionalLight::Update()
 
 	XMStoreFloat4(&m_lightBuffer.lightDirection, lightDirection);
 
-	m_lightBuffer.ambientColor = XMFLOAT4(0.0f, 0.0f, 0.5f, 1.0f);
+	m_lightBuffer.ambientColor = XMFLOAT4(0.05f, 0.1f, 0.5f, 1.0f);
 	m_lightBuffer.diffuseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	XMMATRIX lightMatrix = GetViewMatrix();

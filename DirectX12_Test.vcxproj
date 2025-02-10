@@ -228,7 +228,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>F:\Projects\DirectX12_Test\Library\BulletPhysics\lib;Library\Zstandard\lib\$(Configuration);Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\PhysX\$(Configuration);Library\assimp\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Library\BulletPhysics\lib;Library\Zstandard\lib\$(Configuration);Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\PhysX\$(Configuration);Library\assimp\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <DelayLoadDLLs>assimp-vc143-mtd.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll</DelayLoadDLLs>
       <AdditionalDependencies>assimp-vc143-mtd.lib;winmm.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;BulletCollision_x64_debug.lib;BulletDynamics_x64_debug.lib;BulletSoftBody_x64_debug.lib;LinearMath_x64_debug.lib;libzstd_static.lib</AdditionalDependencies>
     </Link>

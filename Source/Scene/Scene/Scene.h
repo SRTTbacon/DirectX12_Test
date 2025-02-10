@@ -19,6 +19,8 @@ private:
 	std::vector<Character*> m_pModels;
 	Model* m_pModel2;
 	Model* m_pModel3;
+	Model* m_pModel4;
+	Model* m_pModel5;
 	SoundHandle* m_pBGMHandle;
 
 	BulletPhysics m_bullet;
