@@ -17,6 +17,13 @@ void Camera::Update(DirectionalLight* pDirectionalLight)
     direction.m128_f32[2] = cosf(m_pitch) * cosf(m_yaw);
 
     m_targetPos = XMVectorAdd(m_eyePos, XMVector3Normalize(direction));
+
+    XMFLOAT4 eyePos;
+    XMStoreFloat4(&eyePos, m_eyePos);
+    pDirectionalLight->m_lightBuffer.cameraEyePos = eyePos;
+
+    pDirectionalLight->m_lightPosition.x = eyePos.x;
+    pDirectionalLight->m_lightPosition.z = eyePos.z;
 }
 
 Camera::Camera()

@@ -532,7 +532,7 @@ void Character::CreateShapeDeltasTexture(HumanoidMesh& humanoidMesh)
 
     //コマンドリストに転送命令を追加
     D3D12_SUBRESOURCE_DATA textureSubresource = {};
-    textureSubresource.pData = mappedData;
+    textureSubresource.pData = textureData.data();
     textureSubresource.RowPitch = rowPitch;
     textureSubresource.SlicePitch = textureSubresource.RowPitch * height;
 
@@ -549,6 +549,8 @@ void Character::CreateShapeDeltasTexture(HumanoidMesh& humanoidMesh)
     //コマンドラインを用いたデータの転送は一度レンダーキューを終了させなければならない。
     g_Engine->EndRender();
     g_Engine->BeginRender();
+
+    uploadBuffer.Reset();
 
     if (humanoidMesh.pMesh->meshName == "Body" && humanoidMesh.pMesh->shapeDeltasBuffer) {
         printf("a = %llu, bufferSize = %llu, Real = %u\n", a, uploadBufferDesc.Width, width * height);

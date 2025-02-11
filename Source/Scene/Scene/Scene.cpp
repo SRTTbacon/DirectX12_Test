@@ -23,7 +23,7 @@ bool Scene::Init()
 	for (int i = 0; i < 1; i++) {
 		Character* pCharacter = g_Engine->AddCharacter(modelFile1);
 		m_pModels.push_back(pCharacter);
-		pCharacter->AddAnimation(g_Engine->GetAnimation("Resource\\Test2.hcs"));
+		pCharacter->AddAnimation(g_Engine->GetAnimation("Resource\\Test3.hcs"));
 		pCharacter->m_animationSpeed = animSpeed;
 
 		pCharacter->SetShapeWeight("Foot_heel", 1.0f);
@@ -85,7 +85,7 @@ bool Scene::Init()
 		}
 	}
 
-	m_pBGMHandle = g_Engine->GetSoundSystem()->LoadSound("Resource\\BGM\\ビビデバDance.mp3", true);
+	m_pBGMHandle = g_Engine->GetSoundSystem()->LoadSound("Resource\\BGM\\VRSuya - Doodle Dance.wav", true);
 	m_pBGMHandle->m_volume = 0.25f;
 	m_pBGMHandle->m_speed = animSpeed;
 	m_pBGMHandle->m_bLooping = true;
@@ -237,8 +237,12 @@ void Scene::UpdateCamera()
 	//カメラの右方向ベクトルを計算
 	XMVECTOR right = XMVector3Normalize(XMVector3Cross(pCamera->m_upFoward, forward));
 
-	const float cameraSpeed = 1.2f * g_Engine->GetFrameTime();
-	const float rotationSpeed = 0.1f * g_Engine->GetFrameTime();
+	float cameraSpeed = 1.2f * g_Engine->GetFrameTime();
+	float rotationSpeed = 0.1f * g_Engine->GetFrameTime();
+
+	if (g_Engine->GetKeyState(DIK_LCONTROL)) {
+		cameraSpeed *= 4.0f;
+	}
 
 	if (g_Engine->GetKeyState(DIK_SPACE)) {
 		pCamera->m_eyePos = XMVectorAdd(pCamera->m_eyePos, XMVectorScale(pCamera->m_upFoward, cameraSpeed));

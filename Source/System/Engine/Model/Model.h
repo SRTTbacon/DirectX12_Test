@@ -125,7 +125,6 @@ protected:
     ComPtr<ID3D12Resource> m_modelConstantBuffer[FRAME_BUFFER_COUNT];   //コンスタントバッファ。画面のちらつきを防止するためトリプルバッファリング (2個でも十分なのかな?)
     ComPtr<ID3D12Resource> m_boneMatricesBuffer;                        //ボーン情報をシェーダーに送信する用
     ComPtr<ID3D12Resource> m_shadowBoneMatricesBuffer;                  //影用シェーダーにボーン情報を送信する用(ボーンがない場合は0で初期化)
-    ComPtr<ID3D12Resource> m_lightConstantBuffer;                       //ディレクショナルライトのバッファ
 
     std::vector<Texture2D*> m_textures;                      //テクスチャ情報
 

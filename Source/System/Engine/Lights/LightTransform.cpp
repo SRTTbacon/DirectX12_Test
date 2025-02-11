@@ -1,127 +1,94 @@
 #include "LightTransform.h"
 
+using namespace DirectX;
+
 LightTransform::LightTransform() :
-	mPosition(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f)),
-	mRotation(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f)),
-	mScale(DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f))
+	m_position(XMFLOAT3(0.0f, 0.0f, 0.0f)),
+	m_rotation(XMFLOAT3(0.0f, 0.0f, 0.0f)),
+	m_scale(XMFLOAT3(1.0f, 1.0f, 1.0f))
 {
-}
-
-void LightTransform::SetPosition(float x, float y, float z)
-{
-	mPosition.x = x;
-	mPosition.y = y;
-	mPosition.z = z;
-}
-
-void LightTransform::SetPosition(DirectX::XMFLOAT3 position)
-{
-	mPosition = position;
-}
-
-const DirectX::XMFLOAT3& LightTransform::GetPosition() const
-{
-	return mPosition;
 }
 
 void LightTransform::SetRotation(float x, float y, float z)
 {
-	mRotation.x = DirectX::XMConvertToRadians(x);
-	mRotation.y = DirectX::XMConvertToRadians(y);
-	mRotation.z = DirectX::XMConvertToRadians(z);
+	m_rotation.x = XMConvertToRadians(x);
+	m_rotation.y = XMConvertToRadians(y);
+	m_rotation.z = XMConvertToRadians(z);
 }
 
-const DirectX::XMFLOAT3 LightTransform::GetRotation() const
+const XMFLOAT3 LightTransform::GetRotation() const
 {
-	return DirectX::XMFLOAT3(DirectX::XMConvertToDegrees(mRotation.x), DirectX::XMConvertToDegrees(mRotation.y), DirectX::XMConvertToDegrees(mRotation.z));
+	return XMFLOAT3(XMConvertToDegrees(m_rotation.x), XMConvertToDegrees(m_rotation.y), XMConvertToDegrees(m_rotation.z));
 }
 
-const DirectX::XMFLOAT3 LightTransform::GetRotationRadians() const
+const XMFLOAT4 LightTransform::GetQuaternion() const
 {
-	return DirectX::XMFLOAT3(mRotation.x, mRotation.y, mRotation.z);
-}
-
-const DirectX::XMFLOAT4 LightTransform::GetQuaternion() const
-{
-	DirectX::XMFLOAT4 result{};
-	DirectX::XMVECTOR quaternion = DirectX::XMQuaternionRotationRollPitchYaw(mRotation.x, mRotation.y, mRotation.z);
-	DirectX::XMStoreFloat4(&result, quaternion);
+	XMFLOAT4 result{};
+	XMVECTOR quaternion = XMQuaternionRotationRollPitchYaw(m_rotation.x, m_rotation.y, m_rotation.z);
+	XMStoreFloat4(&result, quaternion);
 	return result;
-}
-
-void LightTransform::SetScale(float x, float y, float z)
-{
-	mScale.x = x;
-	mScale.y = y;
-	mScale.z = z;
-}
-
-const DirectX::XMFLOAT3& LightTransform::GetScale() const
-{
-	return mScale;
 }
 
 void LightTransform::AddTranslation(float x, float y, float z)
 {
-	mPosition.x += x;
-	mPosition.y += y;
-	mPosition.z += z;
+	m_position.x += x;
+	m_position.y += y;
+	m_position.z += z;
 }
 
 void LightTransform::AddRotationX(float x)
 {
-	mRotation.x += DirectX::XMConvertToRadians(x);
+	m_rotation.x += XMConvertToRadians(x);
 }
 void LightTransform::AddRotationY(float y)
 {
-	mRotation.y += DirectX::XMConvertToRadians(y);
+	m_rotation.y += XMConvertToRadians(y);
 }
 void LightTransform::AddRotationZ(float z)
 {
-	mRotation.z += DirectX::XMConvertToRadians(z);
+	m_rotation.z += XMConvertToRadians(z);
 }
 
-DirectX::XMFLOAT3 LightTransform::GetForward() const
+XMFLOAT3 LightTransform::GetForward() const
 {
-	DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationRollPitchYaw(mRotation.x, mRotation.y, mRotation.z);
-	DirectX::XMFLOAT3 result = DirectX::XMFLOAT3(rotation.r[2].m128_f32[0], rotation.r[2].m128_f32[1], rotation.r[2].m128_f32[2]);
+	XMMATRIX rotation = XMMatrixRotationRollPitchYaw(m_rotation.x, m_rotation.y, m_rotation.z);
+	XMFLOAT3 result = XMFLOAT3(rotation.r[2].m128_f32[0], rotation.r[2].m128_f32[1], rotation.r[2].m128_f32[2]);
 	return result;
 }
 
-DirectX::XMFLOAT3 LightTransform::GetRight() const
+XMFLOAT3 LightTransform::GetRight() const
 {
-	DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationRollPitchYaw(mRotation.x, mRotation.y, mRotation.z);
-	DirectX::XMFLOAT3 result = DirectX::XMFLOAT3(rotation.r[0].m128_f32[0], rotation.r[0].m128_f32[1], rotation.r[0].m128_f32[2]);
+	XMMATRIX rotation = XMMatrixRotationRollPitchYaw(m_rotation.x, m_rotation.y, m_rotation.z);
+	XMFLOAT3 result = XMFLOAT3(rotation.r[0].m128_f32[0], rotation.r[0].m128_f32[1], rotation.r[0].m128_f32[2]);
 	return result;
 }
 
-DirectX::XMFLOAT3 LightTransform::GetUp() const
+XMFLOAT3 LightTransform::GetUp() const
 {
-	DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationRollPitchYaw(mRotation.x, mRotation.y, mRotation.z);
-	DirectX::XMFLOAT3 result = DirectX::XMFLOAT3(rotation.r[1].m128_f32[0], rotation.r[1].m128_f32[1], rotation.r[1].m128_f32[2]);
+	XMMATRIX rotation = XMMatrixRotationRollPitchYaw(m_rotation.x, m_rotation.y, m_rotation.z);
+	XMFLOAT3 result = XMFLOAT3(rotation.r[1].m128_f32[0], rotation.r[1].m128_f32[1], rotation.r[1].m128_f32[2]);
 	return result;
 }
 
-DirectX::XMMATRIX LightTransform::GetTransformMatrix() const
+XMMATRIX LightTransform::GetTransformMatrix() const
 {
-	DirectX::XMMATRIX s = DirectX::XMMatrixScaling(mScale.x, mScale.y, mScale.z);
-	DirectX::XMMATRIX r = DirectX::XMMatrixRotationRollPitchYaw(mRotation.x, mRotation.y, mRotation.z);
-	DirectX::XMMATRIX t = DirectX::XMMatrixTranslation(mPosition.x, mPosition.y, mPosition.z);
-	DirectX::XMMATRIX result = s * r * t;
+	XMMATRIX s = XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
+	XMMATRIX r = XMMatrixRotationRollPitchYaw(m_rotation.x, m_rotation.y, m_rotation.z);
+	XMMATRIX t = XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
+	XMMATRIX result = s * r * t;
 
 	return result;
 }
 
-DirectX::XMMATRIX LightTransform::GetViewMatrix() const
+XMMATRIX LightTransform::GetViewMatrix() const
 {
-	DirectX::XMFLOAT3 position = GetPosition();
-	DirectX::XMFLOAT3 forward = GetForward();
-	DirectX::XMFLOAT3 up = GetUp();
+	XMFLOAT3 forward = GetForward();
+	XMFLOAT3 up = GetUp();
 
-	DirectX::XMVECTOR positionVector = DirectX::XMLoadFloat3(&position);
-	DirectX::XMVECTOR forwardVector = DirectX::XMLoadFloat3(&forward);
-	DirectX::XMVECTOR upVector = DirectX::XMLoadFloat3(&up);
+	XMVECTOR positionVector = XMLoadFloat3(&m_position);
+	XMVECTOR forwardVector = XMLoadFloat3(&forward);
+	XMVECTOR upVector = XMLoadFloat3(&up);
 
-	DirectX::XMMATRIX result = DirectX::XMMatrixLookToLH(positionVector, forwardVector, upVector);
+	XMMATRIX result = XMMatrixLookToLH(positionVector, forwardVector, upVector);
 	return result;
 }

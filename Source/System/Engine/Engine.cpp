@@ -14,7 +14,7 @@ Engine::Engine(HWND hwnd)
 	, m_frameTime(0.0f)
 	, m_hWnd(hwnd)
 	, m_initTime(0)
-	, m_pDirectionalLight(nullptr)
+	, m_directionalLight(DirectionalLight())
 	, m_keyInput(hwnd)
 	, m_soundSystem(hwnd)
 	, m_sceneTimeMS(0)
@@ -38,12 +38,12 @@ bool Engine::Init(UINT windowWidth, UINT windowHeight)
 
 #ifdef _DEBUG
 	//デバッグレイヤーの設定
-	/*if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_pDebugController)))) {
+	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_pDebugController)))) {
 		m_pDebugController->SetEnableGPUBasedValidation(TRUE);
 		m_pDebugController->SetEnableSynchronizedCommandQueueValidation(TRUE);
 		m_pDebugController->EnableDebugLayer();
 		printf("デバッグレイヤーを有効化しました。\n");
-	}*/
+	}
 #endif
 
 	if (!CreateDevice())
@@ -97,7 +97,7 @@ bool Engine::Init(UINT windowWidth, UINT windowHeight)
 	m_frameTime = 0.0f;
 
 	//ディレクショナルライトの初期化
-	m_pDirectionalLight = new DirectionalLight();
+	m_directionalLight.Init(m_pDevice.Get());
 
 	m_zShadow.Init(m_pDevice.Get(), m_pCommandList.Get());
 
@@ -113,14 +113,14 @@ bool Engine::Init(UINT windowWidth, UINT windowHeight)
 
 Character* Engine::AddCharacter(std::string modelFile)
 {
-	Character* pCharacter = new Character(modelFile, m_pDevice.Get(), m_pCommandList.Get(), &m_camera, m_pDirectionalLight, m_zShadow.GetZBuffer());
+	Character* pCharacter = new Character(modelFile, m_pDevice.Get(), m_pCommandList.Get(), &m_camera, &m_directionalLight, m_zShadow.GetZBuffer());
 	m_modelManager.AddModel(pCharacter);
 	return pCharacter;
 }
 
 Model* Engine::AddModel(std::string modelFile)
 {
-	Model* pModel = new Model(m_pDevice.Get(), m_pCommandList.Get(), &m_camera, m_pDirectionalLight, m_zShadow.GetZBuffer());
+	Model* pModel = new Model(m_pDevice.Get(), m_pCommandList.Get(), &m_camera, &m_directionalLight, m_zShadow.GetZBuffer());
 	pModel->LoadModel(modelFile);
 	m_modelManager.AddModel(pModel);
 	return pModel;
@@ -440,10 +440,7 @@ void Engine::WaitRender()
 		}
 
 		//待機処理
-		if (WAIT_OBJECT_0 != WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE))
-		{
-			return;
-		}
+		WaitForSingleObject(m_fenceEvent, INFINITE);
 
 		m_fenceValue[m_CurrentBackBufferIndex] = currentFanceValue + 1;
 	}
@@ -515,17 +512,13 @@ void Engine::Update()
 
 	//サウンドを更新
 	m_soundSystem.Update();
-
-	XMFLOAT3 cameraPos;
-	XMStoreFloat3(&cameraPos, m_camera.m_eyePos);
-
-	m_pDirectionalLight->SetPosition(cameraPos);
-	m_pDirectionalLight->Update();
 }
 
 void Engine::LateUpdate()
 {
-	m_camera.Update(m_pDirectionalLight);
+	m_camera.Update(&m_directionalLight);
+
+	m_directionalLight.Update();
 
 	m_modelManager.LateUpdate(m_CurrentBackBufferIndex);
 }

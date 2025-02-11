@@ -13,6 +13,7 @@ cbuffer LightBuffer : register(b0)
     float4 lightDir;        //ライトの方向
     float4 ambientColor;    //影の色
     float4 diffuseColor;    //標準の色
+    float4 cameraEyePos;    //カメラの位置
 };
 
 struct VSOutput

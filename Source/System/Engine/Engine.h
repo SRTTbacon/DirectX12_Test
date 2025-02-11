@@ -78,7 +78,7 @@ public: //ゲッター関数
 	//ディレクショナルライト
 	inline DirectionalLight* GetDirectionalLight()
 	{
-		return m_pDirectionalLight;
+		return &m_directionalLight;
 	}
 
 	//カメラを取得
@@ -171,7 +171,7 @@ private: //プライベート変数
 
 	SoundSystem m_soundSystem;
 
-	DirectionalLight* m_pDirectionalLight;
+	DirectionalLight m_directionalLight;
 
 	Camera m_camera;
 };

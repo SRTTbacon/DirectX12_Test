@@ -186,16 +186,9 @@ void Model::CreateConstantBuffer()
         }
     }
 
-    //ディレクショナルライトの情報
-    CD3DX12_RESOURCE_DESC lightBuf = CD3DX12_RESOURCE_DESC::Buffer(sizeof(LightBuffer));
-    HRESULT hr = m_pDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &lightBuf, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_lightConstantBuffer));
-    if (FAILED(hr)) {
-        printf("ライトバッファの生成に失敗しました。\n");
-    }
-
     //ボーン情報のリソースを作成 (影用のシェーダー)
     CD3DX12_RESOURCE_DESC boneBuffer = CD3DX12_RESOURCE_DESC::Buffer(sizeof(XMMATRIX) * MAX_BONE_COUNT);
-    hr = m_pDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &boneBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_shadowBoneMatricesBuffer));
+    HRESULT hr = m_pDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &boneBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_shadowBoneMatricesBuffer));
     if (FAILED(hr)) {
         printf("ボーンバッファの生成に失敗しました。\n");
     }
@@ -258,7 +251,7 @@ void Model::RenderSceneWithShadow(UINT backBufferIndex)
     m_pCommandList->SetPipelineState(m_pPipelineState->GetPipelineState());           //パイプラインステートを設定
 
     m_pCommandList->SetGraphicsRootConstantBufferView(0, m_modelConstantBuffer[backBufferIndex]->GetGPUVirtualAddress()); //モデルの位置関係を送信
-    m_pCommandList->SetGraphicsRootConstantBufferView(1, m_lightConstantBuffer->GetGPUVirtualAddress()); //ディレクショナルライトの情報を送信
+    m_pCommandList->SetGraphicsRootConstantBufferView(1, m_pDirectionalLight->GetLightConstantBuffer()->GetGPUVirtualAddress()); //ディレクショナルライトの情報を送信
 
     if (m_boneMatricesBuffer) {
         m_pCommandList->SetGraphicsRootConstantBufferView(4, m_boneMatricesBuffer->GetGPUVirtualAddress());   //ボーンを送信
@@ -319,7 +312,7 @@ void Model::LateUpdate(UINT backBufferIndex)
     mcb.cameraPos.y = m_pCamera->m_eyePos.m128_f32[0];
     mcb.cameraPos.z = m_pCamera->m_eyePos.m128_f32[0];
     mcb.cameraPos.w = 1.0f;
-	XMFLOAT3 lightPos = m_pDirectionalLight->GetPosition();
+	const XMFLOAT3& lightPos = m_pDirectionalLight->m_position;
 	mcb.lightPos.x = lightPos.x;
 	mcb.lightPos.y = lightPos.y;
 	mcb.lightPos.z = lightPos.z;
@@ -340,16 +333,6 @@ void Model::LateUpdate(UINT backBufferIndex)
             //デバイス削除の原因をログに出力
             printf("Device removed reason: 0x%08X\n", reason);
         }
-    }
-
-    void* p1;
-    hr = m_lightConstantBuffer->Map(0, nullptr, &p1);
-    if (p1) {
-        memcpy(p1, &m_pDirectionalLight->m_lightBuffer, sizeof(LightBuffer));
-        m_lightConstantBuffer->Unmap(0, nullptr);
-    }
-    if (FAILED(hr)) {
-        printf("バッファの更新に失敗しました。エラーコード:%d\n", hr);
     }
 
     XMVECTOR objPos = XMLoadFloat3(&m_position);
