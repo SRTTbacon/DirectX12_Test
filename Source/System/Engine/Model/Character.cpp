@@ -853,6 +853,7 @@ void Character::LoadHumanoidMesh(BinaryReader& br)
 
             humanoidMesh.shapeWeights.push_back(0.0f);
             humanoidMesh.shapeMapping[shapeName] = shapeIndex;
+            printf("ShapeName = %s\n", shapeName.c_str());
 
             /*if (humanoidMesh.meshName == "Body all") {
                 printf("%u - %s\n", j, shapeName.c_str());
@@ -873,10 +874,10 @@ void Character::LoadHumanoidMesh(BinaryReader& br)
     }
 }
 
-void Character::SetTexture(const Mesh* pMesh, const std::string nameOnly)
+bool Character::SetTexture(const Mesh* pMesh, const std::string nameOnly)
 {
-    //std::string dir = "Resource\\Model\\Milltina\\";
-    std::string dir = "Resource\\Model\\";
+    std::string dir = "Resource\\Model\\Milltina\\";
+    //std::string dir = "Resource\\Model\\";
 
     std::string texPath = dir + nameOnly;
     //std::string normalPath = dir + "Skin_Normal Map.png";
@@ -884,10 +885,12 @@ void Character::SetTexture(const Mesh* pMesh, const std::string nameOnly)
     //テクスチャを作成
     Texture2D* mainTex = Texture2D::Get(texPath);
     //Texture2D* normalMap = Texture2D::Get(normalPath);
+    //printf("nameOnly = %s\n", nameOnly.c_str());
     //マテリアルを作成
     m_pDescriptorHeap->SetMainTexture(mainTex->Resource(), nullptr, m_pShadowMapBuffer, pMesh->shapeDeltasBuffer.Get());
     m_textures.push_back(mainTex);
     //m_textures.push_back(normalMap);
+    return mainTex->IsSimpleTex();
 }
 
 //ボーンの位置を更新

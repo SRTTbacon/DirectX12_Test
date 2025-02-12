@@ -74,9 +74,11 @@ float4 pixel(VSOutput input) : SV_TARGET
     //ライトの方向を逆に
     float3 lightVec = lightDir.xyz;
     float lightIntensity = saturate(dot(input.normal, -lightVec));
+    //float lightIntensity = 0.8f;
     
     //シャドウの計算
     float shadowFactor = ShadowCalculation(input.shadowPos);
+    //float shadowFactor = 1.0f;
     
     float4 diffuse = diffuseColor * lightIntensity;
 
@@ -98,6 +100,8 @@ float4 pixel(VSOutput input) : SV_TARGET
     
     //finalColor *= max(0, dot(blendedNormal, -lightVec));
     //finalColor += 0.3f * pow(max(0, dot(R, L)), 8);
+    
+    finalColor.a = cameraEyePos.w;
 
     return finalColor;
 }

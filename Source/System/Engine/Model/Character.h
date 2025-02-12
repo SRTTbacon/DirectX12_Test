@@ -179,7 +179,7 @@ private:
     void LoadHumanoidMesh(BinaryReader& br);
 
     //ファイルからテクスチャを作成
-    void SetTexture(const Mesh* pMesh, const std::string nameOnly);
+    bool SetTexture(const Mesh* pMesh, const std::string nameOnly);
 
     //シェイプキーのウェイトを更新
     void UpdateShapeKeys();

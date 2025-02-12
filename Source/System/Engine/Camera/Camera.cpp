@@ -20,6 +20,7 @@ void Camera::Update(DirectionalLight* pDirectionalLight)
 
     XMFLOAT4 eyePos;
     XMStoreFloat4(&eyePos, m_eyePos);
+    eyePos.w = m_test;
     pDirectionalLight->m_lightBuffer.cameraEyePos = eyePos;
 
     pDirectionalLight->m_lightPosition.x = eyePos.x;
@@ -36,5 +37,6 @@ Camera::Camera()
     , m_pitch(0.0f)
     , m_near(0.001f)
     , m_far(1000.0f)
+    , m_test(1.0f)
 {
 }

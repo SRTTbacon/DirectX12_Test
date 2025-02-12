@@ -63,6 +63,9 @@ public:
     //実際に描画 (エンジンから実行されるため、ユーザーが実行する必要はない)
     void RenderSceneWithShadow(UINT backBufferIndex);
 
+    //半透明オブジェクトかどうかを設定
+    void SetTransparent(bool bTransparent);
+
     std::vector<Mesh*> m_meshes;    //メッシュの配列
 
     XMFLOAT3 m_position;    //モデル全体の位置
@@ -84,6 +87,12 @@ public: //ゲッター関数
     inline bool GetIsTransparent() const
     {
         return m_bTransparent;
+    }
+
+    //メッシュ内のテクスチャを参照
+    inline Texture2D* GetTexture(int index) const
+    {
+        return m_textures[index];
     }
 
 protected:

@@ -4,8 +4,8 @@ Scene* g_Scene = nullptr;
 
 using namespace DirectX;
 
-//const std::string modelFile1 = "Resource/Model/Milltina/Milltina.hcs";
-const std::string modelFile1 = "Resource/Model/FBX_Moe.hcs";
+const std::string modelFile1 = "Resource/Model/Milltina/Milltina.hcs";
+//const std::string modelFile1 = "Resource/Model/FBX_Moe.hcs";
 const std::string modelFile2 = "Resource/Model/Sphere.fbx";
 const std::string modelFile3 = "Resource/Model/Plane.fbx";
 const std::string modelFile4 = "Resource/Model/Gun.fbx";
@@ -23,18 +23,28 @@ bool Scene::Init()
 	for (int i = 0; i < 1; i++) {
 		Character* pCharacter = g_Engine->AddCharacter(modelFile1);
 		m_pModels.push_back(pCharacter);
-		pCharacter->AddAnimation(g_Engine->GetAnimation("Resource\\Test3.hcs"));
+		pCharacter->AddAnimation(g_Engine->GetAnimation("Resource\\Test.hcs"));
 		pCharacter->m_animationSpeed = animSpeed;
 
-		pCharacter->SetShapeWeight("Foot_heel", 1.0f);
+		//pCharacter->SetShapeWeight("Foot_heel", 1.0f);
+		pCharacter->SetShapeWeight("Breasts_Flat", 1.0f);
+		pCharacter->SetShapeWeight("Apron_set", 1.0f);
+		//pCharacter->SetShapeWeight("eye_joy", 1.0f);
 
-		std::vector meshNames = { "Body", "Milltina_body", "Milltina_hair_base", "Milltina_hair_front", "Milltina_hair_front_side", "Milltina_hair_side", "Milltina_hair_twintail"};
+		pCharacter->SetTransparent(true);
+
+		std::vector meshNames = { "Body", "Milltina_body", "Milltina_hair_base", "Milltina_hair_front", "Milltina_hair_front_side", "Milltina_hair_side", "Milltina_hair_twintail",
+		"Milltina_cloth_dress", "Milltina_cloth_skirt", "Milltina_cloth_neck_ribbon", "Milltina_cloth_hat", "Milltina_cloth_hat", "Milltina_cloth_hair_ribbon", "Milltina_cloth_garterbelt",
+		"Milltina_cloth_wrist_cuffs", "Milltina_cloth_apron"};
 		//std::vector meshNames = { "Body", "Body all", "Hair"};
-		for (Character::HumanoidMesh& mesh : pCharacter->GetHumanMeshes()) {
-			//mesh.pMesh->bDraw = false;
+		std::vector<Character::HumanoidMesh>& meshes = pCharacter->GetHumanMeshes();
+		for (int i = 0; i < static_cast<int>(meshes.size()); i++) {
+			Character::HumanoidMesh& mesh = meshes[i];
+			mesh.pMesh->bDraw = false;
+			printf("MeshName = %s\n", mesh.pMesh->meshName.c_str());
 			for (const std::string& meshName : meshNames) {
 				if (mesh.pMesh->meshName == meshName) {
-					if (mesh.pMesh) {
+					if (mesh.pMesh && !pCharacter->GetTexture(i)->IsSimpleTex()) {
 						mesh.pMesh->bDraw = true;
 					}
 				}
@@ -184,6 +194,19 @@ void Scene::Update()
 	}
 	if (g_Engine->GetKeyState(DIK_RIGHT)) {
 		m_pModel4->m_position.x += 0.01f;
+	}
+
+	if (g_Engine->GetKeyState(DIK_1)) {
+		g_Engine->GetCamera()->m_test -= 0.01f;
+		if (g_Engine->GetCamera()->m_test < 0.0f) {
+			g_Engine->GetCamera()->m_test = 0.0f;
+		}
+	}
+	if (g_Engine->GetKeyState(DIK_2)) {
+		g_Engine->GetCamera()->m_test += 0.01f;
+		if (g_Engine->GetCamera()->m_test > 1.0f) {
+			g_Engine->GetCamera()->m_test = 1.0f;
+		}
 	}
 
 	if (g_Engine->GetKeyStateSync(DIK_C)) {

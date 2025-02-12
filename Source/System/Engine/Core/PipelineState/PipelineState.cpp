@@ -63,7 +63,27 @@ PipelineState::PipelineState(ID3D12Device* device, RootSignature* rootSignature)
     psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE; //カリングはなし
 
     //ブレンドステート（デフォルト）
-    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    //psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    // ブレンド状態の設定
+    psoDesc.BlendState.AlphaToCoverageEnable = FALSE;
+    psoDesc.BlendState.IndependentBlendEnable = FALSE;
+    const D3D12_RENDER_TARGET_BLEND_DESC defaultRenderTargetBlendDesc =
+    {
+        FALSE,FALSE,
+        D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+        D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+        D3D12_LOGIC_OP_NOOP,
+        D3D12_COLOR_WRITE_ENABLE_ALL,
+    };
+    for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i) {
+        psoDesc.BlendState.RenderTarget[i] = defaultRenderTargetBlendDesc;
+    }
+    // ブレンドを有効にする
+    psoDesc.BlendState.RenderTarget[0].BlendEnable = TRUE;
+    // ピクセルシェーダーが出力するRGB値に対してαを乗算する(SRCrgb ＊ SRCα)
+    psoDesc.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+    // レンダーターゲットの現在のRGB値に対して1-αを乗算する(DESTrgb ＊ (1 ー SRCα))
+    psoDesc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
 
     //深度・ステンシルステート（デフォルト）
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);

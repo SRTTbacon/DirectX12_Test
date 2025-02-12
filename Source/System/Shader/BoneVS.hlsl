@@ -94,10 +94,10 @@ VSOutput vert(VSInput input)
     skinnedNormal += input.boneWeights.w * mul(input.normal, (float3x3)boneMatrices[input.boneIDs.w]);
     
     float3 nor = normalize(mul(input.normal, (float3x3)modelMatrix));
-    //float3 nor = normalize(input.normal);
     float3 bi = normalize(mul(input.binormal, (float3x3)modelMatrix));
-    //float3 bi = normalize(input.binormal);
     float3 tan = normalize(mul(input.tangent, (float3x3)modelMatrix));
+    //float3 nor = normalize(input.normal);
+    //float3 bi = normalize(input.binormal);
     //float3 tan = normalize(input.tangent);
 
     float4x4 invMat = InvTangentMatrix(tan, bi, nor);

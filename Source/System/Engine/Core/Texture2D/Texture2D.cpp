@@ -92,6 +92,7 @@ bool Texture2D::Load(std::wstring& path)
 	TextureManage* manage = new TextureManage();
 	manage->uniqueID = uniqueID;
 	manage->refCount = 1;
+	manage->bSimpleTex = false;
 
 	const Image* img = scratch.GetImage(0, 0, 0);
 	CD3DX12_HEAP_PROPERTIES prop = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
@@ -147,7 +148,8 @@ Texture2D* Texture2D::Get(std::wstring path)
 	Texture2D* tex = new Texture2D(path);
 	if (!tex->IsValid())
 	{
-		return GetColor(0.0f, 0.0f, 0.0f); //読み込みに失敗した時は白単色テクスチャを返す
+		delete tex;
+		return GetColor(0.0f, 0.0f, 0.0f); //読み込みに失敗した時は黒単色テクスチャを返す
 	}
 	return tex;
 }
@@ -187,6 +189,7 @@ Texture2D* Texture2D::GetColor(float r, float g, float b)
 	manage->uniqueID = uniqueID;
 	manage->refCount = 0;		//new Texture2D()で参照カウントが増えるので0
 	manage->pResource = pBuffer;
+	manage->bSimpleTex = true;
 
 	textures.push_back(manage);
 
@@ -219,6 +222,11 @@ ID3D12Resource* Texture2D::GetDefaultResource(DXGI_FORMAT format, bool bPixelSha
 bool Texture2D::IsValid() const
 {
 	return m_pManage != nullptr;
+}
+
+bool Texture2D::IsSimpleTex() const
+{
+	return m_pManage->bSimpleTex;
 }
 
 ID3D12Resource* Texture2D::Resource()

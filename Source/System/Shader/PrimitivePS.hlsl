@@ -47,7 +47,7 @@ float ShadowCalculation(float4 worldPos, float4 shadowPos)
     float2 texelSize = float2(1.0f / SHADOWSIZE, 1.0f / SHADOWSIZE);
     
     // 距離に応じたバイアス
-    float dynamicBias = lerp(BIAS, 0.001f, saturate(length(worldPos - cameraEyePos) / 50.0f));
+    //float dynamicBias = lerp(BIAS, 0.001f, saturate(length(worldPos - cameraEyePos) / 50.0f));
 
     //シャドウマップ上でのサンプリング
     for (int i = -numSamples / 2; i < numSamples / 2; ++i)
@@ -62,7 +62,7 @@ float ShadowCalculation(float4 worldPos, float4 shadowPos)
             //shadowSampleUV = saturate(shadowSampleUV);
 
             //シャドウマップから深度をサンプリング
-            float sampleDepth = shadowMap.SampleCmpLevelZero(shadowSampler, shadowSampleUV, posFromLightVP.z - dynamicBias);
+            float sampleDepth = shadowMap.SampleCmpLevelZero(shadowSampler, shadowSampleUV, posFromLightVP.z - BIAS);
             
             //サンプルを合計
             total += sampleDepth;
@@ -82,14 +82,19 @@ float4 pixel(VSOutput input) : SV_TARGET
 {
     //ライトの方向を逆に
     float lightIntensity = saturate(dot(input.normal, -lightDir.xyz));
+    //float lightIntensity = 0.1f;
 
     //シャドウの計算
     float shadowFactor = ShadowCalculation(input.svpos, input.shadowPos);
+    //float shadowFactor = 1.0f;
     
     float4 diffuse = diffuseColor * lightIntensity;
 
     //シャドウがかかっていれば光を減少させる (0.0f なら完全な影、1.0f なら影なし)
     float4 lighting = ambientColor + shadowFactor * diffuse;
+    //float4 lighting = shadowFactor * diffuse;
+    
+    lighting.a = 1.0f;
 
     return lighting;
 }

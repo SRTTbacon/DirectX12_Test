@@ -5,7 +5,7 @@ using namespace DirectX;
 DirectionalLight::DirectionalLight()
 	: m_lightBuffer(LightBuffer())
 	, m_lightViewProj(XMMatrixIdentity())
-	, m_shadowDistance(500.0f)
+	, m_shadowDistance(100.0f)
 	, m_shadowScale(25.0f)
 	, m_lightPosition(0.0f, 0.0f, 0.0f)
 	, m_pDevice(nullptr)

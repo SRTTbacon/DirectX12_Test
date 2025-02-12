@@ -289,6 +289,11 @@ void Model::RenderSceneWithShadow(UINT backBufferIndex)
     }
 }
 
+void Model::SetTransparent(bool bTransparent)
+{
+    m_bTransparent = bTransparent;
+}
+
 void Model::LateUpdate(UINT backBufferIndex)
 {
     if (!m_bVisible) {

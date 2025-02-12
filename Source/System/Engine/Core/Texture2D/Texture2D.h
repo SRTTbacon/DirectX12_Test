@@ -11,6 +11,7 @@ struct TextureManage
 {
 	UINT uniqueID;			//ユニークID
 	UINT refCount;			//参照カウント
+	bool bSimpleTex;		//単色
 	ComPtr<ID3D12Resource> pResource; //リソース
 };
 
@@ -27,6 +28,7 @@ public:
 	static ID3D12Resource* GetDefaultResource(DXGI_FORMAT format, bool bPixelShader, size_t width, size_t height);
 
 	bool IsValid() const; //正常に読み込まれているかどうかを返す
+	bool IsSimpleTex() const;
 
 	ID3D12Resource* Resource(); //リソースを返す
 	D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc(); //シェーダーリソースビューの設定を返す

@@ -17,6 +17,8 @@ struct Camera
 	float m_yaw;
 	float m_pitch;
 
+	float m_test;
+
 	void Update(DirectionalLight* pDirectionalLight);
 	void SetFov(float fovDegree);
 
