@@ -1,8 +1,8 @@
 #pragma once
 #include "..\\..\\System\\Engine\\Engine.h"
 #include "..\\..\\System\\Engine\\Model\\Convert\\ConvertFromFBX.h"
-#include "..\\..\\System\\Engine\\Model\\BulletPhysics\\DynamicBone.h"
 #include <DirectXMath.h>
+#include "..\\..\\System\\Engine\\Physics\\PhysXManager.h"
 
 class Scene
 {
@@ -16,15 +16,15 @@ public:
 	~Scene();
 
 private:
-	std::vector<Character*> m_pModels;
+	Character* m_pChar1;
+	Character* m_pChar2;
 	Model* m_pModel2;
 	Model* m_pModel3;
 	Model* m_pModel4;
 	Model* m_pModel5;
 	SoundHandle* m_pBGMHandle;
 
-	BulletPhysics m_bullet;
-	DynamicBone* m_pDynamicBone;
+	PhysXManager m_physX;
 
 	std::vector<Model*> m_spheres;
 

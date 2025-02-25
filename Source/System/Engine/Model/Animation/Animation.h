@@ -55,9 +55,14 @@ public:
 	//アニメーションのフレーム一覧
 	std::vector<AnimationFrame> m_frames;
 
+public:
+	inline std::string GetFilePath() const { return m_animFilePath; }
+
 private:
 	//フレーム補間用
 	AnimationFrame* m_pTempFrame;
 
 	std::unordered_map<std::string, std::vector<ShapeAnimation>> m_shapeAnimations;
+
+	std::string m_animFilePath;
 };

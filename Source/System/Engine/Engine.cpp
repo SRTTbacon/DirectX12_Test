@@ -38,12 +38,12 @@ bool Engine::Init(UINT windowWidth, UINT windowHeight)
 
 #ifdef _DEBUG
 	//デバッグレイヤーの設定
-	/*if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_pDebugController)))) {
+	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_pDebugController)))) {
 		m_pDebugController->SetEnableGPUBasedValidation(TRUE);
 		m_pDebugController->SetEnableSynchronizedCommandQueueValidation(TRUE);
 		m_pDebugController->EnableDebugLayer();
 		printf("デバッグレイヤーを有効化しました。\n");
-	}*/
+	}
 #endif
 
 	if (!CreateDevice())

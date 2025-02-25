@@ -38,12 +38,11 @@
     <ClCompile Include="Source\System\Engine\Model\Animation\Animation.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Animation\AnimationManager.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Bone\Bone.cpp" />
-    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\BulletPhysics.cpp" />
-    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\DynamicBone.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Character.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Convert\ConvertFromFBX.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Model.cpp" />
     <ClCompile Include="Source\System\Engine\Model\ModelManager.cpp" />
+    <ClCompile Include="Source\System\Engine\Physics\PhysXManager.cpp" />
     <ClCompile Include="Source\System\Engine\SoundSystem\SoundSystem.cpp" />
     <ClCompile Include="Source\System\Main\Main.cpp" />
     <ClCompile Include="Source\System\Main\Utility.cpp" />
@@ -59,6 +58,7 @@
     <ClInclude Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap2.h" />
     <ClInclude Include="Source\System\Engine\Core\Hash\xxhash.h" />
     <ClInclude Include="Source\System\Engine\Core\Raytracing\RaytracingProcess.h" />
+    <ClInclude Include="Source\System\Engine\Core\XMFLOATHelper.h" />
     <ClInclude Include="Source\System\Engine\Engine.h" />
     <ClInclude Include="Source\System\Engine\Core\PipelineState\PipelineState.h" />
     <ClInclude Include="Source\System\Engine\Core\RootSignature\RootSignature.h" />
@@ -70,12 +70,11 @@
     <ClInclude Include="Source\System\Engine\Model\Animation\Animation.h" />
     <ClInclude Include="Source\System\Engine\Model\Animation\AnimationManager.h" />
     <ClInclude Include="Source\System\Engine\Model\Bone\Bone.h" />
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\BulletPhysics.h" />
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\DynamicBone.h" />
     <ClInclude Include="Source\System\Engine\Model\Character.h" />
     <ClInclude Include="Source\System\Engine\Model\Convert\ConvertFromFBX.h" />
     <ClInclude Include="Source\System\Engine\Model\Model.h" />
     <ClInclude Include="Source\System\Engine\Model\ModelManager.h" />
+    <ClInclude Include="Source\System\Engine\Physics\PhysXManager.h" />
     <ClInclude Include="Source\System\Engine\SoundSystem\SoundSystem.h" />
     <ClInclude Include="Source\System\Main\Main.h" />
     <ClInclude Include="Source\System\Main\Utility.h" />
@@ -96,6 +95,14 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vert</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\ShadowPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
     </FxCompile>
     <FxCompile Include="Source\System\Shader\ShadowVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
@@ -129,6 +136,13 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vert</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\ToonPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
@@ -221,16 +235,16 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>Library\BulletPhysics\Include;Library\Zstandard\Include;Library\Bass\Include;Library\DirectXTex\Include;Library\assimp\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Library\PhysX\Include;Library\Zstandard\Include;Library\Bass\Include;Library\DirectXTex\Include;Library\assimp\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Library\BulletPhysics\lib;Library\Zstandard\lib\$(Configuration);Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\PhysX\$(Configuration);Library\assimp\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>assimp-vc143-mtd.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll</DelayLoadDLLs>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;winmm.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;BulletCollision_x64_debug.lib;BulletDynamics_x64_debug.lib;BulletSoftBody_x64_debug.lib;LinearMath_x64_debug.lib;libzstd_static.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>Library\Zstandard\lib\$(Configuration);Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\PhysX\$(Configuration);Library\assimp\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <DelayLoadDLLs>assimp-vc143-mtd.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll;PhysX_64.dll;PhysXCommon_64.dll;PhysXFoundation_64.dll</DelayLoadDLLs>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;winmm.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;libzstd_static.lib;PhysX_64.lib;PhysXCommon_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -248,7 +262,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>F:\Projects\DirectX12_Test\Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\assimp\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\assimp\$(Configuration)</AdditionalLibraryDirectories>
       <DelayLoadDLLs>assimp-vc143-mt.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll</DelayLoadDLLs>
       <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib</AdditionalDependencies>
     </Link>

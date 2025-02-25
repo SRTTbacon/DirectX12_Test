@@ -50,32 +50,32 @@ SoundHandle* SoundSystem::LoadSound(std::string filePath, bool bPlay)
 		return nullptr;
 	}
 
-	//ピッチやエフェクトが適応できる形に変更
-	int fxHandle = BASS_FX_TempoCreate(soundHandle, BASS_FX_FREESOURCE);
+	SoundHandle* pHandle = LoadSoundFromHandle(soundHandle, bPlay);
+
+	return pHandle;
+}
+
+SoundHandle* SoundSystem::LoadSound(void* mem, size_t size, bool bFlacFormat, bool bPlay)
+{
+	UINT soundHandle = 0;
+
+	BASS_SetConfig(BASS_CONFIG_BUFFER, 100);
+
+	//.flac形式は少々特殊なため関数が分かれている
+	if (bFlacFormat) {
+		soundHandle = BASS_FLAC_StreamCreateFile(true, mem, 0, size, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE);
+	}
+	else {
+		soundHandle = BASS_StreamCreateFile(true, mem, 0, size, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE);
+	}
 
 	if (GetBassError) {
 		printf("サウンドの読み込み時にエラーが発生しました。エラーコード:%d\n", BASS_ErrorGetCode());
-		BASS_StreamFree(soundHandle);
 		return nullptr;
 	}
 
-	//サウンドの状態を保持する構造体
-	float freq;
-	BASS_ChannelGetAttribute(fxHandle, BASS_ATTRIB_TEMPO_FREQ, &freq);
-	SoundHandle* pHandle = new SoundHandle(fxHandle, freq);
+	SoundHandle* pHandle = LoadSoundFromHandle(soundHandle, bPlay);
 
-	//再生終了時のコールバックを設定
-	HSYNC syncHandle = BASS_ChannelSetSync(fxHandle, BASS_SYNC_END, 0, &SoundSystem::PlaybackEndCallback, pHandle);
-	if (!syncHandle) {
-		return nullptr;
-	}
-
-	//ロード後すぐに再生
-	if (bPlay) {
-		pHandle->PlaySound(true);
-	}
-
-	m_soundHandles.push_back(pHandle);
 	return pHandle;
 }
 
@@ -113,12 +113,43 @@ void SoundSystem::PlaybackEndCallback(HSYNC handle, DWORD channel, DWORD data, v
 	}
 }
 
+SoundHandle* SoundSystem::LoadSoundFromHandle(int handleID, bool bPlay)
+{
+	//ピッチやエフェクトが適応できる形に変更
+	int fxHandle = BASS_FX_TempoCreate(handleID, BASS_FX_FREESOURCE);
+
+	if (GetBassError) {
+		printf("サウンドの読み込み時にエラーが発生しました。エラーコード:%d\n", BASS_ErrorGetCode());
+		BASS_StreamFree(handleID);
+		return nullptr;
+	}
+
+	//サウンドの状態を保持する構造体
+	float freq;
+	BASS_ChannelGetAttribute(fxHandle, BASS_ATTRIB_TEMPO_FREQ, &freq);
+	SoundHandle* pHandle = new SoundHandle(fxHandle, freq);
+
+	//再生終了時のコールバックを設定
+	HSYNC syncHandle = BASS_ChannelSetSync(fxHandle, BASS_SYNC_END, 0, &SoundSystem::PlaybackEndCallback, pHandle);
+	if (!syncHandle) {
+		return nullptr;
+	}
+
+	//ロード後すぐに再生
+	if (bPlay) {
+		pHandle->PlaySound(true);
+	}
+
+	m_soundHandles.push_back(pHandle);
+	return pHandle;
+}
+
 SoundHandle::SoundHandle(const UINT handle, const float freq)
-	: m_streamHandle(handle)		//ハンドル
+	: m_streamHandle(handle)	//ハンドル
 	, m_maxSoundTime(BASS_ChannelBytes2Seconds(handle, BASS_ChannelGetLength(handle, BASS_POS_BYTE)))	//サウンドの長さ
 	, m_defaultFrequency(freq)	//初期の周波数
 	, m_speed(1.0f)				//再生速度
-	, m_volume(1.0f)				//音量
+	, m_volume(1.0f)			//音量
 	, m_bLooping(false)
 	, m_bPlaying(false)
 {
@@ -166,7 +197,6 @@ void SoundHandle::UpdateProperty()
 		return;
 	}
 
-	m_speed = min(m_speed, 1.0f);
 	m_speed = max(m_speed, 0.0f);
 
 	m_volume = min(m_volume, 1.0f);

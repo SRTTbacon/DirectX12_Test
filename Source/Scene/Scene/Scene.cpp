@@ -4,8 +4,8 @@ Scene* g_Scene = nullptr;
 
 using namespace DirectX;
 
-const std::string modelFile1 = "Resource/Model/Milltina/Milltina.hcs";
-//const std::string modelFile1 = "Resource/Model/FBX_Moe.hcs";
+//const std::string modelFile1 = "Resource/Model/Milltina/Milltina.hcs";
+const std::string modelFile1 = "Resource/Model/FBX_Moe.hcs";
 const std::string modelFile2 = "Resource/Model/Sphere.fbx";
 const std::string modelFile3 = "Resource/Model/Plane.fbx";
 const std::string modelFile4 = "Resource/Model/Gun.fbx";
@@ -17,43 +17,43 @@ float animSpeed = 0.95f;
 
 bool Scene::Init()
 {
-	g_Engine->GetCamera()->SetFov(65.0f);
+	g_Engine->GetCamera()->SetFov(85.0f);
 
 	//キャラクター
-	for (int i = 0; i < 1; i++) {
-		Character* pCharacter = g_Engine->AddCharacter(modelFile1);
-		m_pModels.push_back(pCharacter);
-		pCharacter->AddAnimation(g_Engine->GetAnimation("Resource\\Test.hcs"));
-		pCharacter->m_animationSpeed = animSpeed;
+	m_pChar1 = g_Engine->AddCharacter(modelFile1);
+	//m_pChar1->AddAnimation(g_Engine->GetAnimation("Resource\\Roki1.hcs"));
+	m_pChar1->m_animationSpeed = animSpeed;
+	m_pChar1->SetTransparent(true);
+	m_pChar1->m_scale.x = -1.0f;
+	m_pChar1->m_scale.y = -1.0f;
+	m_pChar1->m_rotation.x = -90.0f;
+	m_pChar1->m_rotation.y = 180.0f;
 
-		//pCharacter->SetShapeWeight("Foot_heel", 1.0f);
-		pCharacter->SetShapeWeight("Breasts_Flat", 1.0f);
-		pCharacter->SetShapeWeight("Apron_set", 1.0f);
-		//pCharacter->SetShapeWeight("eye_joy", 1.0f);
+	m_pChar2 = g_Engine->AddCharacter(modelFile1);
+	m_pChar2->AddAnimation(g_Engine->GetAnimation("Resource\\Roki2.hcs"));
+	m_pChar2->m_animationSpeed = animSpeed;
+	m_pChar2->m_scale.x = -1.0f;
+	m_pChar2->m_scale.y = -1.0f;
+	m_pChar2->m_rotation.x = -90.0f;
+	m_pChar2->m_rotation.y = 180.0f;
+	m_pChar2->SetTransparent(true);
 
-		pCharacter->SetTransparent(true);
-
-		std::vector meshNames = { "Body", "Milltina_body", "Milltina_hair_base", "Milltina_hair_front", "Milltina_hair_front_side", "Milltina_hair_side", "Milltina_hair_twintail",
-		"Milltina_cloth_dress", "Milltina_cloth_skirt", "Milltina_cloth_neck_ribbon", "Milltina_cloth_hat", "Milltina_cloth_hat", "Milltina_cloth_hair_ribbon", "Milltina_cloth_garterbelt",
-		"Milltina_cloth_wrist_cuffs", "Milltina_cloth_apron"};
-		//std::vector meshNames = { "Body", "Body all", "Hair"};
-		std::vector<Character::HumanoidMesh>& meshes = pCharacter->GetHumanMeshes();
-		for (int i = 0; i < static_cast<int>(meshes.size()); i++) {
-			Character::HumanoidMesh& mesh = meshes[i];
-			mesh.pMesh->bDraw = false;
-			printf("MeshName = %s\n", mesh.pMesh->meshName.c_str());
-			for (const std::string& meshName : meshNames) {
-				if (mesh.pMesh->meshName == meshName) {
-					if (mesh.pMesh && !pCharacter->GetTexture(i)->IsSimpleTex()) {
-						mesh.pMesh->bDraw = true;
-					}
+	/*std::vector meshNames = {"Body", "Milltina_body", "Milltina_hair_base", "Milltina_hair_front", "Milltina_hair_front_side", "Milltina_hair_side", "Milltina_hair_twintail",
+	"Milltina_cloth_dress", "Milltina_cloth_skirt", "Milltina_cloth_neck_ribbon", "Milltina_cloth_hat", "Milltina_cloth_hat", "Milltina_cloth_hair_ribbon", "Milltina_cloth_garterbelt",
+	"Milltina_cloth_wrist_cuffs", "Milltina_cloth_apron"};
+	std::vector<Character::HumanoidMesh>& meshes = pCharacter->GetHumanMeshes();
+	for (int i = 0; i < static_cast<int>(meshes.size()); i++) {
+		Character::HumanoidMesh& mesh = meshes[i];
+		//mesh.pMesh->bDraw = false;
+		printf("MeshName = %s\n", mesh.pMesh->meshName.c_str());
+		for (const std::string& meshName : meshNames) {
+			if (mesh.pMesh->meshName == meshName) {
+				if (mesh.pMesh && !pCharacter->GetTexture(i)->IsSimpleTex()) {
+					mesh.pMesh->bDraw = true;
 				}
 			}
 		}
-
-		//m_pDynamicBone = new DynamicBone(m_bullet.GetDynamicWorld(), &pCharacter->m_boneManager);
-		//m_pDynamicBone->Initialize(m_pModels[0]->m_boneManager.GetBone("Hair Root"), 0.5f, 0.2f);
-	}
+	}*/
 
 	/*for (UINT i = 0; i < m_pModels[0]->m_boneManager.m_bones.size(); i++) {
 		if (i > 200) {
@@ -71,8 +71,8 @@ bool Scene::Init()
 		pSphere->m_position.y = m.r[3].m128_f32[1];
 		pSphere->m_position.z = m.r[3].m128_f32[2];
 		m_spheres.push_back(pSphere);
-		
 	}*/
+
 	//地面
 	m_pModel2 = g_Engine->AddModel(modelFile3);
 	m_pModel2->m_scale = XMFLOAT3(50.0f, 0.05f, 50.0f);
@@ -80,23 +80,15 @@ bool Scene::Init()
 
 	m_pModel3 = g_Engine->AddModel(modelFile3);
 	m_pModel3->m_scale = XMFLOAT3(0.5f, 0.5f, 0.5f);
-	m_pModel3->m_position = XMFLOAT3(-1.0f, 0.5f, 1.0f);
+	m_pModel3->m_position = XMFLOAT3(-4.0f, 0.5f, 1.0f);
 
 	m_pModel4 = g_Engine->AddModel(modelFile4);
 	m_pModel4->m_rotation.x = -90.0f;
 	m_pModel4->m_position.y = 1.0f;
 	m_pModel4->m_scale = XMFLOAT3(0.25f, 0.25f, 0.25f);
 
-	for (int i = 0; i < 1; i++) {
-		m_pModels[i]->m_rotation.x = -90.0f;
-		m_pModels[i]->m_rotation.y = 180.0f;
-		if (i > 0) {
-			m_pModels[i]->m_position.x = (float)((i % 2 == 0 ? 1.0f : -1.0f) * i / 2) + 1.0f;
-		}
-	}
-
-	m_pBGMHandle = g_Engine->GetSoundSystem()->LoadSound("Resource\\BGM\\VRSuya - Doodle Dance.wav", true);
-	m_pBGMHandle->m_volume = 0.25f;
+	m_pBGMHandle = g_Engine->GetSoundSystem()->LoadSound("Resource\\BGM\\Roki.mp3", true);
+	m_pBGMHandle->m_volume = 0.4f;
 	m_pBGMHandle->m_speed = animSpeed;
 	m_pBGMHandle->m_bLooping = true;
 	m_pBGMHandle->UpdateProperty();
@@ -112,59 +104,69 @@ void Scene::Update()
 	if (g_Engine->GetMouseStateSync(0x00)) {
 		bAnim = !bAnim;
 		if (bAnim) {
-			m_pModels[0]->m_animationSpeed = animSpeed;
+			m_pChar1->m_animationSpeed = animSpeed;
+			m_pChar2->m_animationSpeed = animSpeed;
 			m_pBGMHandle->PlaySound(false);
 		}
 		else {
-			m_pModels[0]->m_animationSpeed = 0.0f;
+			m_pChar1->m_animationSpeed = 0.0f;
+			m_pChar2->m_animationSpeed = 0.0f;
 			m_pBGMHandle->PauseSound();
 		}
 	}
 	if (g_Engine->GetMouseState(0x01)) {
-		m_pModels[0]->m_rotation.y += 2.0f;
+		m_pChar1->m_rotation.y += 2.0f;
+		m_pChar2->m_rotation.y += 2.0f;
 	}
 	if (g_Engine->GetMouseStateSync(0x02)) {
-		m_pBGMHandle->SetPosition(m_pModels[0]->m_nowAnimationTime);
+		m_pBGMHandle->SetPosition(m_pChar1->m_nowAnimationTime);
 	}
 
 	if (g_Engine->GetKeyStateSync(DIK_J)) {
-		m_pModels[0]->m_nowAnimationTime -= 5.0f;
-		if (m_pModels[0]->m_nowAnimationTime < 0.0f) {
-			m_pModels[0]->m_nowAnimationTime = 0.0f;
+		m_pChar1->m_nowAnimationTime -= 5.0f;
+		m_pChar2->m_nowAnimationTime -= 5.0f;
+		if (m_pChar1->m_nowAnimationTime < 0.0f) {
+			m_pChar1->m_nowAnimationTime = 0.0f;
+			m_pChar2->m_nowAnimationTime = 0.0f;
 		}
 
-		m_pBGMHandle->SetPosition(m_pModels[0]->m_nowAnimationTime);
+		m_pBGMHandle->SetPosition(m_pChar1->m_nowAnimationTime);
 	}
 	else if (g_Engine->GetKeyStateSync(DIK_K)) {
-		m_pModels[0]->m_nowAnimationTime += 5.0f;
-		m_pBGMHandle->SetPosition(m_pModels[0]->m_nowAnimationTime);
+		m_pChar1->m_nowAnimationTime += 5.0f;
+		m_pChar2->m_nowAnimationTime += 5.0f;
+		m_pBGMHandle->SetPosition(m_pChar1->m_nowAnimationTime);
 	}
 
 	if (g_Engine->GetKeyState(DIK_N)) {
-		float weight = m_pModels[0]->GetShapeWeight("High heeled_ON");
+		/*float weight = m_pChar1->GetShapeWeight("High heeled_ON");
 		//float weight = m_pModels[0]->GetShapeWeight("Body", shapeIndex);
 		weight -= g_Engine->GetFrameTime();
-		m_pModels[0]->SetShapeWeight("High heeled_ON", weight);
+		m_pChar1->SetShapeWeight("High heeled_ON", weight);
 
-		weight = m_pModels[0]->GetShapeWeight("High heeled_OFF");
+		weight = m_pChar1->GetShapeWeight("High heeled_OFF");
 		weight += g_Engine->GetFrameTime();
-		m_pModels[0]->SetShapeWeight("High heeled_OFF", weight);
+		m_pChar1->SetShapeWeight("High heeled_OFF", weight);*/
+
+		g_Engine->GetDirectionalLight()->AddRotationX(-0.5f);
 	}
 	if (g_Engine->GetKeyState(DIK_M)) {
-		float weight = m_pModels[0]->GetShapeWeight("High heeled_ON");
+		/*float weight = m_pChar1->GetShapeWeight("High heeled_ON");
 		weight += g_Engine->GetFrameTime();
-		m_pModels[0]->SetShapeWeight("High heeled_ON", weight);
+		m_pChar1->SetShapeWeight("High heeled_ON", weight);
 
-		weight = m_pModels[0]->GetShapeWeight("High heeled_OFF");
+		weight = m_pChar1->GetShapeWeight("High heeled_OFF");
 		weight -= g_Engine->GetFrameTime();
-		m_pModels[0]->SetShapeWeight("High heeled_OFF", weight);
+		m_pChar1->SetShapeWeight("High heeled_OFF", weight);*/
+		g_Engine->GetDirectionalLight()->AddRotationX(0.5f);
 	}
 
 	if (g_Engine->GetKeyState(DIK_G)) {
 		animSpeed -= 0.005f;
 		if (animSpeed < 0.1f)
 			animSpeed = 0.1f;
-		m_pModels[0]->m_animationSpeed = animSpeed;
+		m_pChar1->m_animationSpeed = animSpeed;
+		m_pChar2->m_animationSpeed = animSpeed;
 		m_pBGMHandle->m_speed = animSpeed;
 		m_pBGMHandle->UpdateProperty();
 	}
@@ -172,29 +174,41 @@ void Scene::Update()
 		animSpeed += 0.005f;
 		if (animSpeed > 2.0f)
 			animSpeed = 2.0f;
-		m_pModels[0]->m_animationSpeed = animSpeed;
+		m_pChar1->m_animationSpeed = animSpeed;
+		m_pChar2->m_animationSpeed = animSpeed;
 		m_pBGMHandle->m_speed = animSpeed;
 		m_pBGMHandle->UpdateProperty();
 	}
 	if (g_Engine->GetKeyState(DIK_T)) {
-		m_pModels[0]->m_position.y -= 0.01f;
+		m_pChar1->m_position.y -= 0.01f;
+		m_pChar2->m_position.y -= 0.01f;
 	}
 	if (g_Engine->GetKeyState(DIK_Y)) {
-		m_pModels[0]->m_position.y += 0.01f;
+		m_pChar1->m_position.y += 0.01f;
+		m_pChar2->m_position.y += 0.01f;
 	}
 
 	if (g_Engine->GetKeyState(DIK_UP)) {
-		m_pModel4->m_position.z -= 0.01f;
+		//m_pChar1->m_boneManager.m_armatureBone.m_position.z -= 0.01f;
+		m_pChar1->m_boneManager.GetBone("Hips")->m_position.z -= 0.01f;
+		//m_pModel4->m_position.z -= 0.01f;
 	}
 	if (g_Engine->GetKeyState(DIK_DOWN)) {
-		m_pModel4->m_position.z += 0.01f;
+		//m_pChar1->m_boneManager.m_armatureBone.m_position.z += 0.01f;
+		m_pChar1->m_boneManager.GetBone("Hips")->m_position.z += 0.01f;
+		//m_pModel4->m_position.z += 0.01f;
 	}
 	if (g_Engine->GetKeyState(DIK_LEFT)) {
-		m_pModel4->m_position.x -= 0.01f;
+		//m_pChar1->m_boneManager.m_armatureBone.m_position.x -= 0.01f;
+		m_pChar1->m_boneManager.GetBone("Hips")->m_position.x -= 0.01f;
+		//m_pModel4->m_position.x -= 0.01f;
 	}
 	if (g_Engine->GetKeyState(DIK_RIGHT)) {
-		m_pModel4->m_position.x += 0.01f;
+		//m_pChar1->m_boneManager.m_armatureBone.m_position.x += 0.01f;
+		m_pChar1->m_boneManager.GetBone("Hips")->m_position.x += 0.01f;
+		//m_pModel4->m_position.x += 0.01f;
 	}
+	//printf("Char1 -> %f, %f, %f\n", m_pChar1->m_boneManager.m_armatureBone.m_position.x, m_pChar1->m_boneManager.m_armatureBone.m_position.y, m_pChar1->m_boneManager.m_armatureBone.m_position.z);
 
 	if (g_Engine->GetKeyState(DIK_1)) {
 		g_Engine->GetCamera()->m_test -= 0.01f;
@@ -212,19 +226,22 @@ void Scene::Update()
 	if (g_Engine->GetKeyStateSync(DIK_C)) {
 		ConvertFromFBX convert;
 		//convert.ConvertFromCharacter(m_pModels[0], modelFile1, "Resource/Model/Milltina/Milltina.hcs");
-		std::vector<Character::HumanoidMesh>& meshes = m_pModels[0]->GetHumanMeshes();
-		for (Character::HumanoidMesh& mesh : meshes) {
+		//std::vector<Character::HumanoidMesh>& meshes = m_pModels[0]->GetHumanMeshes();
+		//for (Character::HumanoidMesh& mesh : meshes) {
 			//printf("MeshName = %s\n", mesh.pMesh->meshName.c_str());
-		}
+		//}
 
-		Character::HumanoidMesh* a = m_pModels[0]->GetHumanMesh("Body all");
-		for (std::pair<std::string, UINT> keyValue : a->shapeMapping) {
-			printf("%s\n", keyValue.first.c_str());
-		}
+		//Character::HumanoidMesh* a = m_pModels[0]->GetHumanMesh("Body all");
+		//for (std::pair<std::string, UINT> keyValue : a->shapeMapping) {
+			//printf("%s\n", keyValue.first.c_str());
+		//}
 	}
 
-	m_pModels[0]->Update();
-	m_bullet.Update(g_Engine->GetFrameTime());
+	m_pChar1->Update();
+	m_pChar2->Update();
+
+	m_physX.Update();
+
 	//m_pDynamicBone->Update();
 }
 
@@ -236,17 +253,16 @@ void Scene::Draw()
 Scene::Scene()
 	: m_pModel2(nullptr)
 	, m_pModel3(nullptr)
+	, m_pModel4(nullptr)
+	, m_pModel5(nullptr)
+	, m_pChar1(nullptr)
+	, m_pChar2(nullptr)
 	, m_pBGMHandle(nullptr)
-	, m_pDynamicBone(nullptr)
-	, m_bullet(XMFLOAT3(0.0f, -9.81f, 0.0f))
 {
 }
 
 Scene::~Scene()
 {
-	for (size_t i = 0; i < m_pModels.size(); i++) {
-		//delete m_pModels[i];
-	}
 	//m_pModels.clear();
 }
 
@@ -316,4 +332,6 @@ void Scene::UpdateCamera()
 	XMVECTOR newForward = XMVector3TransformNormal(defaultForward, rotationMatrix);
 
 	pCamera->m_targetPos = pCamera->m_eyePos + newForward;
+
+	printf("Camera -> %f, %f, %f\n", XMVectorGetX(pCamera->m_eyePos), XMVectorGetY(pCamera->m_eyePos), XMVectorGetZ(pCamera->m_eyePos));
 }

@@ -74,6 +74,11 @@ public:
 	//戻り値 : サウンド情報が入っているハンドル
 	SoundHandle* LoadSound(std::string filePath, bool bPlay = false);
 
+	//メモリからサウンドのハンドルを作成
+	//引数 : void* サウンドが存在するメモリ上の位置, size_t バイト数, bool .flac形式かどうか, bool すぐに再生するか
+	//戻り値 : サウンド情報が入っているハンドル
+	SoundHandle* LoadSound(void* mem, size_t size, bool bFlacFormat, bool bPlay = false);
+
 	//再生中のサウンドをすべて更新
 	void Update();
 
@@ -83,4 +88,6 @@ private:
 
 	//再生終了時のコールバック関数
 	static void CALLBACK PlaybackEndCallback(HSYNC handle, DWORD channel, DWORD data, void* user);
+
+	SoundHandle* LoadSoundFromHandle(int handleID, bool bPlay);
 };

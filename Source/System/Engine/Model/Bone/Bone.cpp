@@ -12,7 +12,6 @@ Bone::Bone(std::string boneName, XMMATRIX offset, UINT boneIndex)
 	, m_boneWorldMatrix(XMMatrixIdentity())
 	, m_boneOffset(offset)
 	, m_bType(BONETYPE_DEFAULT)
-	, m_pRigidBody(nullptr)
 	, m_parentBoneIndex(UINT_MAX)
 	, m_boneIndex(boneIndex)
 {

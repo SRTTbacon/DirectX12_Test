@@ -144,6 +144,8 @@ void Animation::Load(std::string animFilePath)
 			frame.shapeAnimations.push_back(lerp);
 		}
 	}
+
+	m_animFilePath = animFilePath;
 }
 
 //指定したアニメーション時間のフレームを取得

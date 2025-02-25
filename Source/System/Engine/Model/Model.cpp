@@ -222,6 +222,10 @@ void Model::RenderShadowMap(UINT backBufferIndex)
     //メッシュの深度情報をシャドウマップに描画
     for (size_t i = 0; i < m_meshes.size(); i++)
     {
+        if (!m_meshes[i]->bDraw) {
+            continue;
+        }
+
         Mesh* pMesh = m_meshes[i];
 
         if (pMesh->contentsBuffer) {

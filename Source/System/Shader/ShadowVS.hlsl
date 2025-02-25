@@ -71,7 +71,7 @@ VSOutput main(VSInput input)
     float4 localPos = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
     //ボーンを適応(存在すれば)
-    if (input.boneWeights.x == localPos.x && input.boneWeights.y == localPos.y && input.boneWeights.z == localPos.z && input.boneWeights.w == localPos.w)
+    if (input.boneWeights.x == 0.0f && input.boneWeights.y == 0.0f && input.boneWeights.z == 0.0f && input.boneWeights.w == 0.0f)
     {
         localPos = float4(shapePos, 1.0f); //頂点座標
     }
@@ -83,7 +83,6 @@ VSOutput main(VSInput input)
 
         localPos = mul(float4(shapePos, 1.0f), skinMatrix); //頂点座標
     }
-    
     float4 worldPos = mul(modelMatrix, localPos);       //ワールド座標に変換
     output.position = mul(lightViewProjMatrix, worldPos);
     return output;

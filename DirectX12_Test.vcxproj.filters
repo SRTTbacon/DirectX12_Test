@@ -74,8 +74,8 @@
     <Filter Include="Source\System\Engine\Core\Hash">
       <UniqueIdentifier>{d459cdf5-27dd-4b7a-bab1-f81238ee5ea4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\System\Engine\Model\BulletPhysics">
-      <UniqueIdentifier>{72a7cffc-f083-4d32-b3ae-90785a982cfd}</UniqueIdentifier>
+    <Filter Include="Source\System\Engine\Physics">
+      <UniqueIdentifier>{d181dc77-72cd-48db-ac3b-9afd34df8f8b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -157,11 +157,8 @@
     <ClCompile Include="Source\System\Engine\Core\Hash\xxhash.cpp">
       <Filter>Source\System\Engine\Core\Hash</Filter>
     </ClCompile>
-    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\BulletPhysics.cpp">
-      <Filter>Source\System\Engine\Model\BulletPhysics</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\System\Engine\Model\BulletPhysics\DynamicBone.cpp">
-      <Filter>Source\System\Engine\Model\BulletPhysics</Filter>
+    <ClCompile Include="Source\System\Engine\Physics\PhysXManager.cpp">
+      <Filter>Source\System\Engine\Physics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -249,11 +246,11 @@
     <ClInclude Include="Source\System\Engine\Core\Hash\xxhash.h">
       <Filter>Source\System\Engine\Core\Hash</Filter>
     </ClInclude>
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\BulletPhysics.h">
-      <Filter>Source\System\Engine\Model\BulletPhysics</Filter>
+    <ClInclude Include="Source\System\Engine\Physics\PhysXManager.h">
+      <Filter>Source\System\Engine\Physics</Filter>
     </ClInclude>
-    <ClInclude Include="Source\System\Engine\Model\BulletPhysics\DynamicBone.h">
-      <Filter>Source\System\Engine\Model\BulletPhysics</Filter>
+    <ClInclude Include="Source\System\Engine\Core\XMFLOATHelper.h">
+      <Filter>Source\System\Engine\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -270,6 +267,12 @@
       <Filter>リソース ファイル</Filter>
     </FxCompile>
     <FxCompile Include="Source\System\Shader\ShadowVS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\ShadowPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\ToonPS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
   </ItemGroup>

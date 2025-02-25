@@ -84,11 +84,11 @@ UINT Character::AddAnimation(Animation animation)
 
 void Character::Update()
 {
-    //ボーンのマトリックスを更新
-    m_boneManager.UpdateBoneMatrix();
-
     //アニメーションの更新
     UpdateAnimation();
+
+    //ボーンのマトリックスを更新
+    m_boneManager.UpdateBoneMatrix();
 
     //シェイプキーのウェイトを更新
     UpdateShapeKeys();
@@ -106,6 +106,28 @@ void Character::LateUpdate(UINT backBufferIndex)
     }
 
     Model::LateUpdate(backBufferIndex);
+
+    //キャラクターはルートモーションを考慮
+    XMFLOAT3 armaturePos = m_boneManager.m_armatureBone.m_position;
+    armaturePos.x = -armaturePos.x;
+    XMFLOAT3 hipPos = m_boneManager.GetBone("Hips")->m_position;
+    hipPos.z = -hipPos.z;
+    XMMATRIX& m = m_boneManager.m_boneInfos[m_boneManager.GetBone("Hips")->GetBoneIndex()];
+    //XMFLOAT3 tempPos = armaturePos + m_position + m_boneManager.GetBone("Hips")->m_position;
+    //XMFLOAT3 tempPos = armaturePos + m_position + hipPos;
+    XMFLOAT3 tempPos = XMFLOAT3(m.r[3].m128_f32[0], m.r[3].m128_f32[1], m.r[3].m128_f32[2]) + m_position;
+    XMVECTOR objPos = XMLoadFloat3(&tempPos);
+    XMVECTOR camPos = m_pCamera->m_eyePos;
+
+    // カメラ位置からオブジェクト位置までのユークリッド距離をそのまま m_depth に設定
+    m_depth = XMVectorGetX(XMVector3Length(XMVectorSubtract(objPos, camPos)));
+
+    if (m_nowAnimationIndex != -1) {
+        printf("AnimFile = %s : %f, %f, %f, Length -> %f\n", m_animations[m_nowAnimationIndex].GetFilePath().c_str(), tempPos.x, tempPos.y, tempPos.z, m_depth);
+    }
+    else {
+        printf("%f, %f, %f, Length -> %f\n", tempPos.x, tempPos.y, tempPos.z, m_depth);
+    }
 }
 
 void Character::LoadFBX(const std::string& fbxFile)
@@ -553,8 +575,8 @@ void Character::CreateShapeDeltasTexture(HumanoidMesh& humanoidMesh)
     uploadBuffer.Reset();
 
     if (humanoidMesh.pMesh->meshName == "Body" && humanoidMesh.pMesh->shapeDeltasBuffer) {
-        printf("a = %llu, bufferSize = %llu, Real = %u\n", a, uploadBufferDesc.Width, width * height);
-        printf("width = %u, rowPitch = %u\n", width, static_cast<UINT>(rowPitch));
+        //printf("a = %llu, bufferSize = %llu, Real = %u\n", a, uploadBufferDesc.Width, width * height);
+        //printf("width = %u, rowPitch = %u\n", width, static_cast<UINT>(rowPitch));
 
         //VerifyShapeDeltasBuffer(humanoidMesh, m_pCommandList);
 
@@ -853,7 +875,7 @@ void Character::LoadHumanoidMesh(BinaryReader& br)
 
             humanoidMesh.shapeWeights.push_back(0.0f);
             humanoidMesh.shapeMapping[shapeName] = shapeIndex;
-            printf("ShapeName = %s\n", shapeName.c_str());
+            //printf("ShapeName = %s\n", shapeName.c_str());
 
             /*if (humanoidMesh.meshName == "Body all") {
                 printf("%u - %s\n", j, shapeName.c_str());
@@ -876,8 +898,8 @@ void Character::LoadHumanoidMesh(BinaryReader& br)
 
 bool Character::SetTexture(const Mesh* pMesh, const std::string nameOnly)
 {
-    std::string dir = "Resource\\Model\\Milltina\\";
-    //std::string dir = "Resource\\Model\\";
+    //std::string dir = "Resource\\Model\\Milltina\\";
+    std::string dir = "Resource\\Model\\";
 
     std::string texPath = dir + nameOnly;
     //std::string normalPath = dir + "Skin_Normal Map.png";

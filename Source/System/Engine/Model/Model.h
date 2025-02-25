@@ -72,28 +72,19 @@ public:
     XMFLOAT3 m_rotation;    //モデル全体の回転 (デグリー角)
     XMFLOAT3 m_scale;       //モデル全体のスケール
 
-    std::string m_modelFile;
-
     bool m_bVisible;        //描画するかどうか
 
 public: //ゲッター関数
     //深度
-    inline float GetZBuffer() const
-    {
-        return m_depth;
-    }
+    inline float GetZBuffer() const { return m_depth; }
 
     //半透明かどうか
-    inline bool GetIsTransparent() const
-    {
-        return m_bTransparent;
-    }
+    inline bool GetIsTransparent() const { return m_bTransparent; }
 
     //メッシュ内のテクスチャを参照
-    inline Texture2D* GetTexture(int index) const
-    {
-        return m_textures[index];
-    }
+    inline Texture2D* GetTexture(int index) const { return m_textures[index]; }
+
+    inline std::string GetModelFilePath() const { return m_modelFile; }
 
 protected:
     //シェーダーに渡す頂点情報 (プリミティブ用)
@@ -143,6 +134,9 @@ protected:
     XMMATRIX m_modelMatrix;         //位置、回転、スケールをMatrixで保持
 
     ModelType m_modelType;
+    std::string m_modelFile;
+
+    float m_depth;          //Zバッファ
 
     void CreateConstantBuffer();
 
@@ -155,7 +149,6 @@ private:
     void DrawMesh(const Mesh* pMesh) const;
 
 
-    float m_depth;          //Zバッファ
     bool m_bTransparent;    //半透明のオブジェクトかどうか
 };
 

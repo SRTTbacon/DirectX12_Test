@@ -1,10 +1,8 @@
 #pragma once
-#include <DirectXMath.h>
+#include "..\\..\\Core\\XMFLOATHelper.h"
 #include <unordered_map>
 #include <string>
 #include <Windows.h>
-
-#include <btBulletDynamicsCommon.h>
 
 #define _PARENT_BONE_NONE UINT_MAX
 
@@ -72,8 +70,6 @@ public:
     }
 
 public:
-    btRigidBody* m_pRigidBody;
-
     DirectX::XMFLOAT3 m_position;           //ボーンの位置
     DirectX::XMFLOAT4 m_rotation;           //ボーンの回転 (デグリー角)
     DirectX::XMFLOAT3 m_scale;              //ボーンのスケール

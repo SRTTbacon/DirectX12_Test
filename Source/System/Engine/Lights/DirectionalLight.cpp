@@ -10,7 +10,7 @@ DirectionalLight::DirectionalLight()
 	, m_lightPosition(0.0f, 0.0f, 0.0f)
 	, m_pDevice(nullptr)
 {
-	SetRotation(50.0f, -30.0f, 0.0f);
+	SetRotation(130.0f, 30.0f, 0.0f);
 }
 
 void DirectionalLight::Init(ID3D12Device* pDevice)
