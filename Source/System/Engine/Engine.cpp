@@ -36,7 +36,7 @@ bool Engine::Init(UINT windowWidth, UINT windowHeight)
 	m_FrameBufferWidth = windowWidth;
 	m_FrameBufferHeight = windowHeight;
 
-#ifdef _DEBUG
+#ifndef _DEBUG
 	//デバッグレイヤーの設定
 	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_pDebugController)))) {
 		m_pDebugController->SetEnableGPUBasedValidation(TRUE);
@@ -100,6 +100,7 @@ bool Engine::Init(UINT windowWidth, UINT windowHeight)
 	m_directionalLight.Init(m_pDevice.Get());
 
 	m_zShadow.Init(m_pDevice.Get(), m_pCommandList.Get());
+	m_materialManager.Initialize(m_pDevice.Get(), m_pCommandList.Get(), &m_directionalLight, m_zShadow.GetZBuffer());
 
 	//コマンドを初期化してためる準備をする
 	m_pAllocator->Reset();
@@ -113,14 +114,14 @@ bool Engine::Init(UINT windowWidth, UINT windowHeight)
 
 Character* Engine::AddCharacter(std::string modelFile)
 {
-	Character* pCharacter = new Character(modelFile, m_pDevice.Get(), m_pCommandList.Get(), &m_camera, &m_directionalLight, m_zShadow.GetZBuffer());
+	Character* pCharacter = new Character(modelFile, m_pDevice.Get(), m_pCommandList.Get(), &m_camera, &m_directionalLight, &m_materialManager);
 	m_modelManager.AddModel(pCharacter);
 	return pCharacter;
 }
 
 Model* Engine::AddModel(std::string modelFile)
 {
-	Model* pModel = new Model(m_pDevice.Get(), m_pCommandList.Get(), &m_camera, &m_directionalLight, m_zShadow.GetZBuffer());
+	Model* pModel = new Model(m_pDevice.Get(), m_pCommandList.Get(), &m_camera, &m_directionalLight, &m_materialManager);
 	pModel->LoadModel(modelFile);
 	m_modelManager.AddModel(pModel);
 	return pModel;
@@ -395,6 +396,11 @@ void Engine::BeginRender()
 
 void Engine::ModelRender()
 {
+#if _DEBUG
+	//PIXBeginEvent(m_pCommandList.Get(), PIX_COLOR(255, 0, 0), "Render Frame");
+#endif
+	m_materialManager.SetHeap();
+
 	//モデルの影の描画
 	m_zShadow.BeginMapping();
 	m_modelManager.RenderShadowMap(m_CurrentBackBufferIndex);
@@ -411,7 +417,7 @@ void Engine::ModelRender()
 	m_pCommandList->ResourceBarrier(1, &barrier);
 	
 	//モデルを描画
-	m_modelManager.RenderModel(m_CurrentBackBufferIndex);
+	m_modelManager.RenderModel(m_pCommandList.Get(), m_CurrentBackBufferIndex);
 
 	//深度マップを変更
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
@@ -444,6 +450,10 @@ void Engine::WaitRender()
 
 		m_fenceValue[m_CurrentBackBufferIndex] = currentFanceValue + 1;
 	}
+
+#if _DEBUG
+	//PIXEndEvent(m_pCommandList.Get());
+#endif
 }
 
 void Engine::EndRender()
@@ -545,6 +555,11 @@ void Engine::ResetViewportAndScissor()
 	//レンダーターゲットをクリア
 	const float clearColor[] = { 0.25f, 0.25f, 0.25f, 1.0f };
 	m_pCommandList->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
+}
+
+void Engine::SetKeyResponseUnFocus(bool bCanResponse)
+{
+	m_keyInput.m_bCanResponseUnFocus = bCanResponse;
 }
 
 Animation Engine::GetAnimation(std::string animFilePath)

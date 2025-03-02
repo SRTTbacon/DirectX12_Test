@@ -35,8 +35,7 @@ public:
     //基本的にエンジンで実行
     //引数 : std::string FBXファイルのパス, Camera* カメラクラスのポインタ, ID3D12Device* デバイス, ID3D12GraphicsCommandList* コマンドリスト, Camera* カメラ, 
     //          DirectionalLight* ディレクショナルライト, ID3D12Resource* 影が書き込まれるバッファ
-    Character(const std::string modelFile, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, DirectionalLight* pDirectionalLight,
-        ID3D12Resource* pShadowMapBuffer);
+    Character(const std::string modelFile, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, const DirectionalLight* pDirectionalLight, MaterialManager* pMaterialManager);
     ~Character();
 
     //アニメーションを追加
@@ -179,7 +178,7 @@ private:
     void LoadHumanoidMesh(BinaryReader& br);
 
     //ファイルからテクスチャを作成
-    bool SetTexture(const Mesh* pMesh, const std::string nameOnly);
+    void SetTexture(Mesh* pMesh, const std::string nameOnly);
 
     //シェイプキーのウェイトを更新
     void UpdateShapeKeys();

@@ -21,22 +21,16 @@ bool Scene::Init()
 
 	//キャラクター
 	m_pChar1 = g_Engine->AddCharacter(modelFile1);
-	//m_pChar1->AddAnimation(g_Engine->GetAnimation("Resource\\Roki1.hcs"));
+	m_pChar1->AddAnimation(g_Engine->GetAnimation("Resource\\Fan1.hcs"));
 	m_pChar1->m_animationSpeed = animSpeed;
-	m_pChar1->SetTransparent(true);
-	m_pChar1->m_scale.x = -1.0f;
-	m_pChar1->m_scale.y = -1.0f;
 	m_pChar1->m_rotation.x = -90.0f;
 	m_pChar1->m_rotation.y = 180.0f;
 
 	m_pChar2 = g_Engine->AddCharacter(modelFile1);
-	m_pChar2->AddAnimation(g_Engine->GetAnimation("Resource\\Roki2.hcs"));
+	m_pChar2->AddAnimation(g_Engine->GetAnimation("Resource\\Fan2.hcs"));
 	m_pChar2->m_animationSpeed = animSpeed;
-	m_pChar2->m_scale.x = -1.0f;
-	m_pChar2->m_scale.y = -1.0f;
 	m_pChar2->m_rotation.x = -90.0f;
 	m_pChar2->m_rotation.y = 180.0f;
-	m_pChar2->SetTransparent(true);
 
 	/*std::vector meshNames = {"Body", "Milltina_body", "Milltina_hair_base", "Milltina_hair_front", "Milltina_hair_front_side", "Milltina_hair_side", "Milltina_hair_twintail",
 	"Milltina_cloth_dress", "Milltina_cloth_skirt", "Milltina_cloth_neck_ribbon", "Milltina_cloth_hat", "Milltina_cloth_hat", "Milltina_cloth_hair_ribbon", "Milltina_cloth_garterbelt",
@@ -87,8 +81,8 @@ bool Scene::Init()
 	m_pModel4->m_position.y = 1.0f;
 	m_pModel4->m_scale = XMFLOAT3(0.25f, 0.25f, 0.25f);
 
-	m_pBGMHandle = g_Engine->GetSoundSystem()->LoadSound("Resource\\BGM\\Roki.mp3", true);
-	m_pBGMHandle->m_volume = 0.4f;
+	m_pBGMHandle = g_Engine->GetSoundSystem()->LoadSound("Resource\\BGM\\いーあるふぁんくらぶ.mp3", true);
+	m_pBGMHandle->m_volume = 0.2f;
 	m_pBGMHandle->m_speed = animSpeed;
 	m_pBGMHandle->m_bLooping = true;
 	m_pBGMHandle->UpdateProperty();
@@ -189,23 +183,19 @@ void Scene::Update()
 	}
 
 	if (g_Engine->GetKeyState(DIK_UP)) {
-		//m_pChar1->m_boneManager.m_armatureBone.m_position.z -= 0.01f;
-		m_pChar1->m_boneManager.GetBone("Hips")->m_position.z -= 0.01f;
+		g_Engine->GetDirectionalLight()->m_lightPosition.z -= 0.1f;
 		//m_pModel4->m_position.z -= 0.01f;
 	}
 	if (g_Engine->GetKeyState(DIK_DOWN)) {
-		//m_pChar1->m_boneManager.m_armatureBone.m_position.z += 0.01f;
-		m_pChar1->m_boneManager.GetBone("Hips")->m_position.z += 0.01f;
+		g_Engine->GetDirectionalLight()->m_lightPosition.z += 0.1f;
 		//m_pModel4->m_position.z += 0.01f;
 	}
 	if (g_Engine->GetKeyState(DIK_LEFT)) {
-		//m_pChar1->m_boneManager.m_armatureBone.m_position.x -= 0.01f;
-		m_pChar1->m_boneManager.GetBone("Hips")->m_position.x -= 0.01f;
+		g_Engine->GetDirectionalLight()->m_lightPosition.x -= 0.1f;
 		//m_pModel4->m_position.x -= 0.01f;
 	}
 	if (g_Engine->GetKeyState(DIK_RIGHT)) {
-		//m_pChar1->m_boneManager.m_armatureBone.m_position.x += 0.01f;
-		m_pChar1->m_boneManager.GetBone("Hips")->m_position.x += 0.01f;
+		g_Engine->GetDirectionalLight()->m_lightPosition.x += 0.1f;
 		//m_pModel4->m_position.x += 0.01f;
 	}
 	//printf("Char1 -> %f, %f, %f\n", m_pChar1->m_boneManager.m_armatureBone.m_position.x, m_pChar1->m_boneManager.m_armatureBone.m_position.y, m_pChar1->m_boneManager.m_armatureBone.m_position.z);
@@ -332,6 +322,4 @@ void Scene::UpdateCamera()
 	XMVECTOR newForward = XMVector3TransformNormal(defaultForward, rotationMatrix);
 
 	pCamera->m_targetPos = pCamera->m_eyePos + newForward;
-
-	printf("Camera -> %f, %f, %f\n", XMVectorGetX(pCamera->m_eyePos), XMVectorGetY(pCamera->m_eyePos), XMVectorGetZ(pCamera->m_eyePos));
 }

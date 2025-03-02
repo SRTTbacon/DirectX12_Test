@@ -1,4 +1,4 @@
-#define BIAS 0.0001f     //シャギー抑制のバイアス値
+#define BIAS 0.0005f     //シャギー抑制のバイアス値
 #define SHADOWSIZE 8192.0f
 
 SamplerState texSampler : register(s0);         //テクスチャ用サンプラー
@@ -39,14 +39,19 @@ float IsUVOutOfRange(float2 uv)
 float ShadowCalculation(float4 worldPos, float4 shadowPos)
 {
     float3 posFromLightVP = shadowPos.xyz / shadowPos.w;
-    float2 shadowUV = (posFromLightVP.xy + float2(1.0f, -1.0f)) * float2(0.5f, -0.5f);
+    float2 shadowUV = (posFromLightVP.xy + float2(1, -1)) * float2(0.5, -0.5);
+    
+    if (shadowUV.x <= 0.0f || shadowUV.x >= 1.0f || shadowUV.y <= 0.0f || shadowUV.y >= 1.0f)
+    {
+        return 0.0f;
+    }
     
     //影の柔らかさを決定するための分割数(サンプリング数)
     int numSamples = 4; //サンプル数 (多いほど滑らかだが重い)
     float total = 0.0f;
     float2 texelSize = float2(1.0f / SHADOWSIZE, 1.0f / SHADOWSIZE);
     
-    // 距離に応じたバイアス
+    //距離に応じたバイアス
     //float dynamicBias = lerp(BIAS, 0.001f, saturate(length(worldPos - cameraEyePos) / 50.0f));
 
     //シャドウマップ上でのサンプリング
@@ -59,7 +64,6 @@ float ShadowCalculation(float4 worldPos, float4 shadowPos)
 
             //サンプリング位置のUV座標
             float2 shadowSampleUV = shadowUV + sampleOffset;
-            //shadowSampleUV = saturate(shadowSampleUV);
 
             //シャドウマップから深度をサンプリング
             float sampleDepth = shadowMap.SampleCmpLevelZero(shadowSampler, shadowSampleUV, posFromLightVP.z - BIAS);
@@ -72,7 +76,6 @@ float ShadowCalculation(float4 worldPos, float4 shadowPos)
     
     //平均を取る
     float shadowFactor = total / (numSamples * numSamples);
-    //shadowFactor = lerp(shadowFactor, 1.0f, IsUVOutOfRange(shadowUV));
 
     //シャドウの有無を決定(0.0fなら完全な影、1.0fなら影なし)
     return shadowFactor;
@@ -80,19 +83,21 @@ float ShadowCalculation(float4 worldPos, float4 shadowPos)
 
 float4 pixel(VSOutput input) : SV_TARGET
 {
+    //テクスチャ
+    float4 tex = _MainTex.Sample(texSampler, input.uv);
+
     //ライトの方向を逆に
     float lightIntensity = saturate(dot(input.normal, -lightDir.xyz));
-    //float lightIntensity = 0.1f;
 
     //シャドウの計算
     float shadowFactor = ShadowCalculation(input.svpos, input.shadowPos);
-    //float shadowFactor = 1.0f;
     
     float4 diffuse = diffuseColor * lightIntensity;
 
     //シャドウがかかっていれば光を減少させる (0.0f なら完全な影、1.0f なら影なし)
     float4 lighting = ambientColor + shadowFactor * diffuse;
-    //float4 lighting = shadowFactor * diffuse;
+    
+    lighting *= tex;
     
     lighting.a = 1.0f;
 

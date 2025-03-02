@@ -20,9 +20,8 @@ static XMVECTOR ExtractEulerAngles(const XMMATRIX& matrix) {
     return XMVectorSet(pitch, yaw, roll, 0.0f); //ラジアン角で出力
 }
 
-Character::Character(const std::string modelFile, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, DirectionalLight* pDirectionalLight,
-    ID3D12Resource* pShadowMapBuffer)
-    : Model(pDevice, pCommandList, pCamera, pDirectionalLight, pShadowMapBuffer)
+Character::Character(const std::string modelFile, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, const DirectionalLight* pDirectionalLight, MaterialManager* pMaterialManager)
+    : Model(pDevice, pCommandList, pCamera, pDirectionalLight, pMaterialManager)
     , m_animationSpeed(1.0f)
     , m_nowAnimationTime(0.0f)
     , m_nowAnimationIndex(-1)
@@ -52,11 +51,6 @@ Character::Character(const std::string modelFile, ID3D12Device* pDevice, ID3D12G
     }
 
     tempTime = timeGetTime();
-
-    //ルートシグネチャとパイプラインステートを初期化
-	m_pRootSignature = new RootSignature(m_pDevice, ShaderKinds::BoneShader);
-	m_pPipelineState = new PipelineState(m_pDevice, m_pRootSignature);
-    printf("PipelineState - %dms\n", timeGetTime() - tempTime);
 
     m_boneManager.UpdateBoneMatrix();
 
@@ -109,25 +103,23 @@ void Character::LateUpdate(UINT backBufferIndex)
 
     //キャラクターはルートモーションを考慮
     XMFLOAT3 armaturePos = m_boneManager.m_armatureBone.m_position;
-    armaturePos.x = -armaturePos.x;
-    XMFLOAT3 hipPos = m_boneManager.GetBone("Hips")->m_position;
-    hipPos.z = -hipPos.z;
-    XMMATRIX& m = m_boneManager.m_boneInfos[m_boneManager.GetBone("Hips")->GetBoneIndex()];
-    //XMFLOAT3 tempPos = armaturePos + m_position + m_boneManager.GetBone("Hips")->m_position;
+    armaturePos.x = armaturePos.x;
+    armaturePos.z = -armaturePos.z;
+    XMFLOAT3 hipPos = XMFLOAT3(0.0f, 0.0f, 0.0f);
+    if (m_boneManager.m_bones.size() > 0) {
+        //m_bonesの0番目は基本的にルートボーン
+        hipPos = m_boneManager.m_bones[0].m_position;
+        float temp = hipPos.x;
+        hipPos.x = -hipPos.z;
+        hipPos.z = -temp;
+    }
+    XMFLOAT3 tempPos = armaturePos + hipPos;
     //XMFLOAT3 tempPos = armaturePos + m_position + hipPos;
-    XMFLOAT3 tempPos = XMFLOAT3(m.r[3].m128_f32[0], m.r[3].m128_f32[1], m.r[3].m128_f32[2]) + m_position;
-    XMVECTOR objPos = XMLoadFloat3(&tempPos);
-    XMVECTOR camPos = m_pCamera->m_eyePos;
+    XMFLOAT3 camPos;
+    XMStoreFloat3(&camPos, m_pCamera->m_eyePos);
 
     // カメラ位置からオブジェクト位置までのユークリッド距離をそのまま m_depth に設定
-    m_depth = XMVectorGetX(XMVector3Length(XMVectorSubtract(objPos, camPos)));
-
-    if (m_nowAnimationIndex != -1) {
-        printf("AnimFile = %s : %f, %f, %f, Length -> %f\n", m_animations[m_nowAnimationIndex].GetFilePath().c_str(), tempPos.x, tempPos.y, tempPos.z, m_depth);
-    }
-    else {
-        printf("%f, %f, %f, Length -> %f\n", tempPos.x, tempPos.y, tempPos.z, m_depth);
-    }
+    m_depth = DistanceSq(tempPos, camPos);
 }
 
 void Character::LoadFBX(const std::string& fbxFile)
@@ -157,10 +149,10 @@ void Character::LoadFBX(const std::string& fbxFile)
     }
 
     //マテリアルの読み込み
-    m_pDescriptorHeap = new DescriptorHeap(m_pDevice, scene->mNumMeshes, CHARACTER_DISCRIPTOR_HEAP_SIZE, ShadowSizeHigh);
-
     for (size_t i = 0; i < scene->mNumMeshes; i++)
     {
+        m_meshes[i]->pModel = this;
+
         aiMesh* mesh = scene->mMeshes[i];
         //メッシュのマテリアルを取得する
         if (mesh->mMaterialIndex >= 0) {
@@ -173,9 +165,7 @@ void Character::LoadFBX(const std::string& fbxFile)
         }
         else {
             //テクスチャが存在しない場合は白単色テクスチャを使用
-            Texture2D* pTexture = Texture2D::GetColor(1.0f, 1.0f, 1.0f);
-            m_pDescriptorHeap->SetMainTexture(pTexture->Resource(), pTexture->Resource(), m_pShadowMapBuffer, m_meshes[i]->shapeDeltasBuffer.Get());
-            m_textures.push_back(pTexture);
+            m_meshes[i]->pMaterial = m_pMaterialManager->AddMaterialWithShapeData("BoneWhite", m_meshes[i]->shapeDataIndex);
         }
     }
 }
@@ -240,10 +230,10 @@ void Character::LoadHCS(const std::string& hcsFile)
     startTime = endTime;
 
     //マテリアルの読み込み
-    m_pDescriptorHeap = new DescriptorHeap(m_pDevice, meshCount, CHARACTER_DISCRIPTOR_HEAP_SIZE, ShadowSizeHigh);
-
     for (UINT i = 0; i < meshCount; i++) {
         bool bExistTexture = br.ReadBoolean();
+
+        m_meshes[i]->pModel = this;
 
         //メッシュのマテリアルを取得する
         if (bExistTexture) {
@@ -254,10 +244,8 @@ void Character::LoadHCS(const std::string& hcsFile)
             SetTexture(m_meshes[i], nameOnly);
         }
         else {
-			//テクスチャが存在しない場合は白単色テクスチャを使用
-            Texture2D* pTexture = Texture2D::GetColor(1.0f, 1.0f, 1.0f);
-            m_pDescriptorHeap->SetMainTexture(pTexture->Resource(), pTexture->Resource(), m_pShadowMapBuffer, m_meshes[i]->shapeDeltasBuffer.Get());
-			m_textures.push_back(pTexture);
+            //テクスチャが存在しない場合は白単色テクスチャを使用
+            m_meshes[i]->pMaterial = m_pMaterialManager->AddMaterialWithShapeData("BoneWhite", m_meshes[i]->shapeDataIndex);
         }
     }
 
@@ -896,7 +884,7 @@ void Character::LoadHumanoidMesh(BinaryReader& br)
     }
 }
 
-bool Character::SetTexture(const Mesh* pMesh, const std::string nameOnly)
+void Character::SetTexture(Mesh* pMesh, const std::string nameOnly)
 {
     //std::string dir = "Resource\\Model\\Milltina\\";
     std::string dir = "Resource\\Model\\";
@@ -904,15 +892,12 @@ bool Character::SetTexture(const Mesh* pMesh, const std::string nameOnly)
     std::string texPath = dir + nameOnly;
     //std::string normalPath = dir + "Skin_Normal Map.png";
 
-    //テクスチャを作成
-    Texture2D* mainTex = Texture2D::Get(texPath);
-    //Texture2D* normalMap = Texture2D::Get(normalPath);
-    //printf("nameOnly = %s\n", nameOnly.c_str());
     //マテリアルを作成
-    m_pDescriptorHeap->SetMainTexture(mainTex->Resource(), nullptr, m_pShadowMapBuffer, pMesh->shapeDeltasBuffer.Get());
-    m_textures.push_back(mainTex);
-    //m_textures.push_back(normalMap);
-    return mainTex->IsSimpleTex();
+    bool bExist;
+    pMesh->pMaterial = m_pMaterialManager->AddMaterialWithShapeData(texPath, bExist, pMesh->shapeDataIndex);
+    if (!bExist) {
+        pMesh->pMaterial->SetMainTexture(texPath);
+    }
 }
 
 //ボーンの位置を更新

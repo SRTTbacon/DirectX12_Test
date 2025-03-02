@@ -40,6 +40,8 @@
     <ClCompile Include="Source\System\Engine\Model\Bone\Bone.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Character.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Convert\ConvertFromFBX.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\Material\Material.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\Material\MaterialManager.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Model.cpp" />
     <ClCompile Include="Source\System\Engine\Model\ModelManager.cpp" />
     <ClCompile Include="Source\System\Engine\Physics\PhysXManager.cpp" />
@@ -72,6 +74,8 @@
     <ClInclude Include="Source\System\Engine\Model\Bone\Bone.h" />
     <ClInclude Include="Source\System\Engine\Model\Character.h" />
     <ClInclude Include="Source\System\Engine\Model\Convert\ConvertFromFBX.h" />
+    <ClInclude Include="Source\System\Engine\Model\Material\Material.h" />
+    <ClInclude Include="Source\System\Engine\Model\Material\MaterialManager.h" />
     <ClInclude Include="Source\System\Engine\Model\Model.h" />
     <ClInclude Include="Source\System\Engine\Model\ModelManager.h" />
     <ClInclude Include="Source\System\Engine\Physics\PhysXManager.h" />
@@ -146,6 +150,7 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
     <None Include="Source\System\Shader\RayTracingHelper.hlsli" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -235,16 +240,16 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>Library\PhysX\Include;Library\Zstandard\Include;Library\Bass\Include;Library\DirectXTex\Include;Library\assimp\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Library\WinPixEventRuntime\Include;Library\PhysX\Include;Library\Zstandard\Include;Library\Bass\Include;Library\DirectXTex\Include;Library\assimp\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Library\Zstandard\lib\$(Configuration);Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\PhysX\$(Configuration);Library\assimp\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Library\WinPixEventRuntime\lib;Library\Zstandard\lib\$(Configuration);Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\PhysX\$(Configuration);Library\assimp\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <DelayLoadDLLs>assimp-vc143-mtd.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll;PhysX_64.dll;PhysXCommon_64.dll;PhysXFoundation_64.dll</DelayLoadDLLs>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;winmm.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;libzstd_static.lib;PhysX_64.lib;PhysXCommon_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;winmm.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;libzstd_static.lib;PhysX_64.lib;PhysXCommon_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;WinPixEventRuntime.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -268,5 +273,13 @@
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets" Condition="Exists('packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>このプロジェクトは、このコンピューター上にない NuGet パッケージを参照しています。それらのパッケージをダウンロードするには、[NuGet パッケージの復元] を使用します。詳細については、http://go.microsoft.com/fwlink/?LinkID=322105 を参照してください。見つからないファイルは {0} です。</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets'))" />
+  </Target>
 </Project>

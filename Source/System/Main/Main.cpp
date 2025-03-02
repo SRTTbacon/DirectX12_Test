@@ -76,12 +76,6 @@ static void InitWindow(const TCHAR* appName)
 
 	//ウィンドウにフォーカスする
 	SetFocus(g_hWnd);
-
-	//dllの参照場所を指定
-	if (!SetDllDirectory(TEXT("Resource\\dll"))) {
-		printf("dllディレクトリの指定に失敗しました。");
-		return;
-	}
 }
 
 static void MainLoop()
@@ -151,6 +145,13 @@ static void MainLoop()
 
 void StartApp(const TCHAR* appName)
 {
+	//dllの参照場所を指定
+	if (!SetDllDirectory(TEXT("Resource\\dll"))) {
+		printf("dllディレクトリの指定に失敗しました。");
+		return;
+	}
+	//LoadLibrary(L"WinPixGpuCapturer.dll");
+
 	//ウィンドウ生成
 	InitWindow(appName);
 

@@ -3,23 +3,20 @@
 #include <stdexcept>
 #include "..\\..\\Main\\Main.h"
 
-Model::Model(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, DirectionalLight* pDirectionalLight, ID3D12Resource* pShadowMapBuffer)
+Model::Model(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, const DirectionalLight* pDirectionalLight, MaterialManager* pMaterialManager)
     : m_modelMatrix(XMMatrixIdentity())
     , m_modelType(ModelType_Primitive)
     , m_pCamera(pCamera)
+    , m_pDirectionalLight(pDirectionalLight)
     , m_pDevice(pDevice)
     , m_pCommandList(pCommandList)
-    , m_pDirectionalLight(pDirectionalLight)
-    , m_pShadowMapBuffer(pShadowMapBuffer)
-    , m_pPipelineState(nullptr)
-    , m_pRootSignature(nullptr)
-    , m_pDescriptorHeap(nullptr)
+    , m_pMaterialManager(pMaterialManager)
     , m_position(XMFLOAT3(0.0f, 0.0f, 0.0f))
     , m_rotation(XMFLOAT3(0.0f, 0.0f, 0.0f))
     , m_scale(XMFLOAT3(1.0f, 1.0f, 1.0f))
     , m_depth(0.0f)
     , m_bVisible(true)
-    , m_bTransparent(false)
+    , m_bShadowRendered(false)
 {
 }
 
@@ -87,13 +84,7 @@ void Model::LoadModel(const std::string fbxFile)
         return;
     }
 
-    //ディスクリプタヒープを作成 (メッシュの数 + 影1つ)
-    m_pDescriptorHeap = new DescriptorHeap(m_pDevice, scene->mNumMeshes, MODEL_DISCRIPTOR_HEAP_SIZE, ShadowSizeHigh);
-
     ProcessNode(scene, scene->mRootNode);
-
-    m_pRootSignature = new RootSignature(m_pDevice, ShaderKinds::PrimitiveShader);
-    m_pPipelineState = new PipelineState(m_pDevice, m_pRootSignature);
 }
 
 void Model::ProcessNode(const aiScene* pScene, aiNode* pNode) {
@@ -149,25 +140,10 @@ Mesh* Model::ProcessMesh(const aiScene* scene, aiMesh* mesh) {
     CreateBuffer(meshData, vertices, indices, sizeof(VertexPrimitive));
 
     //テクスチャが存在しない場合は白単色テクスチャを使用
-    Texture2D* pTexture = Texture2D::GetColor(1.0f, 1.0f, 1.0f);
-    m_pDescriptorHeap->SetMainTexture(pTexture->Resource(), pTexture->Resource(), m_pShadowMapBuffer, nullptr);
-    m_textures.push_back(pTexture);
+    meshData->pMaterial = m_pMaterialManager->AddMaterial("PrimitiveWhite");
+    meshData->pModel = this;
 
     return meshData;
-}
-
-void Model::DrawMesh(const Mesh* pMesh) const
-{
-	//描画フラグが立っていない場合は描画しない
-    if (!pMesh->bDraw) {
-        return;
-    }
-
-    m_pCommandList->IASetVertexBuffers(0, 1, &pMesh->vertexBufferView);           //頂点情報を送信
-    m_pCommandList->IASetIndexBuffer(&pMesh->indexBufferView);                    //インデックス情報を送信
-    m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);  //3角ポリゴンのみ
-
-    m_pCommandList->DrawIndexedInstanced(pMesh->indexCount, 1, 0, 0, 0);  //描画
 }
 
 void Model::CreateConstantBuffer()
@@ -203,21 +179,17 @@ void Model::CreateConstantBuffer()
 
 void Model::RenderShadowMap(UINT backBufferIndex)
 {
-    if (!m_bVisible) {
+    if (!m_bVisible || m_bShadowRendered) {
         return;
     }
+
+    m_bShadowRendered = true;
 
     m_pCommandList->SetGraphicsRootConstantBufferView(0, m_modelConstantBuffer[backBufferIndex]->GetGPUVirtualAddress());
 
     if (m_boneMatricesBuffer) {
         m_pCommandList->SetGraphicsRootConstantBufferView(1, m_boneMatricesBuffer->GetGPUVirtualAddress());   //ボーンを送信
     }
-    else {
-        //m_pCommandList->SetGraphicsRootConstantBufferView(1, m_shadowBoneMatricesBuffer->GetGPUVirtualAddress());   //ボーンを送信 (0で初期化済み)
-    }
-
-    ID3D12DescriptorHeap* heap = m_pDescriptorHeap->GetHeap();
-    m_pCommandList->SetDescriptorHeaps(1, &heap);
 
     //メッシュの深度情報をシャドウマップに描画
     for (size_t i = 0; i < m_meshes.size(); i++)
@@ -227,75 +199,8 @@ void Model::RenderShadowMap(UINT backBufferIndex)
         }
 
         Mesh* pMesh = m_meshes[i];
-
-        if (pMesh->contentsBuffer) {
-            m_pCommandList->SetGraphicsRootConstantBufferView(2, pMesh->contentsBuffer->GetGPUVirtualAddress());      //頂点数を送信
-        }
-
-        if (pMesh->shapeDeltasBuffer) {
-            m_pCommandList->SetGraphicsRootDescriptorTable(3, m_pDescriptorHeap->GetGpuDescriptorHandle(static_cast<UINT>(i), 3));  //頂点シェーダーのシェイプキー
-        }
-
-        if (pMesh->shapeWeightsBuffer) {
-            m_pCommandList->SetGraphicsRootShaderResourceView(4, pMesh->shapeWeightsBuffer->GetGPUVirtualAddress());  //シェイプキーのウェイト情報を送信
-        }
-
-        DrawMesh(pMesh); //深度のみを描画
+        pMesh->DrawMesh(m_pCommandList, backBufferIndex, true); //深度のみを描画
     }
-}
-
-void Model::RenderSceneWithShadow(UINT backBufferIndex)
-{
-    if (!m_bVisible) {
-        return;
-    }
-
-    //コマンドリストに送信
-    m_pCommandList->SetGraphicsRootSignature(m_pRootSignature->GetRootSignature());   //ルートシグネチャを設定
-    m_pCommandList->SetPipelineState(m_pPipelineState->GetPipelineState());           //パイプラインステートを設定
-
-    m_pCommandList->SetGraphicsRootConstantBufferView(0, m_modelConstantBuffer[backBufferIndex]->GetGPUVirtualAddress()); //モデルの位置関係を送信
-    m_pCommandList->SetGraphicsRootConstantBufferView(1, m_pDirectionalLight->GetLightConstantBuffer()->GetGPUVirtualAddress()); //ディレクショナルライトの情報を送信
-
-    if (m_boneMatricesBuffer) {
-        m_pCommandList->SetGraphicsRootConstantBufferView(4, m_boneMatricesBuffer->GetGPUVirtualAddress());   //ボーンを送信
-    }
-
-    //ディスクリプタヒープを設定し、シャドウマップをサンプリングできるようにする
-    ID3D12DescriptorHeap* heap = m_pDescriptorHeap->GetHeap();
-    m_pCommandList->SetDescriptorHeaps(1, &heap);
-
-    //カメラ視点からシーンを描画 (シャドウを計算し、カラー出力)
-    for (size_t i = 0; i < m_meshes.size(); i++)
-    {
-        if (!m_meshes[i]->bDraw) {
-            continue;
-        }
-
-        Mesh* pMesh = m_meshes[i];
-
-        m_pCommandList->SetGraphicsRootDescriptorTable(2, m_pDescriptorHeap->GetGpuDescriptorHandle(static_cast<UINT>(i)));     //ピクセルシェーダのテクスチャ
-        if (m_modelType == ModelType_Character) {
-            if (pMesh->shapeDeltasBuffer) {
-                m_pCommandList->SetGraphicsRootDescriptorTable(3, m_pDescriptorHeap->GetGpuDescriptorHandle(static_cast<UINT>(i), 3));  //頂点シェーダーのシェイプキー
-            }
-
-            if (pMesh->contentsBuffer) {
-                m_pCommandList->SetGraphicsRootConstantBufferView(5, pMesh->contentsBuffer->GetGPUVirtualAddress());      //頂点数を送信
-            }
-
-            if (pMesh->shapeWeightsBuffer) {
-                m_pCommandList->SetGraphicsRootShaderResourceView(6, pMesh->shapeWeightsBuffer->GetGPUVirtualAddress());  //シェイプキーのウェイト情報を送信
-            }
-        }
-
-        DrawMesh(m_meshes[i]); //カラーとシャドウを計算し描画
-    }
-}
-
-void Model::SetTransparent(bool bTransparent)
-{
-    m_bTransparent = bTransparent;
 }
 
 void Model::LateUpdate(UINT backBufferIndex)
@@ -303,6 +208,8 @@ void Model::LateUpdate(UINT backBufferIndex)
     if (!m_bVisible) {
         return;
     }
+
+    m_bShadowRendered = false;
 
     //位置、回転、スケールを決定
     ModelConstantBuffer mcb{};
@@ -352,12 +259,60 @@ void Model::LateUpdate(UINT backBufferIndex)
 Mesh::Mesh()
     : indexBufferView(D3D12_INDEX_BUFFER_VIEW())
     , vertexBufferView(D3D12_VERTEX_BUFFER_VIEW())
+    , pMaterial(nullptr)
+    , pModel(nullptr)
     , vertexCount(0)
     , indexCount(0)
+    , shapeDataIndex(0)
     , bDraw(true)
 {
 }
 
 Mesh::~Mesh()
 {
+}
+
+void Mesh::DrawMesh(ID3D12GraphicsCommandList* pCommandList, UINT backBufferIndex, bool bShadowMode) const
+{
+    //描画フラグが立っていない場合は描画しない
+    if (!bDraw) {
+        return;
+    }
+
+    pCommandList->SetGraphicsRootConstantBufferView(0, pModel->GetConstantBuffer(backBufferIndex)->GetGPUVirtualAddress()); //モデルの位置関係を送信
+
+    if (bShadowMode) {
+        if (contentsBuffer) {
+            pCommandList->SetGraphicsRootConstantBufferView(2, contentsBuffer->GetGPUVirtualAddress());      //頂点数を送信
+        }
+
+        if (shapeDeltasBuffer) {
+            pCommandList->SetGraphicsRootDescriptorTable(3, pMaterial->GetShapeData(shapeDataIndex));        //頂点シェーダーのシェイプキー
+        }
+
+        if (shapeWeightsBuffer) {
+            pCommandList->SetGraphicsRootShaderResourceView(4, shapeWeightsBuffer->GetGPUVirtualAddress());  //シェイプキーのウェイト情報を送信
+        }
+    }
+    else {
+        if (pModel->GetBoneBuffer()) {
+            pCommandList->SetGraphicsRootConstantBufferView(5, pModel->GetBoneBuffer()->GetGPUVirtualAddress());   //ボーンを送信
+        }
+
+        if (pModel->GetModelType() == ModelType_Character) {   //ボーンが存在するシェーダーのみ
+            if (contentsBuffer) {
+                pCommandList->SetGraphicsRootConstantBufferView(6, contentsBuffer->GetGPUVirtualAddress());      //頂点数を送信
+            }
+
+            if (shapeWeightsBuffer) {
+                pCommandList->SetGraphicsRootShaderResourceView(7, shapeWeightsBuffer->GetGPUVirtualAddress());  //シェイプキーのウェイト情報を送信
+            }
+        }
+    }
+
+    pCommandList->IASetVertexBuffers(0, 1, &vertexBufferView);           //頂点情報を送信
+    pCommandList->IASetIndexBuffer(&indexBufferView);                    //インデックス情報を送信
+    pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);  //3角ポリゴンのみ
+
+    pCommandList->DrawIndexedInstanced(indexCount, 1, 0, 0, 0);  //描画
 }

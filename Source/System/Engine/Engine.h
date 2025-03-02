@@ -14,6 +14,8 @@
 #include "Model\\ModelManager.h"
 #include "Model\\Character.h"
 
+#include <pix3.h>
+
 class Character;
 
 class Engine
@@ -41,6 +43,9 @@ public:
 	void LateUpdate();
 
 	void ResetViewportAndScissor();
+
+	//キー操作をフォーカスがない状態でも受け付けるかどうかを設定
+	void SetKeyResponseUnFocus(bool bCanResponse);
 
 	//ファイルからアニメーションをロード
 	//既にロード済み
@@ -156,6 +161,7 @@ private: //描画に使うオブジェクト
 	ComPtr<ID3D12Resource> m_pDepthStencilBuffer = nullptr;
 
 	ModelManager m_modelManager;
+	MaterialManager m_materialManager;
 	ZShadow m_zShadow;
 
 private: //描画ループで使用するもの

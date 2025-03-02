@@ -39,7 +39,7 @@ VSOutput vert(VSInput input)
     float4 projPos = mul(projectionMatrix, viewPos);    //投影変換
 
     output.svpos = projPos; //投影変換された座標
-    output.normal = normalize(mul(normalMatrix, float4(input.normal, 1.0f)).xyz);
+    output.normal = normalize(mul(normalMatrix, float4(input.normal, 0.0f)).xyz);
     output.uv = input.uv; //UV
     output.shadowPos = mul(lightViewProjMatrix, worldPos);
     return output; //ピクセルシェーダーに渡す

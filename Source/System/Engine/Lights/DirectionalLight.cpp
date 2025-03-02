@@ -5,12 +5,14 @@ using namespace DirectX;
 DirectionalLight::DirectionalLight()
 	: m_lightBuffer(LightBuffer())
 	, m_lightViewProj(XMMatrixIdentity())
-	, m_shadowDistance(100.0f)
-	, m_shadowScale(25.0f)
+	, m_shadowDistance(50.0f)
+	, m_shadowScale(75.0f)
 	, m_lightPosition(0.0f, 0.0f, 0.0f)
 	, m_pDevice(nullptr)
 {
-	SetRotation(130.0f, 30.0f, 0.0f);
+	SetRotation(50.0f, -30.0f, 0.0f);
+	m_lightPosition.x = m_shadowScale / 4.0f;
+	m_lightPosition.z = m_shadowScale / 4.0f;
 }
 
 void DirectionalLight::Init(ID3D12Device* pDevice)
@@ -32,16 +34,13 @@ void DirectionalLight::Update()
 {
 	DirectX::XMFLOAT3 storeVector = GetForward();
 	DirectX::XMVECTOR lightDirection = DirectX::XMLoadFloat3(&storeVector);
-	//DirectX::XMVECTOR sceneCenter = DirectX::XMVectorSet(m_lightPosition.x, m_lightPosition.y, m_lightPosition.z - m_shadowScale / 2.0f, 0.0f);
-	DirectX::XMVECTOR sceneCenter = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	DirectX::XMVECTOR sceneCenter = DirectX::XMVectorSet(m_lightPosition.x, m_lightPosition.y, m_lightPosition.z, 0.0f);
 
-	DirectX::XMVECTOR lightPosition = DirectX::XMVectorMultiplyAdd(lightDirection, XMVectorReplicate(-m_shadowDistance), sceneCenter);
-	//DirectX::XMVECTOR lightPosition = sceneCenter;
+	DirectX::XMVECTOR lightPosition = DirectX::XMVectorMultiplyAdd(lightDirection, XMVectorReplicate(-25.0f), sceneCenter);
 	DirectX::XMStoreFloat3(&storeVector, lightPosition);
 
 	XMStoreFloat4(&m_lightBuffer.lightDirection, lightDirection);
-
-	m_position = XMFLOAT3(storeVector.x, storeVector.y, storeVector.z);
+	m_position = storeVector;
 
 	m_lightBuffer.ambientColor = XMFLOAT4(0.05f, 0.1f, 0.5f, 1.0f);
 	m_lightBuffer.diffuseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -58,6 +57,7 @@ void DirectionalLight::Update()
 	if (FAILED(hr)) {
 		printf("バッファの更新に失敗しました。エラーコード:%d\n", hr);
 	}
+	//printf("%f, %f, %f\n", m_lightPosition.x, m_lightPosition.y, m_lightPosition.z);
 }
 
 ID3D12Resource* DirectionalLight::GetLightConstantBuffer() const

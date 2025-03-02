@@ -1,15 +1,11 @@
 #pragma once
 #include <unordered_map>
-#include "..\\Core\\RootSignature\\RootSignature.h"
-#include "..\\Core\\PipelineState\\PipelineState.h"
-#include "..\\Core\\DescriptorHeap\\DescriptorHeap2.h"
-#include "..\\Core\\Texture2D\\Texture2D.h"
 #include "..\\Camera\\Camera.h"
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include "Bone\\Bone.h"
-#include "..\\Lights\\DirectionalLight.h"
+#include "Material\MaterialManager.h"
 
 using namespace DirectX;
 
@@ -20,6 +16,8 @@ constexpr int MAX_BONE_COUNT = 512;
 constexpr const char* MODEL_HEADER = "HCSModel";
 //モデルファイルがキャラクターの場合は0
 constexpr BYTE MODEL_CHARACTER = 0;
+
+class Model;
 
 enum ModelType
 {
@@ -37,20 +35,25 @@ struct Mesh {
     ComPtr<ID3D12Resource> shapeDeltasBuffer;       //各頂点に対するシェイプキーの位置情報                   (ヒューマノイドモデルのみ設定)
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView;      //頂点バッファのデータ内容とサイズを保持
     D3D12_INDEX_BUFFER_VIEW indexBufferView;        //インデックスバッファのデータ内容とサイズを保持
+    Material* pMaterial;                            //マテリアル
+    Model* pModel;                                  //親であるモデルクラス
     std::string meshName;                           //メッシュ名
     UINT vertexCount;                               //頂点数
     UINT indexCount;                                //インデックス数 (GPU側で、この数ぶん描画させる)
+    UINT shapeDataIndex;                            //ディスクリプタヒープ上のシェイプキーのデータが存在する場所
 	bool bDraw;                                     //描画するかどうか
 
     Mesh();
     ~Mesh();
+
+    void DrawMesh(ID3D12GraphicsCommandList* pCommandList, UINT backBufferIndex, bool bShadowMode = false) const;
 };
 
 class Model
 {
 public:
     //モデルを初期化
-    Model(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, DirectionalLight* pDirectionalLight, ID3D12Resource* pShadowMapBuffer);
+    Model(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, const DirectionalLight* pDirectionalLight, MaterialManager* pMaterialManager);
     ~Model();
 
     void LoadModel(const std::string fbxFile);
@@ -60,13 +63,6 @@ public:
 
     //シャドウマップに描画 (エンジンから実行されるため、ユーザーが実行する必要はない)
     void RenderShadowMap(UINT backBufferIndex);
-    //実際に描画 (エンジンから実行されるため、ユーザーが実行する必要はない)
-    void RenderSceneWithShadow(UINT backBufferIndex);
-
-    //半透明オブジェクトかどうかを設定
-    void SetTransparent(bool bTransparent);
-
-    std::vector<Mesh*> m_meshes;    //メッシュの配列
 
     XMFLOAT3 m_position;    //モデル全体の位置
     XMFLOAT3 m_rotation;    //モデル全体の回転 (デグリー角)
@@ -75,15 +71,27 @@ public:
     bool m_bVisible;        //描画するかどうか
 
 public: //ゲッター関数
+    //メッシュ数
+    inline UINT GetMeshCount() const { return static_cast<UINT>(m_meshes.size()); }
+
+    //メッシュを取得
+    inline Mesh* GetMesh(UINT index) { return m_meshes[index]; }
+
+    //モデル情報が入っているバッファを取得
+    inline ID3D12Resource* GetConstantBuffer(UINT backBufferIndex) const { return m_modelConstantBuffer[backBufferIndex].Get(); }
+    //ボーンバッファを取得
+    inline ID3D12Resource* GetBoneBuffer() const { return m_boneMatricesBuffer.Get(); }
+
+    //モデルタイプを取得
+    inline ModelType GetModelType() const { return m_modelType; }
+
     //深度
     inline float GetZBuffer() const { return m_depth; }
 
-    //半透明かどうか
-    inline bool GetIsTransparent() const { return m_bTransparent; }
+    //既に影のレンダリングが終わっているか
+    inline bool GetIsShadowRendered() const { return m_bShadowRendered; }
 
-    //メッシュ内のテクスチャを参照
-    inline Texture2D* GetTexture(int index) const { return m_textures[index]; }
-
+    //モデルのファイル名
     inline std::string GetModelFilePath() const { return m_modelFile; }
 
 protected:
@@ -117,21 +125,18 @@ protected:
     };
 
     ID3D12Device* m_pDevice;                                            //エンジンのデバイス
-    ID3D12Resource* m_pShadowMapBuffer;                                 //影のテクスチャ(エンジンから貰う)
     ID3D12GraphicsCommandList* m_pCommandList;                          //エンジンのコマンドリスト
-    RootSignature* m_pRootSignature;                                    //ルートシグネチャ
-    PipelineState* m_pPipelineState;                                    //パイプラインステート
-    DescriptorHeap* m_pDescriptorHeap;                                  //マテリアル
     ComPtr<ID3D12Resource> m_modelConstantBuffer[FRAME_BUFFER_COUNT];   //コンスタントバッファ。画面のちらつきを防止するためトリプルバッファリング (2個でも十分なのかな?)
     ComPtr<ID3D12Resource> m_boneMatricesBuffer;                        //ボーン情報をシェーダーに送信する用
     ComPtr<ID3D12Resource> m_shadowBoneMatricesBuffer;                  //影用シェーダーにボーン情報を送信する用(ボーンがない場合は0で初期化)
 
-    std::vector<Texture2D*> m_textures;                      //テクスチャ情報
+    std::vector<Mesh*> m_meshes;    //メッシュの配列
 
-    const Camera* m_pCamera;        //カメラ情報
-    DirectionalLight* m_pDirectionalLight;    //ディレクショナルライト
+    const Camera* m_pCamera;                        //カメラ情報
+    const DirectionalLight* m_pDirectionalLight;    //ディレクショナルライト情報
+    MaterialManager* m_pMaterialManager;            //マテリアル作成&取得
 
-    XMMATRIX m_modelMatrix;         //位置、回転、スケールをMatrixで保持
+    XMMATRIX m_modelMatrix;                 //位置、回転、スケールをMatrixで保持
 
     ModelType m_modelType;
     std::string m_modelFile;
@@ -144,12 +149,10 @@ protected:
     void CreateBuffer(Mesh* pMesh, std::vector<VertexType>& vertices, std::vector<UINT>& indices, UINT vertexStructSize);
 
 private:
+    bool m_bShadowRendered;     //影のレンダリングが終わっているかどうか
+
     void ProcessNode(const aiScene* scene, aiNode* node);   //ノードを読み込み
     Mesh* ProcessMesh(const aiScene* scene, aiMesh* mesh);  //メッシュ情報を読み込み
-    void DrawMesh(const Mesh* pMesh) const;
-
-
-    bool m_bTransparent;    //半透明のオブジェクトかどうか
 };
 
 //必要なバッファを作成 (キャラクターと普通のモデル両方をに対応)

@@ -128,7 +128,6 @@ void BoneManager::UpdateBoneMatrix(UINT boneIndex)
     offsetBack.r[3].m128_f32[1] = offsetBack2.r[3].m128_f32[1];
     offsetBack.r[3].m128_f32[2] = offsetBack2.r[3].m128_f32[2];
 
-    //XMMATRIX boneTransform = scale * offsetBack * rot * bone.GetBoneOffset() * pos;
     XMMATRIX boneTransform = scale * XMMatrixInverse(nullptr, offsetBack) * rot * offsetBack * pos;
 
     //親のワールド変換とローカル変換を合成

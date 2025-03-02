@@ -1335,3 +1335,27 @@ _NODISCARD static inline auto LowerToXMFLOAT3(const DirectX::XMFLOAT4& vec)
 {
 	return DirectX::XMFLOAT3{ vec.x, vec.y, vec.z };
 }
+
+// ãóó£ÇãÅÇﬂÇÈ-------------------------------------------------------------------------------
+
+_NODISCARD static inline float Distance(const DirectX::XMFLOAT2& pos1, const DirectX::XMFLOAT2& pos2)
+{
+	return (::sqrtf(::powf(pos2.x - pos1.x, 2.f) + ::powf(pos2.y - pos1.y, 2.f)));
+}
+
+_NODISCARD static inline float Distance(const DirectX::XMFLOAT3& pos1, const DirectX::XMFLOAT3& pos2)
+{
+	return (::sqrtf(::powf(pos2.x - pos1.x, 2.f) + ::powf(pos2.y - pos1.y, 2.f) + ::powf(pos2.z - pos1.z, 2.f)));
+}
+
+// ãóó£ÇÃìÒèÊÇãÅÇﬂÇÈ-------------------------------------------------------------------------------
+
+_NODISCARD static inline float DistanceSq(const DirectX::XMFLOAT3& pos1, const DirectX::XMFLOAT3& pos2)
+{
+	return (::powf(pos2.x - pos1.x, 2.f) + ::powf(pos2.y - pos1.y, 2.f) + ::powf(pos2.z - pos1.z, 2.f));
+}
+
+_NODISCARD static inline float DistanceSq(const DirectX::XMFLOAT2& pos1, const DirectX::XMFLOAT2& pos2)
+{
+	return (::powf(pos2.x - pos1.x, 2.f) + ::powf(pos2.y - pos1.y, 2.f));
+}

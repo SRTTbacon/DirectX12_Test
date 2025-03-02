@@ -65,4 +65,7 @@ private:
 	std::unordered_map<std::string, std::vector<ShapeAnimation>> m_shapeAnimations;
 
 	std::string m_animFilePath;
+
+	//1フレーム前のアニメーションフレームのインデックス
+	UINT m_beforeFrameIndex;
 };

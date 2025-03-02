@@ -20,21 +20,20 @@ public:
 	void RenderShadowMap(UINT backBufferIndex, bool bRenderShadow = true);
 
 	//深度が大きい順に本体を描画
-	void RenderModel(UINT backBufferIndex);
+	void RenderModel(ID3D12GraphicsCommandList* pCommandList, UINT backBufferIndex);
 
 private:
 	//比較関数: 深度の大きい順に並べる
 	struct DepthComparator {
-		bool operator()(const std::pair<float, Model*>& a, const std::pair<float, Model*>& b) {
+		bool operator()(const std::pair<float, Mesh*>& a, const std::pair<float, Mesh*>& b) {
 			return a.first < b.first;  //深度が大きい順にソート
 		}
 	};
 
+	std::unordered_map<Material*, std::vector<Mesh*>> m_opaqueMaterials;
 	//深度順に並べる優先度付きキューを作成
-	std::priority_queue<std::pair<float, Model*>, std::vector<std::pair<float, Model*>>, DepthComparator> m_opaqueModels;
-	std::priority_queue<std::pair<float, Model*>, std::vector<std::pair<float, Model*>>, DepthComparator> m_transparentModels;
-	std::vector<Model*> m_sortedOpaqueModels;
-	std::vector<Model*> m_sortedTransparentModels;
+	std::priority_queue<std::pair<float, Mesh*>, std::vector<std::pair<float, Mesh*>>, DepthComparator> m_transparentModels;
+	std::vector<Mesh*> m_sortedTransparentModels;
 
 	std::vector<Model*> m_models;
 };

@@ -77,6 +77,9 @@
     <Filter Include="Source\System\Engine\Physics">
       <UniqueIdentifier>{d181dc77-72cd-48db-ac3b-9afd34df8f8b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\System\Engine\Model\Material">
+      <UniqueIdentifier>{12b2c8f1-c890-4ae1-aaa4-f67f26dd1e62}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\System\Main\Main.cpp">
@@ -159,6 +162,12 @@
     </ClCompile>
     <ClCompile Include="Source\System\Engine\Physics\PhysXManager.cpp">
       <Filter>Source\System\Engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Model\Material\Material.cpp">
+      <Filter>Source\System\Engine\Model\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Model\Material\MaterialManager.cpp">
+      <Filter>Source\System\Engine\Model\Material</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -250,7 +259,13 @@
       <Filter>Source\System\Engine\Physics</Filter>
     </ClInclude>
     <ClInclude Include="Source\System\Engine\Core\XMFLOATHelper.h">
-      <Filter>Source\System\Engine\Core</Filter>
+      <Filter>Source\System\Engine\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\Material\Material.h">
+      <Filter>Source\System\Engine\Model\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\Material\MaterialManager.h">
+      <Filter>Source\System\Engine\Model\Material</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -280,5 +295,6 @@
     <None Include="Source\System\Shader\RayTracingHelper.hlsli">
       <Filter>リソース ファイル\Raytracing</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

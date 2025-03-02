@@ -4,6 +4,7 @@ using namespace DirectX;
 
 Animation::Animation()
 	: m_pTempFrame(nullptr)
+	, m_beforeFrameIndex(0)
 {
 }
 
@@ -160,15 +161,21 @@ AnimationFrame* Animation::GetFrame(float nowAnimTime)
 	AnimationFrame* currentFrame = nullptr;
 	AnimationFrame* nextFrame = nullptr;
 
+	//前回のフレーム時間よりnowAnimTimeが小さければ0番目から再検索
+	if (m_frames[m_beforeFrameIndex].time > nowAnimTime) {
+		m_beforeFrameIndex = 0;
+	}
+
 	//nowAnimTimeの直前のフレームを取得
-	for (std::vector<AnimationFrame>::iterator it = m_frames.begin(); it != m_frames.end(); it++) {
-		if (it->time <= nowAnimTime) {
-			currentFrame = &(*it);
+	for (UINT i = m_beforeFrameIndex; i < static_cast<UINT>(m_frames.size()); i++) {
+		AnimationFrame& frame = m_frames[i];
+		if (frame.time <= nowAnimTime) {
+			currentFrame = &frame;
 
 			//次のフレームがあれば取得
-			std::vector<AnimationFrame>::iterator nextIt = std::next(it);
-			if (nextIt != m_frames.end()) {
-				nextFrame = &(*nextIt);
+			UINT nextIndex = i + 1;
+			if (nextIndex < static_cast<UINT>(m_frames.size())) {
+				nextFrame = &m_frames[nextIndex];
 			}
 			else {
 				nextFrame = nullptr;
@@ -176,6 +183,11 @@ AnimationFrame* Animation::GetFrame(float nowAnimTime)
 			}
 		}
 		else {
+			m_beforeFrameIndex = i - 1;
+			if (m_beforeFrameIndex < 0) {
+				m_beforeFrameIndex = 0;
+			}
+
 			break;
 		}
 	}

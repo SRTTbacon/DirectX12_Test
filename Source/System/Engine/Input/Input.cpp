@@ -7,8 +7,12 @@
 #define Release(X) { if((X) != nullptr) (X)->Release(); (X) = nullptr; }
 
 //コンストラクタ
-Input::Input(HWND win) :
-    m_hwnd(win), result(S_OK), input(nullptr), key(nullptr)
+Input::Input(HWND win)
+    : m_hwnd(win)
+    , result(S_OK)
+    , input(nullptr)
+    , key(nullptr)
+    , m_bCanResponseUnFocus(false)
 {
     memset(&keys, 0, sizeof(keys));
     memset(&olds, 0, sizeof(olds));
@@ -104,6 +108,11 @@ bool Input::CreateMouseState()
 //キー入力
 bool Input::CheckKey(UINT index)
 {
+    //ウィンドウにフォーカスがない場合はキー操作を受け付けない
+    if (!m_bCanResponseUnFocus && GetForegroundWindow() != m_hwnd) {
+        return false;
+    }
+
     //チェックフラグ
     bool flag = false;
     //キー情報を取得
@@ -120,6 +129,11 @@ bool Input::CheckKey(UINT index)
 //トリガーの入力
 bool Input::TriggerKey(UINT index)
 {
+    //ウィンドウにフォーカスがない場合はキー操作を受け付けない
+    if (!m_bCanResponseUnFocus && GetForegroundWindow() != m_hwnd) {
+        return false;
+    }
+
     //チェックフラグ
     bool flag = false;
 

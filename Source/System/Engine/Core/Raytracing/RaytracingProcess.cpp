@@ -79,7 +79,9 @@ HRESULT RaytracingProcess::CreateBLAS(Model* pModel)
 {
     //ジオメトリ記述子を作成
     std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geometryDescs;
-    for (const Mesh* pMesh : pModel->m_meshes) {
+    for (UINT i = 0; i < pModel->GetMeshCount(); i++) {
+        Mesh* pMesh = pModel->GetMesh(i);
+
         D3D12_RAYTRACING_GEOMETRY_DESC geometry = {};
         geometry.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
         geometry.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;

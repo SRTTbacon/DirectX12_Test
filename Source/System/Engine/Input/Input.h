@@ -10,6 +10,8 @@ class Window;
 class Input
 {
 public:
+	bool m_bCanResponseUnFocus;
+
 	//コンストラクタ
 	Input(HWND win);
 	//デストラクタ

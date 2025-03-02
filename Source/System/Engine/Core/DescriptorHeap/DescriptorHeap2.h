@@ -5,47 +5,34 @@
 #include <stdexcept>
 #include "..\\..\\..\\ComPtr.h"
 
-enum ShadowSize
-{
-    ShadowSizeLow = 512,
-    ShadowSizeMid = 1024,
-    ShadowSizeHigh = 2048,
-    ShadowSizeEpic = 4096
-};
+constexpr const UINT MAX_DESCRIPTORHEAP_SIZE = 10000;       //シーン全体で使用するテクスチャ数の最大 (余裕をもって確保する。10000個で312kb程度)
+constexpr const UINT MATERIAL_DISCRIPTOR_HEAP_SIZE = 2;     //1つのマテリアルで使用するテクスチャ数
+constexpr const UINT MAX_MATERIAL_COUNT = MAX_DESCRIPTORHEAP_SIZE / (MATERIAL_DISCRIPTOR_HEAP_SIZE + 1) - 1;
 
-constexpr const UINT CHARACTER_DISCRIPTOR_HEAP_SIZE = 3;
-constexpr const UINT MODEL_DISCRIPTOR_HEAP_SIZE = 3;
+constexpr const DXGI_FORMAT SHADOWMAP_FORMAT = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+constexpr const DXGI_FORMAT SHAPE_FORMAT = DXGI_FORMAT_R32G32B32A32_FLOAT;
 
 class DescriptorHeap
 {
 public:
-    DescriptorHeap(ID3D12Device* device, UINT meshCount, UINT heapSize, ShadowSize shadowSize);
+    DescriptorHeap();
     ~DescriptorHeap();
 
-    void SetMainTexture(ID3D12Resource* mainTex, ID3D12Resource* normalMap, ID3D12Resource* pShadowMap, ID3D12Resource* pShapeBuffer);
+    void Initialize(ID3D12Device* pDevice, UINT heapSize);
+    void SetResource(UINT offset, ID3D12Resource* pResource, DXGI_FORMAT format);
+    void SetMainTexture(UINT index, ID3D12Resource* mainTex, ID3D12Resource* normalMap, ID3D12Resource* pShapeBuffer);
 
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(UINT index, UINT offset = 0);
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(UINT index, UINT offset);
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(UINT offset);
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle();
     ID3D12DescriptorHeap* GetHeap() const;
-    D3D12_CPU_DESCRIPTOR_HANDLE* GetShadowMapDSV();
-    D3D12_VIEWPORT* GetShadowViewPort();
-    D3D12_RECT* GetShadowScissor();
-    ID3D12Resource* GetShadowMap();
 
 private:
-    ComPtr<ID3D12DescriptorHeap> m_descriptorHeap;
-    UINT m_descriptorSize;
+    static const unsigned long long STATIC_RESOURCE_COUNT; //変動したいリソースがいくつ存在するか
 
-    ComPtr<ID3D12Resource> m_shadowMap;
     ID3D12Device* m_pDevice;
 
-    ComPtr<ID3D12DescriptorHeap> m_dsvHeap;  //DSV用のディスクリプタヒープ
-    D3D12_CPU_DESCRIPTOR_HANDLE m_shadowMapDSV;
+    ComPtr<ID3D12DescriptorHeap> m_descriptorHeap;
 
-    D3D12_VIEWPORT m_shadowViewport;
-    D3D12_RECT m_shadowScissorRect;
-
-    int m_textureCount;
-    int m_heapSize;
-
-    void CreateShadowMap(const ShadowSize shadowSize);
+    UINT m_descriptorSize;
 };
