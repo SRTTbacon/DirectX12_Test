@@ -1,4 +1,4 @@
-#define BIAS 0.0006f        //シャギー抑制のバイアス値
+//#define BIAS 0.0006f        //シャギー抑制のバイアス値
 #define SHADOWSIZE 8192.0f  //シャドウマップのサイズ
 
 SamplerState texSampler : register(s0); //テクスチャ用サンプラー
@@ -8,68 +8,67 @@ Texture2D<float4> _NormalMap : register(t1); //ノーマルマップ
 Texture2D<float> shadowMap : register(t2); //シャドウマップ
 
 //定数バッファ
-cbuffer LightBuffer : register(b0)
+cbuffer PixelBuffer : register(b0)
 {
-    float4 lightDir; //ライトの方向
-    float4 ambientColor; //影の色
-    float4 diffuseColor; //標準の色
-    float4 cameraEyePos; //カメラの位置
+    float4 lightDir;        //ライトの方向
+    float4 ambientColor;    //影の色
+    float4 diffuseColor;    //標準の色
+    float4 cameraEyePos;    //カメラの位置
+    float4 fogColor;        //フォグの色
+    float2 fogStartEnd;     //フォグの開始距離、終了距離
 };
 
 struct VSOutput
 {
     float4 svpos : SV_POSITION; //座標
-    float3 normal : NORMAL; //ノーマル
+    float3 normal : NORMAL; //法線
     float2 uv : TEXCOORD0; //UV
     float4 shadowPos : TEXCOORD1; //影の位置
     float4 tanLightDir : TEXCOORD2; //従法線
     float3 tanHalfWayVec : TEXCOORD3; //接線
 };
 
-// Toon調の段階的な光
+//法線と光の方向に応じたバイアス
+float ComputeShadowBias(float3 normal, float3 lightDir)
+{
+    float cosTheta = saturate(dot(normal, lightDir));
+    return max(0.0015 * (1.0 - cosTheta), 0.0005f); //法線が光と平行なほどバイアスを減らす
+}
+
+//Toon調の段階的な光
 float ToonShading(float intensity)
 {
     if (intensity > 0.5f)
         return 1.0f;
     else
         return 0.2f;
-
 }
 
-float ShadowCalculation(float4 shadowPos)
+static const float2 poissonDisk[4] =
+{
+    float2(-0.94201624, -0.39906216),
+    float2(0.94558609, -0.76890725),
+    float2(-0.09418410, -0.92938870),
+    float2(0.34495938, 0.29387760)
+};
+
+float ShadowCalculation(float4 shadowPos, float bias)
 {
     float3 posFromLightVP = shadowPos.xyz / shadowPos.w;
     float2 shadowUV = (posFromLightVP.xy + float2(1.0f, -1.0f)) * float2(0.5f, -0.5f);
 
-    //影の柔らかさを決定するための分割数(サンプリング数)
-    int numSamples = 2; //サンプル数 (多いほど滑らかだが重い)
     float total = 0.0f;
     float2 texelSize = float2(1.0f / SHADOWSIZE, 1.0f / SHADOWSIZE);
     
-    //シャドウマップ上でのサンプリング
-    for (int i = -numSamples / 2; i < numSamples / 2; ++i)
+    for (int i = 0; i < 4; ++i)
     {
-        for (int j = -numSamples / 2; j < numSamples / 2; ++j)
-        {
-            //サンプルの位置
-            float2 sampleOffset = float2(i, j) * texelSize;
-
-            //サンプリング位置のUV座標
-            float2 shadowSampleUV = shadowUV + sampleOffset;
-
-            //シャドウマップから深度をサンプリング
-            float sampleDepth = shadowMap.SampleCmpLevelZero(shadowSampler, shadowSampleUV, posFromLightVP.z - BIAS);
-            
-            //サンプルを合計
-            total += sampleDepth;
-        }
+        float2 sampleOffset = poissonDisk[i] * texelSize;
+        float2 shadowSampleUV = shadowUV + sampleOffset;
+        float sampleDepth = shadowMap.SampleCmpLevelZero(shadowSampler, shadowSampleUV, posFromLightVP.z - bias);
+        total += sampleDepth;
     }
 
-    //平均を取る
-    float shadowFactor = total / (numSamples * numSamples);
-
-    //シャドウの有無を決定(0.0fなら完全な影、1.0fなら影なし)
-    return shadowFactor;
+    return total / 4.0f; // 平均化
 }
 
 float4 main(VSOutput input) : SV_TARGET
@@ -84,30 +83,24 @@ float4 main(VSOutput input) : SV_TARGET
     //ライトの方向を逆に
     float3 lightVec = lightDir.xyz;
     float lightIntensity = saturate(dot(input.normal, -lightVec));
-    lightIntensity = smoothstep(0.49, 0.51, lightIntensity);
-    //lightIntensity = ToonShading(lightIntensity);
+    //lightIntensity = smoothstep(0.49, 0.51, lightIntensity);
+    lightIntensity = ToonShading(lightIntensity);
     
     //シャドウの計算
-    float shadowFactor = ShadowCalculation(input.shadowPos);
-    shadowFactor = smoothstep(0.45, 0.55, shadowFactor);
-    //shadowFactor = shadowFactor > 0.5f ? 1.0f : 0.2f;
-    //shadowFactor = smoothstep(0.4, 0.6, shadowFactor);
-    
-    //lightIntensity = max(0.5f, lightIntensity);
-    //shadowFactor = max(0.5f, shadowFactor);
+    float bias = ComputeShadowBias(input.normal, lightVec);
+    float shadowFactor = ShadowCalculation(input.shadowPos, bias);
+    shadowFactor = smoothstep(0.35, 0.85, shadowFactor);
     
     float shadowPower = lightIntensity * shadowFactor;
     shadowPower = max(0.5f, shadowPower);
 
+    //シャドウがかかっていれば光を減少させる (0.0f なら完全な影、1.0f なら影なし)
     float4 diffuse = diffuseColor * shadowPower;
 
-    //シャドウがかかっていれば光を減少させる (0.0f なら完全な影、1.0f なら影なし)
     float4 lighting = ambientColor + diffuse;
 
     //ライティング結果とテクスチャカラーを掛け合わせる
     float4 finalColor = lighting * tex;
     
-    finalColor.a = cameraEyePos.w;
-
     return finalColor;
 }

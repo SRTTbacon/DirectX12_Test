@@ -9,7 +9,7 @@
 #include "..\\..\\Core\\BinaryFile\\BinaryCompression.h"
 
 constexpr const float SAVE_SHAPE_DELTA = 0.001f;
-constexpr const int COMPRESSION_LEVEL = 10;		//圧縮レベル (1～22) ロード時間と相談
+constexpr const int COMPRESSION_LEVEL = 3;		//圧縮レベル (1～22) ロード時間と相談
 
 enum ConvertResult
 {
@@ -28,14 +28,20 @@ public:
 	//	2 - std::string Characterのロードに使用したfbxファイル
 	//	3 - std::string 出力先のファイルパス(拡張子はぶっちゃけ何でも良い)
 	ConvertResult ConvertFromCharacter(Character* pCharacter, std::string fromFilePath, std::string toFilePath);
+	ConvertResult ConvertFromModel(std::string fromFilePath, std::string toFilePath);
 
 private:
 
 	BinaryWriter bw;	//バイナリデータとしてファイルに書き込むためのクラス
 	std::unordered_map<std::string, UINT> m_boneMapping;    //ボーン名からインデックスを取得
 
-	void ProcessMesh(aiMesh* pMesh);
+	void ProcessNode(const aiScene* pScene, const aiNode* pNode);
+	void ProcessMesh(const aiMesh* pMesh, bool bIncludeBone, const aiNode* pNode = nullptr);
 	void ProcessBone(Character* pCharacter);
 	void ProcessHumanMesh(Character* pCharacter);
+	void ProcessAnimation(const aiScene* pScene);
+
 	void WriteCompression(std::vector<char>& originalBuffer);
+
+	DirectX::XMMATRIX GetMeshDefaultMatrix(const aiNode* pNode);
 };

@@ -80,6 +80,99 @@
     <Filter Include="Source\System\Engine\Model\Material">
       <UniqueIdentifier>{12b2c8f1-c890-4ae1-aaa4-f67f26dd1e62}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object">
+      <UniqueIdentifier>{0b7c7adf-9684-4b3a-90c7-609fb7d9011d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Terrain">
+      <UniqueIdentifier>{5c3b0a9c-242f-4eba-9744-62df2f0fd5df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\DDSTextureLoader">
+      <UniqueIdentifier>{59f0290d-ed62-4aa9-8999-866dd14a5f77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\SkyBox">
+      <UniqueIdentifier>{c076c96f-2859-42f9-a678-834dd005865b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="リソース ファイル\SkyBox">
+      <UniqueIdentifier>{2f7eeaa8-ae88-4c87-8b78-983d3b24fba5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Physics\CharacterPhysics">
+      <UniqueIdentifier>{570eb7fe-d534-40c4-8446-c83b99a02933}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Effects">
+      <UniqueIdentifier>{4b07036f-a22c-485b-bdb5-3da51a6e54f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\UI">
+      <UniqueIdentifier>{6af027f6-00fd-4084-a908-9295ed89b99f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\UI\Core">
+      <UniqueIdentifier>{76d97b2f-2fc4-443c-9962-11f760efd4ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="リソース ファイル\UI">
+      <UniqueIdentifier>{f5447458-37af-45d1-a4f7-1c70d311703a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\UI\Core\FontManager">
+      <UniqueIdentifier>{9c5ddc47-812a-4b18-9e2e-29ab9ea4ec5f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\ResourceCopy">
+      <UniqueIdentifier>{bb88927e-59f8-4c32-8d03-ecafb1e128c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Model\Transform">
+      <UniqueIdentifier>{0571affa-3467-4fca-b48c-6ddb5caa111f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Scene\SceneGame">
+      <UniqueIdentifier>{e7ceffb0-7b78-4ce7-9017-0d6622d97fe8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\Exception">
+      <UniqueIdentifier>{60b5ee5e-55c8-4e66-aaab-ee3b21b66959}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Scene\SceneInit">
+      <UniqueIdentifier>{b853bd79-3ae8-45dc-aaab-087136d7339e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Scene\SceneClear">
+      <UniqueIdentifier>{4b9f30d7-fe2e-408a-82a6-02bb11d455d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Scene\SceneGameover">
+      <UniqueIdentifier>{6be7aa34-88f5-429b-b4c4-b6da28993ac4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Scene\SceneTitle">
+      <UniqueIdentifier>{0d4d6b9d-4fc0-4e98-a154-6c60a26d5569}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\FileSystem">
+      <UniqueIdentifier>{27a50ae3-726a-401e-b673-179affb3aec0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Title">
+      <UniqueIdentifier>{be969e84-6752-4942-a770-dc98bb0318e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\GUI">
+      <UniqueIdentifier>{e2c39fd4-8f06-42cd-a116-823da7c7cf0e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\Core\PostProcess">
+      <UniqueIdentifier>{99c04e91-9cc1-4c58-9491-384806767613}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="リソース ファイル\PostProcess">
+      <UniqueIdentifier>{6f84a70a-b812-4986-a29c-d8d8d3d96e2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Game">
+      <UniqueIdentifier>{f193b4e1-1863-47f7-b86c-305e3fd26ef9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Game\Opening">
+      <UniqueIdentifier>{d169e259-a5de-4f54-bdb0-a0da621d9e6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Game\Opening\TextSystem">
+      <UniqueIdentifier>{82d33671-a980-4cc3-9a8a-5cf6ac3f89da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Engine\SoundSystem\Core">
+      <UniqueIdentifier>{dac7122f-570d-47c1-8908-8f29c4120193}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Library">
+      <UniqueIdentifier>{17b1310d-779b-4300-a9d5-a84c4933a77f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\System\Library\LZ4">
+      <UniqueIdentifier>{06e4e709-6c6a-41b7-8b46-9ba468685931}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="リソース ファイル\Grass">
+      <UniqueIdentifier>{398794ab-3677-4ca9-84b5-430e25896e47}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\System\Main\Main.cpp">
@@ -87,9 +180,6 @@
     </ClCompile>
     <ClCompile Include="Source\System\Engine\Engine.cpp">
       <Filter>Source\System\Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Scene\Scene\Scene.cpp">
-      <Filter>Source\Scene\Scene</Filter>
     </ClCompile>
     <ClCompile Include="Source\System\Engine\Core\RootSignature\RootSignature.cpp">
       <Filter>Source\System\Engine\Core\RootSignature</Filter>
@@ -127,7 +217,7 @@
     <ClCompile Include="Source\System\Engine\Model\Animation\AnimationManager.cpp">
       <Filter>Source\System\Engine\Model\Animation</Filter>
     </ClCompile>
-    <ClCompile Include="Source\System\Engine\SoundSystem\SoundSystem.cpp">
+    <ClCompile Include="Source\System\Engine\SoundSystem\BassSoundSystem.cpp">
       <Filter>Source\System\Engine\SoundSystem</Filter>
     </ClCompile>
     <ClCompile Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap2.cpp">
@@ -138,9 +228,6 @@
     </ClCompile>
     <ClCompile Include="Source\System\Engine\Model\ModelManager.cpp">
       <Filter>Source\System\Engine\Model</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\System\Engine\Lights\LightTransform.cpp">
-      <Filter>Source\System\Engine\Lights</Filter>
     </ClCompile>
     <ClCompile Include="Source\System\Engine\Lights\ZShadow.cpp">
       <Filter>Source\System\Engine\Lights</Filter>
@@ -169,6 +256,126 @@
     <ClCompile Include="Source\System\Engine\Model\Material\MaterialManager.cpp">
       <Filter>Source\System\Engine\Model\Material</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Object\Terrain\Terrain.cpp">
+      <Filter>Object\Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\DDSTextureLoader\DDSTextureLoader.cpp">
+      <Filter>Source\System\Engine\Core\DDSTextureLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\SkyBox\SkyBox.cpp">
+      <Filter>Source\System\Engine\SkyBox</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Physics\CharacterPhysics\HairPhysicsBone.cpp">
+      <Filter>Source\System\Engine\Physics\CharacterPhysics</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Effects\EffectManager.cpp">
+      <Filter>Source\System\Engine\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Effects\Effect.cpp">
+      <Filter>Source\System\Engine\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\UI\Core\UIElement.cpp">
+      <Filter>Source\System\Engine\UI\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\UI\Core\UITexture.cpp">
+      <Filter>Source\System\Engine\UI\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\UI\UIManager.cpp">
+      <Filter>Source\System\Engine\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\UI\Core\FontManager\FontManager.cpp">
+      <Filter>Source\System\Engine\UI\Core\FontManager</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\UI\Core\FontManager\Font.cpp">
+      <Filter>Source\System\Engine\UI\Core\FontManager</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\UI\Core\UIText.cpp">
+      <Filter>Source\System\Engine\UI\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\ResourceCopy\ResourceCopy.cpp">
+      <Filter>Source\System\Engine\Core\ResourceCopy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Model\Transform\Transform.cpp">
+      <Filter>Source\System\Engine\Model\Transform</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scene\SceneGame\SceneGame.cpp">
+      <Filter>Source\Scene\SceneGame</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scene\Scene\Scene.cpp">
+      <Filter>Source\Scene\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\Exception\DxSystemException.cpp">
+      <Filter>Source\System\Engine\Core\Exception</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scene\SceneInit\SceneInit.cpp">
+      <Filter>Source\Scene\SceneInit</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scene\SceneClear\SceneClear.cpp">
+      <Filter>Source\Scene\SceneClear</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scene\SceneGameover\SceneGameover.cpp">
+      <Filter>Source\Scene\SceneGameover</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scene\SceneTitle\SceneTitle.cpp">
+      <Filter>Source\Scene\SceneTitle</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Object\FileSystem\HCSFileSystem.cpp">
+      <Filter>Object\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Object\Title\TitleUI.cpp">
+      <Filter>Object\Title</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Object\Title\TitleBack.cpp">
+      <Filter>Object\Title</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Object\GUI\GUILayout.cpp">
+      <Filter>Object\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\Core\PostProcess\PostProcessManager.cpp">
+      <Filter>Source\System\Engine\Core\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\SoundSystem\WwiseSoundSystem.cpp">
+      <Filter>Source\System\Engine\SoundSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Object\Game\Opening\TextSystem\SpecialTextAnimation.cpp">
+      <Filter>Object\Game\Opening\TextSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkDefaultIOHookDeferred.cpp">
+      <Filter>Source\System\Engine\SoundSystem\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkDefaultLowLevelIODispatcher.cpp">
+      <Filter>Source\System\Engine\SoundSystem\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkFileLocationBase.cpp">
+      <Filter>Source\System\Engine\SoundSystem\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkFilePackage.cpp">
+      <Filter>Source\System\Engine\SoundSystem\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkFilePackageLUT.cpp">
+      <Filter>Source\System\Engine\SoundSystem\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkGeneratedSoundBanksResolver.cpp">
+      <Filter>Source\System\Engine\SoundSystem\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkJobWorkerMgr.cpp">
+      <Filter>Source\System\Engine\SoundSystem\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkMultipleFileLocation.cpp">
+      <Filter>Source\System\Engine\SoundSystem\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkPlatformProfilerHooks.cpp">
+      <Filter>Source\System\Engine\SoundSystem\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\Library\LZ4\lz4.cpp">
+      <Filter>Source\System\Library\LZ4</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Object\GUI\GUIAnimation.cpp">
+      <Filter>Object\GUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\System\Main\Main.h">
@@ -179,9 +386,6 @@
     </ClInclude>
     <ClInclude Include="Source\System\Engine\Engine.h">
       <Filter>Source\System\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Scene\Scene\Scene.h">
-      <Filter>Source\Scene\Scene</Filter>
     </ClInclude>
     <ClInclude Include="Source\System\Engine\Core\RootSignature\RootSignature.h">
       <Filter>Source\System\Engine\Core\RootSignature</Filter>
@@ -222,7 +426,7 @@
     <ClInclude Include="Source\System\Engine\Model\Animation\AnimationManager.h">
       <Filter>Source\System\Engine\Model\Animation</Filter>
     </ClInclude>
-    <ClInclude Include="Source\System\Engine\SoundSystem\SoundSystem.h">
+    <ClInclude Include="Source\System\Engine\SoundSystem\BassSoundSystem.h">
       <Filter>Source\System\Engine\SoundSystem</Filter>
     </ClInclude>
     <ClInclude Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap2.h">
@@ -233,9 +437,6 @@
     </ClInclude>
     <ClInclude Include="Source\System\Engine\Model\ModelManager.h">
       <Filter>Source\System\Engine\Model</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\System\Engine\Lights\LightTransform.h">
-      <Filter>Source\System\Engine\Lights</Filter>
     </ClInclude>
     <ClInclude Include="Source\System\Engine\Lights\ZShadow.h">
       <Filter>Source\System\Engine\Lights</Filter>
@@ -258,14 +459,116 @@
     <ClInclude Include="Source\System\Engine\Physics\PhysXManager.h">
       <Filter>Source\System\Engine\Physics</Filter>
     </ClInclude>
-    <ClInclude Include="Source\System\Engine\Core\XMFLOATHelper.h">
-      <Filter>Source\System\Engine\Input</Filter>
-    </ClInclude>
     <ClInclude Include="Source\System\Engine\Model\Material\Material.h">
       <Filter>Source\System\Engine\Model\Material</Filter>
     </ClInclude>
     <ClInclude Include="Source\System\Engine\Model\Material\MaterialManager.h">
       <Filter>Source\System\Engine\Model\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Object\Terrain\Terrain.h">
+      <Filter>Object\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\KeyString.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\DDSTextureLoader\DDSTextureLoader.h">
+      <Filter>Source\System\Engine\Core\DDSTextureLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\SkyBox\SkyBox.h">
+      <Filter>Source\System\Engine\SkyBox</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Physics\CharacterPhysics\HairPhysicsBone.h">
+      <Filter>Source\System\Engine\Physics\CharacterPhysics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Effects\EffectManager.h">
+      <Filter>Source\System\Engine\Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Effects\Effect.h">
+      <Filter>Source\System\Engine\Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\XMFLOATHelper.h">
+      <Filter>Source\System\Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\Mesh.h">
+      <Filter>Source\System\Engine\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\UI\Core\UIElement.h">
+      <Filter>Source\System\Engine\UI\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\UI\Core\UITexture.h">
+      <Filter>Source\System\Engine\UI\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\UI\UIManager.h">
+      <Filter>Source\System\Engine\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\UI\Core\FontManager\FontManager.h">
+      <Filter>Source\System\Engine\UI\Core\FontManager</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\UI\Core\FontManager\Font.h">
+      <Filter>Source\System\Engine\UI\Core\FontManager</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\UI\Core\UIText.h">
+      <Filter>Source\System\Engine\UI\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\Color.h">
+      <Filter>Source\System\Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\ResourceCopy\ResourceCopy.h">
+      <Filter>Source\System\Engine\Core\ResourceCopy</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Model\Transform\Transform.h">
+      <Filter>Source\System\Engine\Model\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scene\SceneGame\SceneGame.h">
+      <Filter>Source\Scene\SceneGame</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scene\Scene\Scene.h">
+      <Filter>Source\Scene\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\Exception\DxSystemException.h">
+      <Filter>Source\System\Engine\Core\Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scene\SceneInit\SceneInit.h">
+      <Filter>Source\Scene\SceneInit</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scene\SceneClear\SceneClear.h">
+      <Filter>Source\Scene\SceneClear</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scene\SceneGameover\SceneGameover.h">
+      <Filter>Source\Scene\SceneGameover</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scene\SceneTitle\SceneTitle.h">
+      <Filter>Source\Scene\SceneTitle</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Object\FileSystem\HCSFileSystem.h">
+      <Filter>Object\FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Object\Title\TitleUI.h">
+      <Filter>Object\Title</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Object\Title\TitleBack.h">
+      <Filter>Object\Title</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Object\GUI\GUILayout.h">
+      <Filter>Object\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\Core\PostProcess\PostProcessManager.h">
+      <Filter>Source\System\Engine\Core\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Engine\SoundSystem\WwiseSoundSystem.h">
+      <Filter>Source\System\Engine\SoundSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Object\Game\Opening\TextSystem\SpecialTextAnimation.h">
+      <Filter>Object\Game\Opening\TextSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\Library\LZ4\lz4.h">
+      <Filter>Source\System\Library\LZ4</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Object\GUI\GUIAnimation.h">
+      <Filter>Object\GUI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -284,11 +587,35 @@
     <FxCompile Include="Source\System\Shader\ShadowVS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Source\System\Shader\ShadowPS.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </FxCompile>
     <FxCompile Include="Source\System\Shader\ToonPS.hlsl">
       <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\TerrainPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\SkyBox\SkyBoxVS.hlsl">
+      <Filter>リソース ファイル\SkyBox</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\SkyBox\SkyBoxPS.hlsl">
+      <Filter>リソース ファイル\SkyBox</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\UI\UITextureVS.hlsl">
+      <Filter>リソース ファイル\UI</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\UI\UITexturePS.hlsl">
+      <Filter>リソース ファイル\UI</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\PostProcess\PostProcessVS.hlsl">
+      <Filter>リソース ファイル\PostProcess</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\PostProcess\PostProcessNoisePS.hlsl">
+      <Filter>リソース ファイル\PostProcess</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\Grass\GrassVS.hlsl">
+      <Filter>リソース ファイル\Grass</Filter>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\Grass\GrassPS.hlsl">
+      <Filter>リソース ファイル\Grass</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

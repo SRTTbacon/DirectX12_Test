@@ -1,9 +1,10 @@
 #include "PhysXManager.h"
 
+//---------ŒŸØ’†‚Ì‚½‚ßŽg—p•s‰Â---------
+
 using namespace physx;
 
 PhysXManager::PhysXManager()
-    : m_frameRate(1.0f / 60.0f)
 {
     m_pFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, m_allocator, m_errorCallback);
 
@@ -33,13 +34,8 @@ PhysXManager::PhysXManager()
     }
 }
 
-void PhysXManager::SetFPS(float frameRate)
+void PhysXManager::Update(float deltaTime)
 {
-    m_frameRate = 1.0f / frameRate;
-}
-
-void PhysXManager::Update()
-{
-    m_pScene->simulate(m_frameRate);
+    m_pScene->simulate(deltaTime);
     m_pScene->fetchResults(true);
 }

@@ -85,12 +85,12 @@ HRESULT RaytracingProcess::CreateBLAS(Model* pModel)
         D3D12_RAYTRACING_GEOMETRY_DESC geometry = {};
         geometry.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
         geometry.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
-        geometry.Triangles.VertexBuffer.StartAddress = pMesh->vertexBuffer->GetGPUVirtualAddress();
-        geometry.Triangles.VertexBuffer.StrideInBytes = pMesh->vertexBufferView.StrideInBytes;
-        geometry.Triangles.VertexCount = pMesh->vertexCount;
+        geometry.Triangles.VertexBuffer.StartAddress = pMesh->meshData->vertexBuffer->GetGPUVirtualAddress();
+        geometry.Triangles.VertexBuffer.StrideInBytes = pMesh->meshData->vertexBufferView.StrideInBytes;
+        geometry.Triangles.VertexCount = pMesh->meshData->vertexCount;
         geometry.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT; //頂点フォーマット (float3)
-        geometry.Triangles.IndexBuffer = pMesh->indexBuffer->GetGPUVirtualAddress();
-        geometry.Triangles.IndexCount = pMesh->indexCount;
+        geometry.Triangles.IndexBuffer = pMesh->meshData->indexBuffer->GetGPUVirtualAddress();
+        geometry.Triangles.IndexCount = pMesh->meshData->indexCount;
         geometry.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT; //インデックスフォーマット (32bit)
 
         geometryDescs.push_back(geometry);

@@ -1,10 +1,13 @@
 #include "Animation.h"
+#include "..\\..\\Core\\XMFLOATHelper.h"
+
+#include <filesystem>
 
 using namespace DirectX;
 
 Animation::Animation()
 	: m_pTempFrame(nullptr)
-	, m_beforeFrameIndex(0)
+	, m_maxTime(0.0f)
 {
 }
 
@@ -19,6 +22,18 @@ Animation::~Animation()
 //ファイルからアニメーションをロード
 void Animation::Load(std::string animFilePath)
 {
+	m_boneMapping.clear();
+	m_shapeNames.clear();
+	m_frames.clear();
+	m_shapeAnimations.clear();
+
+	if (m_pTempFrame) {
+		delete m_pTempFrame;
+		m_pTempFrame = nullptr;
+	}
+
+	DWORD startTime = timeGetTime();
+
 	//バイナリとして開く
 	BinaryReader br(animFilePath);
 	char* headerBuf = br.ReadBytes(br.ReadByte());
@@ -46,16 +61,19 @@ void Animation::Load(std::string animFilePath)
 
 	//圧縮されているボーン情報を解凍
 	std::vector<char> animBuffer;
-	BinaryDecompress(animBuffer, animBufferOriginalSize, compressedBuffer, animBufferCompressedSize);
+	BinaryDecompressZSD(animBuffer, animBufferOriginalSize, compressedBuffer, animBufferCompressedSize);
 
 	delete[] compressedBuffer;
 
 	br.Close();
+
+	DWORD temp2 = timeGetTime();
+
 	br = BinaryReader(animBuffer);
 	for (int i = 0; i < animCount; i++) {
 		float time = br.ReadFloat();			//フレーム時間
 
-		AnimationFrame frame(time);
+		CharacterAnimationFrame frame(time);
 
 		//回転
 		float rotX = br.ReadFloat();
@@ -108,67 +126,68 @@ void Animation::Load(std::string animFilePath)
 		}
 	}
 
-	//AnimationFrameにシェイプキーの情報を入れる
-	for (AnimationFrame& frame : m_frames) {
-		for (UINT i = 0; i < m_shapeNames.size(); i++) {
-			ShapeAnimation* frameShapeValue = nullptr;
-			ShapeAnimation* nextFrameShapeValue = nullptr;
-
-			//m_shapeAnimationsに保存しているシェイプキーのキーフレームをすべて参照 (フレーム時間順にソートされている)
-			for (UINT j = 0; j < m_shapeAnimations[m_shapeNames[i]].size(); j++) {
-				//シェイプキーのフレーム時間がAnimationFrameより小さい場合は値を更新
-				if (m_shapeAnimations[m_shapeNames[i]][j].time <= frame.time) {
-					frameShapeValue = &m_shapeAnimations[m_shapeNames[i]][j];
-				}
-				else {
-					//frameShapeValueの次のフレームを保存
-					nextFrameShapeValue = &m_shapeAnimations[m_shapeNames[i]][j];
-					break;
-				}
-			}
-
-			if (!frameShapeValue) {
-				continue;
-			}
-
-			float lerp = frameShapeValue->value;
-
-			//次のフレームが存在していれば次のフレームと今のフレームの間を補間
-			if (nextFrameShapeValue) {
-				//Lerp用t (0.0f～1.0f)
-				float t = (frame.time - frameShapeValue->time) / (nextFrameShapeValue->time - frameShapeValue->time);
-
-				lerp = std::lerp(frameShapeValue->value, nextFrameShapeValue->value, t);
-			}
-
-			//補間した値を入れる
-			frame.shapeAnimations.push_back(lerp);
-		}
-	}
-
 	m_animFilePath = animFilePath;
+
+	std::filesystem::path path(animFilePath);
+	m_animName = path.filename().string();;
+
+	DWORD endTime = timeGetTime();
+	printf("LoadAnimation - %dms\n", endTime - startTime);
+}
+
+void Animation::SetMaxTime(float time)
+{
+	m_maxTime = time;
+}
+
+void Animation::SetAnimName(std::string name)
+{
+	m_animName = name;
+}
+
+void Animation::AddFrame(FrameType frameType, UINT meshIndex, float time, DirectX::XMFLOAT3 value)
+{
+	if (frameType == FrameType::FrameType_Position) {
+		m_positionFrames[meshIndex].push_back(ModelAnimation(-1.0f, time, XMFLOAT3(0.0f, 0.0f, 0.0f), value / 100.0f));
+	}
+	else if (frameType == FrameType::FrameType_Rotation) {
+		m_rotationFrames[meshIndex].push_back(ModelAnimation(-1.0f, time, XMFLOAT3(0.0f, 0.0f, 0.0f), value));
+	}
+	else if (frameType == FrameType::FrameType_Scale) {
+		m_scaleFrames[meshIndex].push_back(ModelAnimation(-1.0f, time, XMFLOAT3(0.0f, 0.0f, 0.0f), value / 100.0f));
+	}
 }
 
 //指定したアニメーション時間のフレームを取得
-AnimationFrame* Animation::GetFrame(float nowAnimTime)
+CharacterAnimationFrame* Animation::GetCharacterFrame(float nowAnimTime, _In_opt_ UINT* pBeforeFrameIndex)
 {
+	if (nowAnimTime < 0.0f) {
+		nowAnimTime = 0.0f;
+	}
+
 	//補間用のフレームがあれば削除
 	if (m_pTempFrame) {
 		delete m_pTempFrame;
 		m_pTempFrame = nullptr;
 	}
 
-	AnimationFrame* currentFrame = nullptr;
-	AnimationFrame* nextFrame = nullptr;
+	UINT beforeFrameIndex = 0;
+	if (pBeforeFrameIndex) {
+		beforeFrameIndex = *pBeforeFrameIndex;
+	}
+
+	CharacterAnimationFrame* currentFrame = nullptr;
+	CharacterAnimationFrame* nextFrame = nullptr;
 
 	//前回のフレーム時間よりnowAnimTimeが小さければ0番目から再検索
-	if (m_frames[m_beforeFrameIndex].time > nowAnimTime) {
-		m_beforeFrameIndex = 0;
+	if (pBeforeFrameIndex && m_frames[*pBeforeFrameIndex].time > nowAnimTime) {
+		*pBeforeFrameIndex = 0;
 	}
 
 	//nowAnimTimeの直前のフレームを取得
-	for (UINT i = m_beforeFrameIndex; i < static_cast<UINT>(m_frames.size()); i++) {
-		AnimationFrame& frame = m_frames[i];
+	for (int i = static_cast<UINT>(beforeFrameIndex); i < static_cast<int>(m_frames.size()); i++) {
+		CharacterAnimationFrame& frame = m_frames[i];
+		beforeFrameIndex = static_cast<UINT>(i);
 		if (frame.time <= nowAnimTime) {
 			currentFrame = &frame;
 
@@ -176,6 +195,9 @@ AnimationFrame* Animation::GetFrame(float nowAnimTime)
 			UINT nextIndex = i + 1;
 			if (nextIndex < static_cast<UINT>(m_frames.size())) {
 				nextFrame = &m_frames[nextIndex];
+				if (nextFrame->time > nowAnimTime) {
+					break;
+				}
 			}
 			else {
 				nextFrame = nullptr;
@@ -183,12 +205,7 @@ AnimationFrame* Animation::GetFrame(float nowAnimTime)
 			}
 		}
 		else {
-			m_beforeFrameIndex = i - 1;
-			if (m_beforeFrameIndex < 0) {
-				m_beforeFrameIndex = 0;
-			}
-
-			break;
+			beforeFrameIndex = -1;
 		}
 	}
 
@@ -196,6 +213,11 @@ AnimationFrame* Animation::GetFrame(float nowAnimTime)
 	if (currentFrame == nullptr) {
 		return nullptr;
 	}
+
+	if (pBeforeFrameIndex) {
+		*pBeforeFrameIndex = beforeFrameIndex;
+	}
+
 	//次のフレームが存在しなければ最後のフレームをそのまま返す
 	if (!nextFrame) {
 		return currentFrame;
@@ -207,7 +229,7 @@ AnimationFrame* Animation::GetFrame(float nowAnimTime)
 	t = max(0.0f, t);
 
 	//現在のフレームと次のフレームの間を補間
-	m_pTempFrame = new AnimationFrame(nowAnimTime);
+	m_pTempFrame = new CharacterAnimationFrame(nowAnimTime);
 
 	BoneAnimation lerpArmatureBoneAnim{};
 	lerpArmatureBoneAnim.position = Lerp(currentFrame->armatureAnimation.position, nextFrame->armatureAnimation.position, t);
@@ -222,24 +244,211 @@ AnimationFrame* Animation::GetFrame(float nowAnimTime)
 		m_pTempFrame->boneAnimations.push_back(lerpBoneAnim);
 	}
 
-	//シェイプキーの補間 (Linear)
-	for (UINT i = 0; i < currentFrame->shapeAnimations.size(); i++) {
-		float shapeValue = std::lerp(currentFrame->shapeAnimations[i], nextFrame->shapeAnimations[i], t);
-		m_pTempFrame->shapeAnimations.push_back(shapeValue);
-	}
+	GetShapeFrame(nowAnimTime, m_pTempFrame->shapeAnimations);
 
 	return m_pTempFrame;
 }
 
+ModelAnimationFrame Animation::GetModelFrame(float nowAnimTime)
+{
+	if (nowAnimTime < 0.0f) {
+		nowAnimTime = 0.0f;
+	}
+
+	std::unordered_map<UINT, ModelAnimation> pCurrentPositionFrame;
+
+	std::unordered_map<UINT, ModelAnimation> pCurrentRotationFrame;
+
+	std::unordered_map<UINT, ModelAnimation> pCurrentScaleFrame;
+
+	for (std::pair<UINT, std::vector<ModelAnimation>> pair : m_positionFrames) {
+		for (size_t i = 0; i < pair.second.size(); i++) {
+			ModelAnimation& anim = pair.second[i];
+			pCurrentPositionFrame.emplace(pair.first, ModelAnimation());
+			pCurrentPositionFrame[pair.first].time = -1.0f;
+			if (anim.time <= nowAnimTime) {
+				pCurrentPositionFrame[pair.first] = anim;
+				pCurrentPositionFrame[pair.first].nextFrameTime = -1.0f;
+				if (i + 1 < pair.second.size()) {
+					if (pair.second[i + 1].time > nowAnimTime) {
+						pCurrentPositionFrame[pair.first].nextFrameTime = pair.second[i + 1].time;
+						pCurrentPositionFrame[pair.first].nextFrameValue = pair.second[i + 1].value;
+						break;
+					}
+				}
+				else {
+					pCurrentPositionFrame[pair.first].nextFrameTime = m_maxTime;
+					pCurrentPositionFrame[pair.first].nextFrameValue = pair.second[0].value;
+					break;
+				}
+			}
+		}
+	}
+	for (std::pair<UINT, std::vector<ModelAnimation>> pair : m_rotationFrames) {
+		for (size_t i = 0; i < pair.second.size(); i++) {
+			ModelAnimation& anim = pair.second[i];
+			pCurrentRotationFrame.emplace(pair.first, ModelAnimation());
+			pCurrentRotationFrame[pair.first].time = -1.0f;
+			if (anim.time <= nowAnimTime) {
+				pCurrentRotationFrame[pair.first] = anim;
+				pCurrentRotationFrame[pair.first].nextFrameTime = -1.0f;
+				if (i + 1 < pair.second.size()) {
+					if (pair.second[i + 1].time > nowAnimTime) {
+						pCurrentRotationFrame[pair.first].nextFrameTime = pair.second[i + 1].time;
+						pCurrentRotationFrame[pair.first].nextFrameValue = pair.second[i + 1].value;
+						break;
+					}
+				}
+				else {
+					pCurrentRotationFrame[pair.first].nextFrameTime = m_maxTime;
+					pCurrentRotationFrame[pair.first].nextFrameValue = pair.second[0].value;
+					break;
+				}
+			}
+		}
+	}
+	for (std::pair<UINT, std::vector<ModelAnimation>> pair : m_scaleFrames) {
+		for (size_t i = 0; i < pair.second.size(); i++) {
+			ModelAnimation& anim = pair.second[i];
+			pCurrentScaleFrame.emplace(pair.first, ModelAnimation());
+			pCurrentScaleFrame[pair.first].time = -1.0f;
+			if (anim.time <= nowAnimTime) {
+				pCurrentScaleFrame[pair.first] = anim;
+				pCurrentScaleFrame[pair.first].nextFrameTime = -1.0f;
+				if (i + 1 < pair.second.size()) {
+					if (pair.second[i + 1].time > nowAnimTime) {
+						pCurrentScaleFrame[pair.first].nextFrameTime = m_maxTime;
+						pCurrentScaleFrame[pair.first].nextFrameValue = pair.second[0].value;
+						break;
+					}
+				}
+				else {
+					break;
+				}
+			}
+		}
+	}
+
+	ModelAnimationFrame frame{};
+	frame.time = nowAnimTime;
+
+	for (std::pair<UINT, ModelAnimation> pair : pCurrentPositionFrame) {
+		if (pair.second.time >= 0.0f) {
+			if (pair.second.nextFrameTime >= 0.0f) {
+				float t = (nowAnimTime - pair.second.time) / (pair.second.nextFrameTime - pair.second.time);
+				t = min(1.0f, t);
+				t = max(0.0f, t);
+				frame.position.emplace(pair.first, Lerp(pair.second.value, pair.second.nextFrameValue, t));
+			}
+			else {
+				frame.position.emplace(pair.first, pair.second.value);
+			}
+		}
+	}
+	for (std::pair<UINT, ModelAnimation> pair : pCurrentRotationFrame) {
+		if (pair.second.time >= 0.0f) {
+			if (pair.second.nextFrameTime >= 0.0f) {
+				float t = (nowAnimTime - pair.second.time) / (pair.second.nextFrameTime - pair.second.time);
+				t = min(1.0f, t);
+				t = max(0.0f, t);
+				frame.rotation.emplace(pair.first, Lerp(pair.second.value, pair.second.nextFrameValue, t));
+			}
+			else {
+				frame.rotation.emplace(pair.first, pair.second.value);
+			}
+		}
+	}
+	for (std::pair<UINT, ModelAnimation> pair : pCurrentScaleFrame) {
+		if (pair.second.time >= 0.0f) {
+			if (pair.second.nextFrameTime >= 0.0f) {
+				float t = (nowAnimTime - pair.second.time) / (pair.second.nextFrameTime - pair.second.time);
+				t = min(1.0f, t);
+				t = max(0.0f, t);
+				frame.scale.emplace(pair.first, Lerp(pair.second.value, pair.second.nextFrameValue, t));
+			}
+			else {
+				frame.scale.emplace(pair.first, pair.second.value);
+			}
+		}
+	}
+
+	return frame;
+}
+
 //フレームが最後のフレームかどうか
-bool Animation::IsLastFrame(AnimationFrame* pAnimFrame)
+bool Animation::IsLastFrame(CharacterAnimationFrame* pAnimFrame)
 {
 	if (!pAnimFrame)
 		return false;
 	return pAnimFrame == &m_frames[m_frames.size() - 1];
 }
 
-AnimationFrame::AnimationFrame(float time)
+bool Animation::IsLastFrame(float time) const
+{
+	if (m_maxTime > 0.0f) {
+		return m_maxTime <= time;
+	}
+
+	return GetMaxTime() <= time;
+}
+
+inline float Animation::GetMaxTime() const
+{
+	if (m_maxTime > 0.0f) {
+		return m_maxTime;
+	}
+
+	float maxTime = 0.0f;
+	if (m_frames.size() > 0){
+		if (maxTime < m_frames[m_frames.size() - 1].time) {
+			maxTime = m_frames[m_frames.size() - 1].time;
+		}
+	}
+
+	return maxTime;
+}
+
+void Animation::GetShapeFrame(float time, std::vector<float>& shapeWeights)
+{
+	shapeWeights.clear();
+	for (UINT i = 0; i < m_shapeNames.size(); i++) {
+		ShapeAnimation* frameShapeValue = nullptr;
+		ShapeAnimation* nextFrameShapeValue = nullptr;
+
+		//m_shapeAnimationsに保存しているシェイプキーのキーフレームをすべて参照 (フレーム時間順にソートされている)
+		for (UINT j = 0; j < m_shapeAnimations[m_shapeNames[i]].size(); j++) {
+			//シェイプキーのフレーム時間がtimeより小さい場合は値を更新
+			if (m_shapeAnimations[m_shapeNames[i]][j].time <= time) {
+				frameShapeValue = &m_shapeAnimations[m_shapeNames[i]][j];
+			}
+			else {
+				//frameShapeValueの次のフレームを保存
+				nextFrameShapeValue = &m_shapeAnimations[m_shapeNames[i]][j];
+				break;
+			}
+		}
+
+		if (!frameShapeValue || !nextFrameShapeValue) {
+			shapeWeights.push_back(0.0f);
+			continue;
+		}
+
+		float lerp = frameShapeValue->value;
+
+		//次のフレームが存在していれば次のフレームと今のフレームの間を補間
+		if (nextFrameShapeValue) {
+			//Lerp用t (0.0f～1.0f)
+			float t = (time - frameShapeValue->time) / (nextFrameShapeValue->time - frameShapeValue->time);
+
+			lerp = std::lerp(frameShapeValue->value, nextFrameShapeValue->value, t);
+		}
+
+		//補間した値を入れる
+		shapeWeights.push_back(lerp);
+	}
+}
+
+CharacterAnimationFrame::CharacterAnimationFrame(float time)
 	: time(time)
 	, armatureAnimation(BoneAnimation())
 {

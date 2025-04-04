@@ -2,20 +2,6 @@
 
 using namespace std;
 
-void MaterialManager::Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight, ID3D12Resource* pShadowMap)
-{
-	m_pDevice = pDevice;
-	m_pCommandList = pCommandList;
-	m_pDirectionalLight = pDirectionalLight;
-	m_pShadowMap = pShadowMap;
-	m_descriptorHeap.Initialize(pDevice, MAX_DESCRIPTORHEAP_SIZE);
-	m_descriptorHeap.SetResource(0, pShadowMap, SHADOWMAP_FORMAT);
-
-	//デフォルトテクスチャを作成
-	m_pWhiteTexture = Texture2D::GetColor(1.0f, 1.0f, 1.0f);
-	m_pNormalTexture = Texture2D::GetColor(0.5f, 0.5f, 1.0f);
-}
-
 MaterialManager::MaterialManager()
 	: m_pDevice(nullptr)
 	, m_pCommandList(nullptr)
@@ -30,6 +16,8 @@ MaterialManager::MaterialManager()
 		m_bFreeMaterialIDs.push_back(true);
 	}
 
+	//シェイプ情報のリソースが格納できる数を計算
+	//※ヒープサイズからマテリアルとシャドウマップで使用するリソース数を引いた数
 	UINT startIndex = MAX_MATERIAL_COUNT * MATERIAL_DISCRIPTOR_HEAP_SIZE + 1;
 	UINT maxCount = MAX_DESCRIPTORHEAP_SIZE - startIndex;
 	for (UINT i = 0; i < maxCount; i++) {
@@ -39,9 +27,18 @@ MaterialManager::MaterialManager()
 
 MaterialManager::~MaterialManager()
 {
+	if (m_pWhiteTexture) {
+		delete m_pWhiteTexture;
+		m_pWhiteTexture = nullptr;
+	}
+	if (m_pNormalTexture) {
+		delete m_pNormalTexture;
+		m_pNormalTexture = nullptr;
+	}
+
 	for (auto& keyValue : m_pipelines) {
-		delete[] keyValue.second.pPipelineState;
-		delete[] keyValue.second.pRootSignature;
+		delete keyValue.second.pPipelineState;
+		delete keyValue.second.pRootSignature;
 	}
 
 	for (auto& keyValue : m_materials) {
@@ -49,8 +46,27 @@ MaterialManager::~MaterialManager()
 	}
 }
 
+void MaterialManager::Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight, ID3D12Resource* pShadowMap)
+{
+	//エンジンから必要な情報を受け取る
+	m_pDevice = pDevice;
+	m_pCommandList = pCommandList;
+	m_pDirectionalLight = pDirectionalLight;
+	m_pShadowMap = pShadowMap;
+
+	//ディスクリプタヒープを作成
+	m_descriptorHeap.Initialize(pDevice, MAX_DESCRIPTORHEAP_SIZE);
+	//シャドウマップはヒープの一番初めに格納
+	m_descriptorHeap.SetResource(SHADOWMAP_HEAP_INDEX, pShadowMap, SHADOWMAP_FORMAT);
+
+	//デフォルトテクスチャを作成 (白色テクスチャ、影響を与えないノーマルマップ)
+	m_pWhiteTexture = Texture2D::GetColor(1.0f, 1.0f, 1.0f);
+	m_pNormalTexture = Texture2D::GetColor(0.5f, 0.5f, 1.0f);
+}
+
 Material* MaterialManager::AddMaterial(string materialName, OUT bool& bExist, ShaderKinds shaderType)
 {
+	//既に同名のマテリアルが存在すればそれを返す
 	if (m_materials.find(materialName) != m_materials.end()) {
 		bExist = true;
 		return m_materials[materialName];
@@ -78,6 +94,7 @@ Material* MaterialManager::AddMaterial(string materialName, OUT bool& bExist, Sh
 		}
 	}
 
+	//マテリアルを作成
 	Material* pNewMat = new Material(m_pDevice, m_pCommandList, m_pDirectionalLight, &m_descriptorHeap, m_nextMaterialID);
 	pNewMat->Initialize(m_pWhiteTexture->Resource(), m_pNormalTexture->Resource());
 
@@ -98,6 +115,7 @@ Material* MaterialManager::AddMaterial(string materialName, OUT bool& bExist, Sh
 
 Material* MaterialManager::AddMaterial(std::string materialName, ShaderKinds shaderType)
 {
+	//bExistを使用しない
 	bool temp;
 	return AddMaterial(materialName, temp, shaderType);
 }
@@ -133,8 +151,14 @@ Material* MaterialManager::AddMaterialWithShapeData(std::string materialName, OU
 
 Material* MaterialManager::AddMaterialWithShapeData(std::string materialName, OUT UINT& index)
 {
+	//bExistを使用しない
 	bool temp;
 	return AddMaterialWithShapeData(materialName, temp, index);
+}
+
+bool MaterialManager::IsExistMaterialName(std::string materialName) const
+{
+	return m_materials.find(materialName) != m_materials.end();
 }
 
 void MaterialManager::SetHeap()

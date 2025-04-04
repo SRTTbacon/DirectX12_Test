@@ -6,7 +6,7 @@ class AnimationManager
 {
 public:
 	//アニメーションをロード
-	Animation LoadAnimation(std::string animFilePath);
+	Animation* LoadAnimation(std::string animFilePath);
 
 private:
 	//ロード済みのアニメーション情報を格納

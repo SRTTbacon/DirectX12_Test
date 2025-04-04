@@ -19,21 +19,39 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Game.cpp" />
+    <ClCompile Include="Source\Object\FileSystem\HCSFileSystem.cpp" />
+    <ClCompile Include="Source\Object\Game\Opening\TextSystem\SpecialTextAnimation.cpp" />
+    <ClCompile Include="Source\Object\GUI\GUIAnimation.cpp" />
+    <ClCompile Include="Source\Object\GUI\GUILayout.cpp" />
+    <ClCompile Include="Source\Object\Terrain\Terrain.cpp" />
+    <ClCompile Include="Source\Object\Title\TitleBack.cpp" />
+    <ClCompile Include="Source\Object\Title\TitleUI.cpp" />
+    <ClCompile Include="Source\Scene\SceneClear\SceneClear.cpp" />
+    <ClCompile Include="Source\Scene\SceneGameover\SceneGameover.cpp" />
+    <ClCompile Include="Source\Scene\SceneGame\SceneGame.cpp" />
+    <ClCompile Include="Source\Scene\SceneInit\SceneInit.cpp" />
+    <ClCompile Include="Source\Scene\SceneTitle\SceneTitle.cpp" />
     <ClCompile Include="Source\Scene\Scene\Scene.cpp" />
     <ClCompile Include="Source\System\Engine\Camera\Camera.cpp" />
     <ClCompile Include="Source\System\Engine\Core\BinaryFile\BinaryCompression.cpp" />
     <ClCompile Include="Source\System\Engine\Core\BinaryFile\BinaryReader.cpp" />
     <ClCompile Include="Source\System\Engine\Core\BinaryFile\BinaryWriter.cpp" />
+    <ClCompile Include="Source\System\Engine\Core\DDSTextureLoader\DDSTextureLoader.cpp" />
     <ClCompile Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap2.cpp" />
+    <ClCompile Include="Source\System\Engine\Core\Exception\DxSystemException.cpp" />
     <ClCompile Include="Source\System\Engine\Core\Hash\xxhash.cpp" />
+    <ClCompile Include="Source\System\Engine\Core\PostProcess\PostProcessManager.cpp" />
     <ClCompile Include="Source\System\Engine\Core\Raytracing\RaytracingProcess.cpp" />
+    <ClCompile Include="Source\System\Engine\Core\ResourceCopy\ResourceCopy.cpp" />
+    <ClCompile Include="Source\System\Engine\Effects\Effect.cpp" />
+    <ClCompile Include="Source\System\Engine\Effects\EffectManager.cpp" />
     <ClCompile Include="Source\System\Engine\Engine.cpp" />
     <ClCompile Include="Source\System\Engine\Core\PipelineState\PipelineState.cpp" />
     <ClCompile Include="Source\System\Engine\Core\RootSignature\RootSignature.cpp" />
     <ClCompile Include="Source\System\Engine\Core\Texture2D\Texture2D.cpp" />
     <ClCompile Include="Source\System\Engine\Input\Input.cpp" />
     <ClCompile Include="Source\System\Engine\Lights\DirectionalLight.cpp" />
-    <ClCompile Include="Source\System\Engine\Lights\LightTransform.cpp" />
     <ClCompile Include="Source\System\Engine\Lights\ZShadow.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Animation\Animation.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Animation\AnimationManager.cpp" />
@@ -44,30 +62,70 @@
     <ClCompile Include="Source\System\Engine\Model\Material\MaterialManager.cpp" />
     <ClCompile Include="Source\System\Engine\Model\Model.cpp" />
     <ClCompile Include="Source\System\Engine\Model\ModelManager.cpp" />
+    <ClCompile Include="Source\System\Engine\Model\Transform\Transform.cpp" />
+    <ClCompile Include="Source\System\Engine\Physics\CharacterPhysics\HairPhysicsBone.cpp" />
     <ClCompile Include="Source\System\Engine\Physics\PhysXManager.cpp" />
-    <ClCompile Include="Source\System\Engine\SoundSystem\SoundSystem.cpp" />
+    <ClCompile Include="Source\System\Engine\SkyBox\SkyBox.cpp" />
+    <ClCompile Include="Source\System\Engine\SoundSystem\BassSoundSystem.cpp" />
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkDefaultIOHookDeferred.cpp" />
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkDefaultLowLevelIODispatcher.cpp" />
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkFileLocationBase.cpp" />
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkFilePackage.cpp" />
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkFilePackageLUT.cpp" />
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkGeneratedSoundBanksResolver.cpp" />
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkJobWorkerMgr.cpp" />
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkMultipleFileLocation.cpp" />
+    <ClCompile Include="Source\System\Engine\SoundSystem\Core\AkPlatformProfilerHooks.cpp" />
+    <ClCompile Include="Source\System\Engine\SoundSystem\WwiseSoundSystem.cpp" />
+    <ClCompile Include="Source\System\Engine\UI\Core\FontManager\Font.cpp" />
+    <ClCompile Include="Source\System\Engine\UI\Core\FontManager\FontManager.cpp" />
+    <ClCompile Include="Source\System\Engine\UI\Core\UIElement.cpp" />
+    <ClCompile Include="Source\System\Engine\UI\Core\UIText.cpp" />
+    <ClCompile Include="Source\System\Engine\UI\Core\UITexture.cpp" />
+    <ClCompile Include="Source\System\Engine\UI\UIManager.cpp" />
+    <ClCompile Include="Source\System\Library\LZ4\lz4.cpp" />
     <ClCompile Include="Source\System\Main\Main.cpp" />
     <ClCompile Include="Source\System\Main\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Game.h" />
     <ClInclude Include="Source\GameBase.h" />
+    <ClInclude Include="Source\KeyString.h" />
+    <ClInclude Include="Source\Object\FileSystem\HCSFileSystem.h" />
+    <ClInclude Include="Source\Object\Game\Opening\TextSystem\SpecialTextAnimation.h" />
+    <ClInclude Include="Source\Object\GUI\GUIAnimation.h" />
+    <ClInclude Include="Source\Object\GUI\GUILayout.h" />
+    <ClInclude Include="Source\Object\Terrain\Terrain.h" />
+    <ClInclude Include="Source\Object\Title\TitleBack.h" />
+    <ClInclude Include="Source\Object\Title\TitleUI.h" />
+    <ClInclude Include="Source\Scene\SceneClear\SceneClear.h" />
+    <ClInclude Include="Source\Scene\SceneGameover\SceneGameover.h" />
+    <ClInclude Include="Source\Scene\SceneGame\SceneGame.h" />
+    <ClInclude Include="Source\Scene\SceneInit\SceneInit.h" />
+    <ClInclude Include="Source\Scene\SceneTitle\SceneTitle.h" />
     <ClInclude Include="Source\Scene\Scene\Scene.h" />
     <ClInclude Include="Source\System\ComPtr.h" />
     <ClInclude Include="Source\System\Engine\Camera\Camera.h" />
     <ClInclude Include="Source\System\Engine\Core\BinaryFile\BinaryCompression.h" />
     <ClInclude Include="Source\System\Engine\Core\BinaryFile\BinaryReader.h" />
     <ClInclude Include="Source\System\Engine\Core\BinaryFile\BinaryWriter.h" />
+    <ClInclude Include="Source\System\Engine\Core\Color.h" />
+    <ClInclude Include="Source\System\Engine\Core\DDSTextureLoader\DDSTextureLoader.h" />
     <ClInclude Include="Source\System\Engine\Core\DescriptorHeap\DescriptorHeap2.h" />
+    <ClInclude Include="Source\System\Engine\Core\Exception\DxSystemException.h" />
     <ClInclude Include="Source\System\Engine\Core\Hash\xxhash.h" />
+    <ClInclude Include="Source\System\Engine\Core\PostProcess\PostProcessManager.h" />
     <ClInclude Include="Source\System\Engine\Core\Raytracing\RaytracingProcess.h" />
+    <ClInclude Include="Source\System\Engine\Core\ResourceCopy\ResourceCopy.h" />
     <ClInclude Include="Source\System\Engine\Core\XMFLOATHelper.h" />
+    <ClInclude Include="Source\System\Engine\Effects\Effect.h" />
+    <ClInclude Include="Source\System\Engine\Effects\EffectManager.h" />
     <ClInclude Include="Source\System\Engine\Engine.h" />
     <ClInclude Include="Source\System\Engine\Core\PipelineState\PipelineState.h" />
     <ClInclude Include="Source\System\Engine\Core\RootSignature\RootSignature.h" />
     <ClInclude Include="Source\System\Engine\Core\Texture2D\Texture2D.h" />
     <ClInclude Include="Source\System\Engine\Input\Input.h" />
     <ClInclude Include="Source\System\Engine\Lights\DirectionalLight.h" />
-    <ClInclude Include="Source\System\Engine\Lights\LightTransform.h" />
     <ClInclude Include="Source\System\Engine\Lights\ZShadow.h" />
     <ClInclude Include="Source\System\Engine\Model\Animation\Animation.h" />
     <ClInclude Include="Source\System\Engine\Model\Animation\AnimationManager.h" />
@@ -77,13 +135,49 @@
     <ClInclude Include="Source\System\Engine\Model\Material\Material.h" />
     <ClInclude Include="Source\System\Engine\Model\Material\MaterialManager.h" />
     <ClInclude Include="Source\System\Engine\Model\Model.h" />
+    <ClInclude Include="Source\System\Engine\Model\Mesh.h" />
     <ClInclude Include="Source\System\Engine\Model\ModelManager.h" />
+    <ClInclude Include="Source\System\Engine\Model\Transform\Transform.h" />
+    <ClInclude Include="Source\System\Engine\Physics\CharacterPhysics\HairPhysicsBone.h" />
     <ClInclude Include="Source\System\Engine\Physics\PhysXManager.h" />
-    <ClInclude Include="Source\System\Engine\SoundSystem\SoundSystem.h" />
+    <ClInclude Include="Source\System\Engine\SkyBox\SkyBox.h" />
+    <ClInclude Include="Source\System\Engine\SoundSystem\BassSoundSystem.h" />
+    <ClInclude Include="Source\System\Engine\SoundSystem\WwiseSoundSystem.h" />
+    <ClInclude Include="Source\System\Engine\UI\Core\FontManager\Font.h" />
+    <ClInclude Include="Source\System\Engine\UI\Core\FontManager\FontManager.h" />
+    <ClInclude Include="Source\System\Engine\UI\Core\UIElement.h" />
+    <ClInclude Include="Source\System\Engine\UI\Core\UIText.h" />
+    <ClInclude Include="Source\System\Engine\UI\Core\UITexture.h" />
+    <ClInclude Include="Source\System\Engine\UI\UIManager.h" />
+    <ClInclude Include="Source\System\Library\LZ4\lz4.h" />
     <ClInclude Include="Source\System\Main\Main.h" />
     <ClInclude Include="Source\System\Main\Utility.h" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Source\System\Shader\Grass\GrassPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\Grass\GrassVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\PostProcess\PostProcessNoisePS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\PostProcess\PostProcessVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
     <FxCompile Include="Source\System\Shader\PrimitivePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
@@ -91,6 +185,8 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pixel</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pixel</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
     </FxCompile>
     <FxCompile Include="Source\System\Shader\PrimitiveVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
@@ -99,14 +195,8 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vert</EntryPointName>
-    </FxCompile>
-    <FxCompile Include="Source\System\Shader\ShadowPS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vert</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
     </FxCompile>
     <FxCompile Include="Source\System\Shader\ShadowVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
@@ -115,6 +205,32 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\SkyBox\SkyBoxPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\SkyBox\SkyBoxVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\TerrainPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pixel</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pixel</EntryPointName>
     </FxCompile>
     <FxCompile Include="Source\System\Shader\TexturePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
@@ -126,6 +242,7 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pixel</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pixel</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
     </FxCompile>
     <FxCompile Include="Source\System\Shader\BoneVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
@@ -139,7 +256,7 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vert</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vert</EntryPointName>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
     </FxCompile>
     <FxCompile Include="Source\System\Shader\ToonPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
@@ -147,6 +264,24 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\UI\UITexturePS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Source\System\Shader\UI\UITextureVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
@@ -240,17 +375,21 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>Library\WinPixEventRuntime\Include;Library\PhysX\Include;Library\Zstandard\Include;Library\Bass\Include;Library\DirectXTex\Include;Library\assimp\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Library\Wwise\Include;Library\FreeType\Include;Library\Effekseer\Include\EffekseerSoundXAudio2;Library\Effekseer\Include\EffekseerRendererDX12;Library\Effekseer\Include\3rdParty;Library\Effekseer\Include\Effekseer;Library\WinPixEventRuntime\Include;Library\PhysX\Include;Library\Zstandard\Include;Library\Bass\Include;Library\DirectXTex\Include;Library\assimp\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Library\WinPixEventRuntime\lib;Library\Zstandard\lib\$(Configuration);Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\PhysX\$(Configuration);Library\assimp\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Library\Wwise\lib\$(Configuration);Library\FreeType\lib\$(Configuration);Library\Effekseer\lib\$(Configuration);Library\WinPixEventRuntime\lib;Library\Zstandard\lib\$(Configuration);Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\PhysX\$(Configuration);Library\assimp\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <DelayLoadDLLs>assimp-vc143-mtd.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll;PhysX_64.dll;PhysXCommon_64.dll;PhysXFoundation_64.dll</DelayLoadDLLs>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;winmm.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;libzstd_static.lib;PhysX_64.lib;PhysXCommon_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;WinPixEventRuntime.lib</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;winmm.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;libzstd_static.lib;PhysX_64.lib;PhysXCommon_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;Effekseerd.lib;EffekseerRendererDX12d.lib;EffekseerSoundXAudio2d.lib;LLGId.lib;freetype.lib;AkSoundEngine.lib;AkMemoryMgr.lib;AkStreamMgr.lib;AkMusicEngine.lib;AkVorbisDecoder.lib;CommunicationCentral.lib</AdditionalDependencies>
+      <AdditionalOptions>/PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <FxCompile>
+      <ShaderModel>5.1</ShaderModel>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -258,19 +397,23 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;AK_OPTIMIZED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>Library\Zstandard\Include;Library\Bass\Include;Library\DirectXTex\Include;LibraryBulletPhysics\Include;Library\assimp\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Library\Wwise\Include;Library\FreeType\Include;Library\Effekseer\Include\EffekseerRendererDX12;Library\Effekseer\Include\EffekseerSoundXAudio2;Library\Effekseer\Include\3rdParty;Library\Effekseer\Include\Effekseer;Library\PhysX\Include;Library\Zstandard\Include;Library\Bass\Include;Library\DirectXTex\Include;Library\assimp\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\assimp\$(Configuration)</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>assimp-vc143-mt.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll</DelayLoadDLLs>
-      <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>Library\Wwise\lib\$(Configuration);Library\FreeType\lib\$(Configuration);Library\Effekseer\lib\$(Configuration);Library\PhysX\$(Configuration);Library\Zstandard\lib\$(Configuration);Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\assimp\$(Configuration)</AdditionalLibraryDirectories>
+      <DelayLoadDLLs>assimp-vc143-mt.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll;PhysX_64.dll;PhysXCommon_64.dll;PhysXFoundation_64.dll</DelayLoadDLLs>
+      <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies);winmm.lib;bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;libzstd_static.lib;PhysX_64.lib;PhysXCommon_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;Effekseer.lib;EffekseerRendererDX12.lib;EffekseerSoundXAudio2.lib;LLGI.lib;freetype.lib;AkMemoryMgr.lib;AkSoundEngine.lib;AkStreamMgr.lib;AkMusicEngine.lib;AkVorbisDecoder.lib</AdditionalDependencies>
     </Link>
+    <FxCompile>
+      <ShaderModel>5.1</ShaderModel>
+    </FxCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -5,14 +5,20 @@
 #include <filesystem>
 
 #include "Lights\ZShadow.h"
-
 #include "Input\\Input.h"
-
-#include "SoundSystem\\SoundSystem.h"
+#include "SoundSystem\\BassSoundSystem.h"
+#include "SoundSystem\\WwiseSoundSystem.h"
+#include "SkyBox\\SkyBox.h"
+#include "Effects\\EffectManager.h"
+#include "UI\\UIManager.h"
 
 #include "Model\\Animation\\AnimationManager.h"
 #include "Model\\ModelManager.h"
 #include "Model\\Character.h"
+
+#include "Core\\Exception\\DxSystemException.h"
+#include "Core\\ResourceCopy\\ResourceCopy.h"
+#include "Core\\PostProcess\\PostProcessManager.h"
 
 #include <pix3.h>
 
@@ -24,17 +30,19 @@ public:
 	Engine(HWND hwnd);
 	~Engine();
 
-	void Release();
-
 	//エンジン初期化
-	bool Init(UINT windowWidth, UINT windowHeight);
+	bool Init(int windowWidth, int windowHeight);
 
 	Character* AddCharacter(std::string modelFile);
 	Model* AddModel(std::string modelFile);
 
 	//描画の開始処理
-	void BeginRender();
+	void Begin3DRender();
+	//3Dを描画
 	void ModelRender();
+	//2Dを描画
+	void Begin2DRender();
+	void ApplyPostProcess();
 	//描画の終了処理
 	void EndRender();
 
@@ -42,67 +50,88 @@ public:
 	void Update();
 	void LateUpdate();
 
+	void SetEnablePostProcess(bool value);
+
 	void ResetViewportAndScissor();
 
 	//キー操作をフォーカスがない状態でも受け付けるかどうかを設定
 	void SetKeyResponseUnFocus(bool bCanResponse);
 
+	//バックカラーを設定
+	void SetClearColor(DXGI_RGBA clearColor);
+
+	//ウィンドウのスタイルを変更
+	//引数 : WindowMode モード, SIZE ウィンドウサイズ
+	//※windowSizeはWindowMode = WindowNormalのみ指定
+	void SetWindowMode(WindowMode windowMode, _In_opt_ SIZE* windowSize);
+
 	//ファイルからアニメーションをロード
 	//既にロード済み
-	Animation GetAnimation(std::string animFilePath);
+	Animation* GetAnimation(std::string animFilePath);
 
 public: //ゲッター関数
 	//マウスの状態を取得
-	BYTE GetMouseState(BYTE keyCode);
+	BYTE GetMouseState(BYTE keyCode) const;
 	//マウスのボタン状態を取得 (押した瞬間のみ)
 	BYTE GetMouseStateSync(BYTE keyCode);
+	//マウスのボタン状態を取得 (離した瞬間のみ)
+	BYTE GetMouseStateRelease(BYTE keyCode);
+
 	//マウスの移動量を取得
-	POINT GetMouseMove();
+	POINT GetMouseMove() const;
+	//マウス座標を取得
+	POINT GetMousePosition() const;
+
 	//キーの状態を取得
 	bool GetKeyState(UINT key);
 	bool GetKeyStateSync(UINT key);
 
+	inline HWND GetHWND() const { return m_hWnd; }
+
 	//エンジンのデバイス
-	inline ID3D12Device6* GetDevice()
-	{
-		return m_pDevice.Get();
-	}
+	inline ID3D12Device6* GetDevice() const { return m_pDevice.Get(); }
 
 	//コマンドリスト
-	inline ID3D12GraphicsCommandList* GetCommandList()
-	{
-		return m_pCommandList.Get();
-	}
+	inline ID3D12GraphicsCommandList4* GetCommandList() const { return m_pCommandList.Get(); }
 
-	//サウンドシステム
-	inline SoundSystem* GetSoundSystem()
-	{
-		return &m_soundSystem;
-	}
+	//Bass Audio Library - サウンドシステム
+	inline BassSoundSystem* GetBassSoundSystem() { return &m_bassSoundSystem; }
+
+	//Wwise - サウンドシステム
+	inline WwiseSoundSystem* GetWwiseSoundSystem() { return &m_wwiseSoundSystem; }
 
 	//ディレクショナルライト
-	inline DirectionalLight* GetDirectionalLight()
-	{
-		return &m_directionalLight;
-	}
+	inline DirectionalLight* GetDirectionalLight() { return &m_directionalLight; }
 
 	//カメラを取得
-	inline Camera* GetCamera()
-	{
-		return &m_camera;
-	}
+	inline Camera* GetCamera() { return &m_camera; }
+
+	//マテリアルシステム
+	inline MaterialManager* GetMaterialManager() { return &m_materialManager; }
+
+	//エフェクトシステム
+	inline EffectManager* GetEffectManager() { return &m_effectManager; }
+
+	//スカイボックス
+	inline SkyBox* GetSkyBox() { return &m_skyBox; }
+
+	//影
+	inline ZShadow* GetZShadow() { return &m_zShadow; }
+
+	//UIシステム
+	inline UIManager* GetUIManager() { return &m_uiManager; }
 
 	//トリプルバッファリングの現在のインデックス
-	inline UINT CurrentBackBufferIndex() const
-	{
-		return m_CurrentBackBufferIndex;
-	}
+	inline UINT CurrentBackBufferIndex() const { return m_CurrentBackBufferIndex; }
+
+	inline bool GetIsPostProcessEnabled() const { return m_bEnablePostProcess; }
 
 	//前回のフレームから何秒経過したかを取得
-	inline float GetFrameTime() const
-	{
-		return m_frameTime;
-	}
+	inline float GetFrameTime() const { return m_frameTime; }
+
+	inline DXGI_RGBA GetClearColor() const { return m_clearColor; }
+
+	inline SIZE GetWindowSize() const { return m_windowSize; }
 
 private: //DirectX12の初期化
 	//デバイスを作成
@@ -120,10 +149,11 @@ private: //DirectX12の初期化
 	//シザー矩形を生成
 	void CreateScissorRect();
 
+	//描画完了を待つ処理
+	void WaitRender();
+
 private: //描画に使うDirectX12のオブジェクト
 	HWND m_hWnd;
-	UINT m_FrameBufferWidth = 0;
-	UINT m_FrameBufferHeight = 0;
 	UINT m_CurrentBackBufferIndex = 0;
 
 	ComPtr<ID3D12Device6> m_pDevice = nullptr;		//デバイス
@@ -133,9 +163,9 @@ private: //描画に使うDirectX12のオブジェクト
 	ComPtr<ID3D12CommandAllocator> m_pAllocator = nullptr;	//コマンドアロケーター
 	ComPtr<ID3D12GraphicsCommandList4> m_pCommandList = nullptr; //コマンドリスト
 	ComPtr<ID3D12Debug1> m_pDebugController;			//デバッグコントローラー
+	ComPtr<ID3D12Fence> m_pFence = nullptr;		//フェンス
 
 	HANDLE m_fenceEvent = nullptr;				//フェンスで使うイベント
-	ComPtr<ID3D12Fence> m_pFence = nullptr;		//フェンス
 	UINT64 m_fenceValue[FRAME_BUFFER_COUNT];	//フェンスの値（トリプルバッファリング用に3個）
 	D3D12_VIEWPORT m_Viewport;					//ビューポート
 	D3D12_RECT m_Scissor;						//シザー矩形
@@ -153,6 +183,7 @@ private: //描画に使うオブジェクト
 	ComPtr<ID3D12DescriptorHeap> m_pRtvHeap = nullptr;
 	//レンダーターゲット（トリプルバッファリング用に3個）
 	ComPtr<ID3D12Resource> m_pRenderTargets[FRAME_BUFFER_COUNT] = { nullptr };
+	ComPtr<ID3D12Resource> m_intermediateRenderTargets[FRAME_BUFFER_COUNT] = { nullptr };
 
 	//深度ステンシルのディスクリプターサイズ
 	UINT m_DsvDescriptorSize = 0;
@@ -160,22 +191,28 @@ private: //描画に使うオブジェクト
 	ComPtr<ID3D12DescriptorHeap> m_pDsvHeap = nullptr;
 	ComPtr<ID3D12Resource> m_pDepthStencilBuffer = nullptr;
 
-	ModelManager m_modelManager;
+	D3D12_RESOURCE_STATES m_beforeResourceState[FRAME_BUFFER_COUNT];
+
+	AnimationManager m_animManager;
+	EffectManager m_effectManager;
 	MaterialManager m_materialManager;
+	ModelManager m_modelManager;
+	SkyBox m_skyBox;
+	BassSoundSystem m_bassSoundSystem;
+	WwiseSoundSystem m_wwiseSoundSystem;
+	UIManager m_uiManager;
 	ZShadow m_zShadow;
 
-private: //描画ループで使用するもの
-	//描画完了を待つ処理
-	void WaitRender();
+	PostProcessManager m_postProcessManager;
 
 private: //プライベート変数
 	unsigned long m_initTime;
 	unsigned long m_sceneTimeMS;
 	float m_frameTime;
+	bool m_bEnablePostProcess;
 
-	AnimationManager animManager;
-
-	SoundSystem m_soundSystem;
+	SIZE m_windowSize;
+	DXGI_RGBA m_clearColor;
 
 	DirectionalLight m_directionalLight;
 

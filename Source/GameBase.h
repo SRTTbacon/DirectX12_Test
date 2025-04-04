@@ -1,18 +1,48 @@
 #pragma once
-#include "System\\ComPtr.h"
 
-constexpr int FRAME_BUFFER_COUNT = 3;
+#include "System\\ComPtr.h"
+#include "System\\Engine\\Engine.h"
+
+#include "System\\Engine\\Core\\Color.h"
+
+#include "KeyString.h"
+
+#include "System\\Engine\\Core\\XMFLOATHelper.h"
+
+//-----------------------------------------------------------------------------
+// 複数のシーンで共用するデータ
+//-----------------------------------------------------------------------------
+namespace Common
+{
+	//-----------------------------------------------------------------------------
+	// シーンを追加した際に定数を追加します。
+	//-----------------------------------------------------------------------------
+	enum {
+		SCENE_INIT,
+		SCENE_TITLE,
+		SCENE_GAME,
+		SCENE_CLEAR,
+		SCENE_GAMEOVER,
+		SCENE_EXIT,
+	};
+
+	//-----------------------------------------------------------------------------
+	// 複数のシーンで共用するデータを構造体にまとめます。
+	//-----------------------------------------------------------------------------
+	struct CommonData {
+	};
+}
 
 namespace KeyString
 {
-	constexpr const wchar_t* SHADER_BONE_VERTEX = L"x64\\Debug\\BoneVS.cso";
-	constexpr const wchar_t* SHADER_TEXTURE_PIXEL = L"x64\\Debug\\ToonPS.cso";
-	constexpr const wchar_t* SHADER_SHAPE_CONVERT = L"x64\\Debug\\ConvertShapeData.cso";
-	constexpr const wchar_t* SHADER_PRIMITIVE_PIXEL = L"x64\\Debug\\PrimitivePS.cso";
-	constexpr const wchar_t* SHADER_PRIMITIVE_VERTEX = L"x64\\Debug\\PrimitiveVS.cso";
-	constexpr const wchar_t* SHADER_SHADOW_VERTEX = L"x64\\Debug\\ShadowVS.cso";
+	constexpr const char* FONT_NOTOSERIF = "Resource\\Fonts\\NotoSerifJP-Medium.ttf";
 
-	constexpr const wchar_t* SHADER_RAYTRACING_RAYGEN = L"x64\\Debug\\RayGenShader.cso";
-	constexpr const wchar_t* SHADER_RAYTRACING_MISS = L"x64\\Debug\\MissShader.cso";
-	constexpr const wchar_t* SHADER_RAYTRACING_HIT = L"x64\\Debug\\HitShader.cso";
+	constexpr const char* SOUND_INIT_BNK = "Resource\\Sounds\\Init.bnk";
+	constexpr const char* SOUND_BGM_BNK = "Resource\\Sounds\\BGM.bnk";
+	constexpr const char* SOUND_SE_BNK = "Resource\\Sounds\\SE.bnk";
+
+	constexpr const char* SOUND_BGM_TITLE = "BGM_Title";
+
+	constexpr const char* SOUND_SE_TITLE_NOISE = "Title_Noise";
+	constexpr const char* SOUND_SE_TITLE_BLACKOUT = "Title_BlackOut";
 }

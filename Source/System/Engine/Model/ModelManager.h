@@ -9,6 +9,8 @@
 class ModelManager
 {
 public:
+	~ModelManager();
+
 	//•`‰æ‚³‚¹‚éƒ‚ƒfƒ‹‚ð’Ç‰Á
 	void AddModel(Model* pModel);
 

@@ -1,6 +1,8 @@
 #pragma once
 #include <PxPhysicsAPI.h>
 
+//---------ŒŸØ’†‚Ì‚½‚ßg—p•s‰Â---------
+
 using namespace physx;
 
 class PhysXManager
@@ -8,9 +10,11 @@ class PhysXManager
 public:
 	PhysXManager();
 
-	void SetFPS(float frameRate);
+	void Update(float deltaTime);
 
-	void Update();
+public:
+	inline PxPhysics* GetPhysics() { return m_pPhysics; }
+	inline PxScene* GetScene() { return m_pScene; }
 
 private:
 	PxDefaultAllocator m_allocator;
@@ -22,6 +26,4 @@ private:
 	PxPvd* m_pPvd;
 
 	PxPvdSceneClient* m_pPvdClient;
-
-	float m_frameRate;
 };

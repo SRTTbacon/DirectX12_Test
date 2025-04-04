@@ -63,6 +63,13 @@ void BinaryWriter::Write(const DirectX::XMMATRIX& matrix)
     }
 }
 
+void BinaryWriter::Write(const DirectX::XMFLOAT3& value)
+{
+    Write(value.x);
+    Write(value.y);
+    Write(value.z);
+}
+
 void BinaryWriter::Write(const unsigned char byte)
 {
     char c = byte;
@@ -96,6 +103,16 @@ std::vector<char> BinaryWriter::GetBuffer() const
     }
     else {
 		return std::vector<char>();
+    }
+}
+
+size_t BinaryWriter::GetNowPointer()
+{
+    if (bMemory) {
+        return memoryStream.tellp();
+    }
+    else {
+        return outputStream.tellp();
     }
 }
 

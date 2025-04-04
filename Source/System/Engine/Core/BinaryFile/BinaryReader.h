@@ -7,7 +7,7 @@
 class BinaryReader
 {
 public:
-	enum SetSeek
+	enum SeekType
 	{
 		Begin,
 		Current,
@@ -16,13 +16,18 @@ public:
 
 	//コンストラクタ
 	//引数 : ファイルパス
-	BinaryReader(const std::string& filePath);
-	BinaryReader(std::vector<char>& buffer);
+	BinaryReader(const std::string& filePath, UINT maxReadKB = 1024 * 10);
+	BinaryReader(std::vector<char>& buffer, UINT maxReadKB = 1024 * 10);
 
 	~BinaryReader();
 
 	//ファイルから128バイトだけ読み取り、XMMATRIX型に入れる
 	DirectX::XMMATRIX ReadMatrix();
+
+	DirectX::XMFLOAT2 ReadFloat2();
+
+	//ファイルから12バイトだけ読み取り、XMFLOAT3型に入れる
+	DirectX::XMFLOAT3 ReadFloat3();
 
 	//ファイルから8バイトだけ読み取り、double型に入れる
 	double ReadDouble();
@@ -60,10 +65,13 @@ public:
 
 	//指定した位置からseekLengthバイトだけ進める
 	//引数 ; スキップするサイズ (バイト単位)
-	void Seek(UINT seekLength);
+	void Seek(UINT seekLength, SeekType seekType);
 
 	//バイナリファイルを閉じる
 	void Close();
+
+public:
+	inline bool GetIsOpen() const { return (hFile != nullptr && hFile != INVALID_HANDLE_VALUE); }
 
 private:
 	HANDLE hFile;
@@ -72,7 +80,7 @@ private:
 	size_t bufferIndex = 0;
 	size_t bufferSize = 0;
 	bool bMemory;
-	static const size_t DEFAULT_BUFFER_SIZE = 1024 * 1024; //1MBずつ読み取る
+	UINT readBufferSize = 1024 * 1024 * 10; //10MBずつ読み取る
 
 	//1度に1024KBファイルから読み取り、メモリに保存
 	bool FillBuffer();

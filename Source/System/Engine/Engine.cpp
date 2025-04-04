@@ -1,43 +1,35 @@
 #include "Engine.h"
-#include <d3d12.h>
-#include <stdio.h>
-#include <Windows.h>
 
 Engine* g_Engine = nullptr;
 
 Engine::Engine(HWND hwnd)
-	: m_modelManager(ModelManager())
-	, m_camera(Camera())
-	, m_Scissor(D3D12_RECT())
+	: m_Scissor(D3D12_RECT())
 	, m_Viewport(D3D12_VIEWPORT())
+	, m_clearColor(DXGI_RGBA(0.0f, 0.0f, 0.0f, 1.0f))
 	, m_fenceValue{0}
 	, m_frameTime(0.0f)
 	, m_hWnd(hwnd)
 	, m_initTime(0)
-	, m_directionalLight(DirectionalLight())
 	, m_keyInput(hwnd)
-	, m_soundSystem(hwnd)
+	, m_bassSoundSystem(hwnd)
 	, m_sceneTimeMS(0)
-	, m_zShadow(ZShadow())
+	, m_windowSize(0, 0)
+	, m_bEnablePostProcess(false)
 {
 }
 
 Engine::~Engine()
 {
+	m_wwiseSoundSystem.Dispose();
 }
 
-void Engine::Release()
+bool Engine::Init(int windowWidth, int windowHeight)
 {
-	m_pCommandList->Close();
-}
+	m_windowSize = SIZE(windowWidth, windowHeight);
 
-bool Engine::Init(UINT windowWidth, UINT windowHeight)
-{
-	m_FrameBufferWidth = windowWidth;
-	m_FrameBufferHeight = windowHeight;
-
-#ifndef _DEBUG
+#ifdef _DEBUG
 	//デバッグレイヤーの設定
+	
 	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_pDebugController)))) {
 		m_pDebugController->SetEnableGPUBasedValidation(TRUE);
 		m_pDebugController->SetEnableSynchronizedCommandQueueValidation(TRUE);
@@ -45,6 +37,10 @@ bool Engine::Init(UINT windowWidth, UINT windowHeight)
 		printf("デバッグレイヤーを有効化しました。\n");
 	}
 #endif
+
+	//ビューポートとシザー矩形を生成
+	CreateViewPort();
+	CreateScissorRect();
 
 	if (!CreateDevice())
 	{
@@ -87,9 +83,7 @@ bool Engine::Init(UINT windowWidth, UINT windowHeight)
 		return false;
 	}
 
-	//ビューポートとシザー矩形を生成
-	CreateViewPort();
-	CreateScissorRect();
+	g_resourceCopy->Initialize(m_pDevice.Get());
 
 	//FrameTime計測用
 	m_initTime = timeGetTime();
@@ -99,8 +93,23 @@ bool Engine::Init(UINT windowWidth, UINT windowHeight)
 	//ディレクショナルライトの初期化
 	m_directionalLight.Init(m_pDevice.Get());
 
+	//影を初期化
 	m_zShadow.Init(m_pDevice.Get(), m_pCommandList.Get());
+
+	//マテリアル管理クラスを初期化
 	m_materialManager.Initialize(m_pDevice.Get(), m_pCommandList.Get(), &m_directionalLight, m_zShadow.GetZBuffer());
+
+	//エフェクト管理クラスを初期化
+	m_effectManager.Initialize(m_pDevice.Get(), m_pQueue.Get(), m_pCommandList.Get(), & m_camera, FRAME_BUFFER_COUNT, 8000);
+
+	//スカイボックスを初期化
+	m_skyBox.Initialize(m_pDevice.Get(), m_pCommandList.Get(), &m_camera, &m_materialManager);
+
+	//UI管理クラスを初期化
+	m_uiManager.Initialize(m_pDevice.Get(), m_pCommandList.Get(), &m_windowSize);
+
+	//ポストプロセスを初期化
+	m_postProcessManager.Initialize(m_pDevice.Get(), m_pCommandList.Get());
 
 	//コマンドを初期化してためる準備をする
 	m_pAllocator->Reset();
@@ -114,14 +123,14 @@ bool Engine::Init(UINT windowWidth, UINT windowHeight)
 
 Character* Engine::AddCharacter(std::string modelFile)
 {
-	Character* pCharacter = new Character(modelFile, m_pDevice.Get(), m_pCommandList.Get(), &m_camera, &m_directionalLight, &m_materialManager);
+	Character* pCharacter = new Character(modelFile, m_pDevice.Get(), m_pCommandList.Get(), &m_camera, &m_directionalLight, &m_materialManager, &m_frameTime);
 	m_modelManager.AddModel(pCharacter);
 	return pCharacter;
 }
 
 Model* Engine::AddModel(std::string modelFile)
 {
-	Model* pModel = new Model(m_pDevice.Get(), m_pCommandList.Get(), &m_camera, &m_directionalLight, &m_materialManager);
+	Model* pModel = new Model(m_pDevice.Get(), m_pCommandList.Get(), &m_camera, &m_directionalLight, &m_materialManager, &m_frameTime);
 	pModel->LoadModel(modelFile);
 	m_modelManager.AddModel(pModel);
 	return pModel;
@@ -184,8 +193,8 @@ bool Engine::CreateSwapChain()
 
 	//スワップチェインの生成
 	DXGI_SWAP_CHAIN_DESC desc = {};
-	desc.BufferDesc.Width = m_FrameBufferWidth;
-	desc.BufferDesc.Height = m_FrameBufferHeight;
+	desc.BufferDesc.Width = static_cast<UINT>(m_windowSize.cx);
+	desc.BufferDesc.Height = static_cast<UINT>(m_windowSize.cy);
 	desc.BufferDesc.RefreshRate.Numerator = 60;
 	desc.BufferDesc.RefreshRate.Denominator = 1;
 	desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
@@ -271,8 +280,8 @@ void Engine::CreateViewPort()
 {
 	m_Viewport.TopLeftX = 0;
 	m_Viewport.TopLeftY = 0;
-	m_Viewport.Width = static_cast<float>(m_FrameBufferWidth);
-	m_Viewport.Height = static_cast<float>(m_FrameBufferHeight);
+	m_Viewport.Width = static_cast<float>(m_windowSize.cx);
+	m_Viewport.Height = static_cast<float>(m_windowSize.cy);
 	m_Viewport.MinDepth = 0.0f;
 	m_Viewport.MaxDepth = 1.0f;
 }
@@ -280,16 +289,16 @@ void Engine::CreateViewPort()
 void Engine::CreateScissorRect()
 {
 	m_Scissor.left = 0;
-	m_Scissor.right = m_FrameBufferWidth;
+	m_Scissor.right = m_windowSize.cx;
 	m_Scissor.top = 0;
-	m_Scissor.bottom = m_FrameBufferHeight;
+	m_Scissor.bottom = m_windowSize.cy;
 }
 
 bool Engine::CreateRenderTarget()
 {
-	//RTV用のディスクリプタヒープを作成する
+	// RTV用のディスクリプタヒープを作成
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-	desc.NumDescriptors = FRAME_BUFFER_COUNT;
+	desc.NumDescriptors = FRAME_BUFFER_COUNT * 2; // フレームバッファ + 中間テクスチャ
 	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	auto hr = m_pDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(m_pRtvHeap.ReleaseAndGetAddressOf()));
@@ -298,10 +307,11 @@ bool Engine::CreateRenderTarget()
 		return false;
 	}
 
-	//ディスクリプタのサイズを取得。
+	// ディスクリプタのサイズを取得
 	m_RtvDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRtvHeap->GetCPUDescriptorHandleForHeapStart();
 
+	// スワップチェーンのバックバッファを取得
 	for (UINT i = 0; i < FRAME_BUFFER_COUNT; i++)
 	{
 		m_pSwapChain->GetBuffer(i, IID_PPV_ARGS(m_pRenderTargets[i].ReleaseAndGetAddressOf()));
@@ -309,8 +319,47 @@ bool Engine::CreateRenderTarget()
 		rtvHandle.ptr += m_RtvDescriptorSize;
 	}
 
+	// 中間テクスチャをフレーム数分作成
+	D3D12_RESOURCE_DESC desc2 = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, static_cast<UINT64>(m_Viewport.Width), static_cast<UINT>(m_Viewport.Height));
+	desc2.SampleDesc.Count = 1;
+	desc2.MipLevels = 1;
+	desc2.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+	D3D12_CLEAR_VALUE clearValue = {};
+	clearValue.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	clearValue.Color[0] = m_clearColor.r;
+	clearValue.Color[1] = m_clearColor.g;
+	clearValue.Color[2] = m_clearColor.b;
+	clearValue.Color[3] = 1.0f; // アルファを1.0に設定
+
+	CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_DEFAULT);
+	for (UINT i = 0; i < FRAME_BUFFER_COUNT; i++)
+	{
+		hr = m_pDevice->CreateCommittedResource(
+			&heapProperties,
+			D3D12_HEAP_FLAG_NONE,
+			&desc2,
+			D3D12_RESOURCE_STATE_COPY_SOURCE,
+			&clearValue,
+			IID_PPV_ARGS(&m_intermediateRenderTargets[i])
+		);
+		if (FAILED(hr)) {
+			return false;
+		}
+
+		// 中間テクスチャ用のRTVを作成
+		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+		rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+		m_pDevice->CreateRenderTargetView(m_intermediateRenderTargets[i].Get(), &rtvDesc, rtvHandle);
+		rtvHandle.ptr += m_RtvDescriptorSize;
+
+		m_beforeResourceState[i] = D3D12_RESOURCE_STATE_COPY_SOURCE;
+	}
+
 	return true;
 }
+
 bool Engine::CreateDepthStencil()
 {
 	//DSV用のディスクリプタヒープを作成する
@@ -336,8 +385,8 @@ bool Engine::CreateDepthStencil()
 	CD3DX12_RESOURCE_DESC resourceDesc(
 		D3D12_RESOURCE_DIMENSION_TEXTURE2D,
 		0,
-		m_FrameBufferWidth,
-		m_FrameBufferHeight,
+		static_cast<UINT64>(m_windowSize.cx),
+		static_cast<UINT>(m_windowSize.cy),
 		1,
 		1,
 		DXGI_FORMAT_D32_FLOAT,
@@ -373,24 +422,17 @@ bool Engine::CreateDepthStencil()
 	return true;
 }
 
-void Engine::BeginRender()
+void Engine::Begin3DRender()
 {
 	//現在のレンダーターゲットを更新
-	ID3D12Resource* pCurrentRenderTarget = m_pRenderTargets[m_CurrentBackBufferIndex].Get();
+	ID3D12Resource* pCurrentIntermediateTarget = m_intermediateRenderTargets[m_CurrentBackBufferIndex].Get();
 
 	//ビューポートとシザー矩形を設定
 	m_pCommandList->RSSetViewports(1, &m_Viewport);
 	m_pCommandList->RSSetScissorRects(1, &m_Scissor);
 
-	//現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
-	auto currentRtvHandle = m_pRtvHeap->GetCPUDescriptorHandleForHeapStart();
-	currentRtvHandle.ptr += static_cast<SIZE_T>(m_CurrentBackBufferIndex * m_RtvDescriptorSize);
-
-	//深度ステンシルのディスクリプタヒープの開始アドレス取得
-	auto currentDsvHandle = m_pDsvHeap->GetCPUDescriptorHandleForHeapStart();
-
 	//レンダーターゲットが使用可能になるまで待つ
-	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(pCurrentRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(pCurrentIntermediateTarget, m_beforeResourceState[m_CurrentBackBufferIndex], D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_pCommandList->ResourceBarrier(1, &barrier);
 }
 
@@ -404,8 +446,6 @@ void Engine::ModelRender()
 	//モデルの影の描画
 	m_zShadow.BeginMapping();
 	m_modelManager.RenderShadowMap(m_CurrentBackBufferIndex);
-	
-	ResetViewportAndScissor();
 
 	//深度マップを変更
 	D3D12_RESOURCE_BARRIER barrier = {};
@@ -415,9 +455,18 @@ void Engine::ModelRender()
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 	m_pCommandList->ResourceBarrier(1, &barrier);
+
+	ResetViewportAndScissor();
+
+	//スカイボックスを描画
+	m_skyBox.Draw();
 	
 	//モデルを描画
 	m_modelManager.RenderModel(m_pCommandList.Get(), m_CurrentBackBufferIndex);
+
+	m_effectManager.BeginRender();
+	m_effectManager.Draw();
+	m_effectManager.EndRender();
 
 	//深度マップを変更
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
@@ -425,31 +474,103 @@ void Engine::ModelRender()
 	m_pCommandList->ResourceBarrier(1, &barrier);
 }
 
+void Engine::Begin2DRender()
+{
+	m_uiManager.BeginRender();
+}
+
+void Engine::ApplyPostProcess()
+{
+	if (m_bEnablePostProcess) {
+		// 中間テクスチャをシェーダーリソースとして使用
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			m_intermediateRenderTargets[m_CurrentBackBufferIndex].Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+		);
+		m_pCommandList->ResourceBarrier(1, &barrier);
+		m_beforeResourceState[m_CurrentBackBufferIndex] = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+
+		//スワップチェーンのバックバッファを取得
+		ID3D12Resource* pCurrentRenderTarget = m_pRenderTargets[m_CurrentBackBufferIndex].Get();
+
+		//状態遷移：バックバッファをレンダーターゲットとして設定
+		barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			pCurrentRenderTarget,
+			D3D12_RESOURCE_STATE_PRESENT,
+			D3D12_RESOURCE_STATE_RENDER_TARGET
+		);
+		m_pCommandList->ResourceBarrier(1, &barrier);
+
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRtvHeap->GetCPUDescriptorHandleForHeapStart();
+		rtvHandle.ptr += static_cast<UINT64>(m_CurrentBackBufferIndex * m_RtvDescriptorSize);
+
+		m_pCommandList->OMSetRenderTargets(1, &rtvHandle, false, nullptr);
+
+		m_postProcessManager.Render(m_intermediateRenderTargets[m_CurrentBackBufferIndex].Get());
+
+		//状態遷移：バックバッファを表示状態に
+		barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			pCurrentRenderTarget,
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PRESENT
+		);
+		m_pCommandList->ResourceBarrier(1, &barrier);
+	}
+	else {
+		// 中間テクスチャをシェーダーリソースとして使用
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			m_intermediateRenderTargets[m_CurrentBackBufferIndex].Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_COPY_SOURCE
+		);
+		m_pCommandList->ResourceBarrier(1, &barrier);
+		m_beforeResourceState[m_CurrentBackBufferIndex] = D3D12_RESOURCE_STATE_COPY_SOURCE;
+
+		//スワップチェーンのバックバッファを取得
+		ID3D12Resource* pCurrentRenderTarget = m_pRenderTargets[m_CurrentBackBufferIndex].Get();
+
+		//状態遷移：バックバッファをレンダーターゲットとして設定
+		barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			pCurrentRenderTarget,
+			D3D12_RESOURCE_STATE_PRESENT,
+			D3D12_RESOURCE_STATE_COPY_DEST
+		);
+		m_pCommandList->ResourceBarrier(1, &barrier);
+
+		m_pCommandList->CopyResource(pCurrentRenderTarget, m_intermediateRenderTargets[m_CurrentBackBufferIndex].Get());
+
+		//状態遷移：バックバッファを表示状態に
+		barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			pCurrentRenderTarget,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_STATE_PRESENT
+		);
+		m_pCommandList->ResourceBarrier(1, &barrier);
+	}
+}
+
 void Engine::WaitRender()
 {
-	//描画終了待ち
 	const UINT64 currentFanceValue = m_fenceValue[m_CurrentBackBufferIndex];
 	m_pQueue->Signal(m_pFence.Get(), currentFanceValue);
 
-	//バックバッファ番号更新
 	m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
-
-	//次のフレームの描画準備がまだであれば待機する.
-	if (m_pFence->GetCompletedValue() < currentFanceValue)
-	{
-		//完了時にイベントを設定
-		HRESULT hr = m_pFence->SetEventOnCompletion(currentFanceValue, m_fenceEvent);
-		if (FAILED(hr))
-		{
-			return;
-		}
-
-		//待機処理
-		WaitForSingleObject(m_fenceEvent, INFINITE);
-
+	// GPUが描画を終えていれば即座に次のフレームへ
+	if (m_pFence->GetCompletedValue() >= currentFanceValue) {
 		m_fenceValue[m_CurrentBackBufferIndex] = currentFanceValue + 1;
+		return;
 	}
+
+	// GPUが未完了の場合は待機
+	HRESULT hr = m_pFence->SetEventOnCompletion(currentFanceValue, m_fenceEvent);
+	if (FAILED(hr)) {
+		return;
+	}
+	WaitForSingleObject(m_fenceEvent, INFINITE);
+
+	m_fenceValue[m_CurrentBackBufferIndex] = currentFanceValue + 1;
 
 #if _DEBUG
 	//PIXEndEvent(m_pCommandList.Get());
@@ -458,10 +579,7 @@ void Engine::WaitRender()
 
 void Engine::EndRender()
 {
-	//レンダーターゲットに書き込み終わるまで待つ
-	ID3D12Resource* pCurrentRenderTarget = m_pRenderTargets[m_CurrentBackBufferIndex].Get();
-	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(pCurrentRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-	m_pCommandList->ResourceBarrier(1, &barrier);
+	ApplyPostProcess();
 
 	//コマンドの記録を終了
 	m_pCommandList->Close();
@@ -481,7 +599,7 @@ void Engine::EndRender()
 	m_pCommandList->Reset(m_pAllocator.Get(), nullptr);
 }
 
-BYTE Engine::GetMouseState(BYTE keyCode)
+BYTE Engine::GetMouseState(BYTE keyCode) const
 {
 	return m_keyInput.GetMouseState(keyCode);
 }
@@ -491,9 +609,19 @@ BYTE Engine::GetMouseStateSync(BYTE keyCode)
 	return m_keyInput.GetMouseStateSync(keyCode);
 }
 
-POINT Engine::GetMouseMove()
+BYTE Engine::GetMouseStateRelease(BYTE keyCode)
+{
+	return m_keyInput.GetMouseStateRelease(keyCode);
+}
+
+POINT Engine::GetMouseMove() const
 {
 	return m_keyInput.GetMouseMove();
+}
+
+POINT Engine::GetMousePosition() const
+{
+	return m_keyInput.GetMousePosition();
 }
 
 bool Engine::GetKeyState(UINT key)
@@ -514,23 +642,41 @@ void Engine::Update()
 	DWORD nowFrameTimeMS = timeNow - m_sceneTimeMS - m_initTime;
 	//フレーム時間を秒に直す
 	m_frameTime = nowFrameTimeMS / 1000.0f;
+
+	//フリーズ対策
+	if (m_frameTime > 0.5f) {
+		m_frameTime = 0.5f;
+	}
+
 	//シーンが切り替わってからの時間(ミリ秒と秒)
 	m_sceneTimeMS = timeNow - m_initTime;
 
 	//マウスの状態を更新
-	m_keyInput.UpdateMouseState();
+	m_keyInput.Update();
 
 	//サウンドを更新
-	m_soundSystem.Update();
+	m_bassSoundSystem.Update();
+
+	//UIを更新
+	m_uiManager.Update();
 }
 
 void Engine::LateUpdate()
 {
-	m_camera.Update(&m_directionalLight);
+	m_camera.LateUpdate(&m_directionalLight);
 
-	m_directionalLight.Update();
+	m_directionalLight.LateUpdate();
 
 	m_modelManager.LateUpdate(m_CurrentBackBufferIndex);
+
+	m_skyBox.LateUpdate();
+
+	m_effectManager.LateUpdate();
+}
+
+void Engine::SetEnablePostProcess(bool value)
+{
+	m_bEnablePostProcess = value;
 }
 
 void Engine::ResetViewportAndScissor()
@@ -539,22 +685,22 @@ void Engine::ResetViewportAndScissor()
 	m_pCommandList->RSSetViewports(1, &m_Viewport);
 	m_pCommandList->RSSetScissorRects(1, &m_Scissor);
 
-	//現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
-	auto currentRtvHandle = m_pRtvHeap->GetCPUDescriptorHandleForHeapStart();
-	currentRtvHandle.ptr += static_cast<SIZE_T>(m_CurrentBackBufferIndex * m_RtvDescriptorSize);
+	//中間テクスチャ用のRTVを設定
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRtvHeap->GetCPUDescriptorHandleForHeapStart();
+	rtvHandle.ptr += static_cast<UINT64>((m_CurrentBackBufferIndex + FRAME_BUFFER_COUNT) * m_RtvDescriptorSize);
 
-	//深度ステンシルのディスクリプタヒープの開始アドレス取得
-	auto currentDsvHandle = m_pDsvHeap->GetCPUDescriptorHandleForHeapStart();
+	//深度ステンシルビューを取得
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-	//レンダーターゲットを設定
-	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, true, &currentDsvHandle);
+	//RTVとDSVを設定
+	m_pCommandList->OMSetRenderTargets(1, &rtvHandle, false, &dsvHandle);
 
-	//深度ステンシルビューをクリア
-	m_pCommandList->ClearDepthStencilView(currentDsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	//深度ステンシルをクリア
+	m_pCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-	//レンダーターゲットをクリア
-	const float clearColor[] = { 0.25f, 0.25f, 0.25f, 1.0f };
-	m_pCommandList->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
+	//中間テクスチャをクリア
+	const float clearColor[] = { m_clearColor.r, m_clearColor.g, m_clearColor.b, 1.0f };
+	m_pCommandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 }
 
 void Engine::SetKeyResponseUnFocus(bool bCanResponse)
@@ -562,10 +708,79 @@ void Engine::SetKeyResponseUnFocus(bool bCanResponse)
 	m_keyInput.m_bCanResponseUnFocus = bCanResponse;
 }
 
-Animation Engine::GetAnimation(std::string animFilePath)
+void Engine::SetClearColor(DXGI_RGBA clearColor)
+{
+	m_clearColor = clearColor;
+}
+
+void Engine::SetWindowMode(WindowMode windowMode, _In_opt_ SIZE* windowSize)
+{
+	if (windowMode == WindowMode::WindowNormal && !windowSize) {
+		printf("WindowModeがWindowNormalの場合はwindowSizeを指定する必要があります。\n");
+		return;
+	}
+
+	//ボーダーレスウィンドウに切り替え
+	LONG style = 0;
+	if (windowMode == WindowMode::WindowNormal || windowMode == WindowMode::WindowMaximum) {
+		style |= WS_OVERLAPPEDWINDOW;
+		style &= ~WS_SIZEBOX;
+	}
+	else {
+		style = WS_OVERLAPPED;
+	}
+
+	SetWindowLong(m_hWnd, GWL_STYLE, style);
+
+	//モニターのサイズを取得
+	HMONITOR hMonitor = MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
+	MONITORINFO monitorInfo = {};
+	monitorInfo.cbSize = sizeof(MONITORINFO);
+	GetMonitorInfo(hMonitor, &monitorInfo);
+
+	LONG titleBarHeight = GetSystemMetrics(SM_CYCAPTION);
+
+	LONG monitorWidth = monitorInfo.rcWork.right - monitorInfo.rcWork.left;
+	LONG monitorHeight = monitorInfo.rcWork.bottom - monitorInfo.rcWork.top;
+
+	if (windowMode == WindowMode::WindowNormal) {
+		m_windowSize.cx = std::min(windowSize->cx, monitorWidth);
+		m_windowSize.cy = std::min(windowSize->cy, monitorHeight);
+	}
+	else if (windowMode == WindowMode::WindowMaximum) {
+		m_windowSize.cx = monitorWidth;
+		m_windowSize.cy = monitorHeight - titleBarHeight;
+	}
+	else {
+		m_windowSize.cx = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
+		m_windowSize.cy = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
+	}
+
+	if (windowMode == WindowMode::WindowNormal) {
+		POINT centerPos{ 0, 0 };
+		centerPos.x = monitorWidth / 4;
+		centerPos.x = monitorHeight / 4;
+
+		//ウィンドウの位置とサイズを調整
+		SetWindowPos(m_hWnd, HWND_TOP, centerPos.x, centerPos.y, m_windowSize.cx, m_windowSize.cy, SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOACTIVATE);
+		ShowWindow(m_hWnd, SW_SHOW);
+	}
+	else {
+		SetWindowPos(m_hWnd, HWND_TOP, 0, 0, m_windowSize.cx, m_windowSize.cy, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+		ShowWindow(m_hWnd, SW_MAXIMIZE);
+	}
+
+	//スワップチェインのバッファサイズをリサイズ
+	HRESULT hr = m_pSwapChain->ResizeBuffers(0, m_windowSize.cx, m_windowSize.cy, DXGI_FORMAT_UNKNOWN, 0);
+	if (FAILED(hr)) {
+		printf("スワップチェインのリサイズに失敗しました。\n");
+	}
+}
+
+Animation* Engine::GetAnimation(std::string animFilePath)
 {
 	if (!std::filesystem::exists(animFilePath))
-		return Animation();
+		return nullptr;
 
-	return animManager.LoadAnimation(animFilePath);
+	return m_animManager.LoadAnimation(animFilePath);
 }

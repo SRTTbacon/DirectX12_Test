@@ -36,12 +36,16 @@ public:
 	void Write(const char* buffer, size_t size);
 	//マトリックスを保存
 	void Write(const DirectX::XMMATRIX& matrix);
+	//XMFLOAT3を保存
+	void Write(const DirectX::XMFLOAT3& value);
 	//1バイト文字を保存
 	void Write(const unsigned char byte);
 	//bool型を保存
 	void Write(const bool b);
 
 	std::vector<char> GetBuffer() const;
+
+	size_t GetNowPointer();
 
 	void Close();
 

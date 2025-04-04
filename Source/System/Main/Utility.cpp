@@ -1,6 +1,7 @@
 #include "Utility.h"
 
 using namespace std;
+using namespace DirectX;
 
 string UTF8ToShiftJIS(string utf8Str)
 {
@@ -90,6 +91,22 @@ string GetFileExtension(const string& filePath)
     return filePath.substr(dotPos);
 }
 
+std::wstring GetFileExtension(const std::wstring& filePath)
+{
+    //ファイルパス内で最後のドットを検索
+    size_t dotPos = filePath.find_last_of(L'.');
+    size_t slashPos = filePath.find_last_of(L"/\\");
+
+    //ドットが見つからない場合、または最後にない場合は空文字を返す
+    //また、ドットがパス区切り文字の後ろにない場合も無効
+    if (dotPos == std::wstring::npos || dotPos <= slashPos || dotPos == filePath.length() - 1) {
+        return L"";
+    }
+
+    //拡張子を返す
+    return filePath.substr(dotPos);
+}
+
 wstring GetWideString(const string& str)
 {
     int num1 = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, nullptr, 0);
@@ -103,6 +120,17 @@ wstring GetWideString(const string& str)
     return wstr;
 }
 
+std::u16string GetU16String(const std::string& str)
+{
+    //UTF-8をUTF-16に変換
+    int len = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
+    if (len == 0) return u"";
+
+    std::u16string result(len - 1, u'\0'); //終端nullを除くため -1
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, reinterpret_cast<wchar_t*>(&result[0]), len);
+    return result;
+}
+
 string GetNarrowString(const wstring& str)
 {
     int num1 = WideCharToMultiByte(CP_ACP, 0, str.c_str(), -1, nullptr, 0, nullptr, nullptr);
@@ -114,6 +142,17 @@ string GetNarrowString(const wstring& str)
 
     assert(num1 == num2);
     return narrowStr;
+}
+
+std::string GetStringFromU16(const std::u16string& str)
+{
+    // UTF-16をUTF-8に変換
+    int len = WideCharToMultiByte(CP_UTF8, 0, reinterpret_cast<const wchar_t*>(str.c_str()), -1, nullptr, 0, nullptr, nullptr);
+    if (len == 0) return "";
+
+    std::string result(len - 1, '\0');
+    WideCharToMultiByte(CP_UTF8, 0, reinterpret_cast<const wchar_t*>(str.c_str()), -1, &result[0], len, nullptr, nullptr);
+    return result;
 }
 
 vector<string> GetSprits(string& str, char delim)
@@ -152,6 +191,11 @@ UINT GenerateIDFromFile(const wstring& filePath)
 
 UINT GenerateIDFromFile(const vector<char>& buffer)
 {
+    return GenerateIDFromFile(buffer.data(), buffer.size());
+}
+
+UINT GenerateIDFromFile(const char* data, size_t size)
+{
     //XXH32の状態を作成
     XXH32_state_t* state = XXH32_createState();
     if (state == nullptr) {
@@ -162,12 +206,12 @@ UINT GenerateIDFromFile(const vector<char>& buffer)
     //シード値を設定
     XXH32_reset(state, 0);
 
-    size_t step = buffer.size() / HASH_SAMPLERATE;
+    size_t step = size / HASH_SAMPLERATE;
     if (step == 0) step = 1;
 
     vector<char> sampledData;
-    for (size_t i = 0; i < buffer.size(); i += step) {
-        sampledData.push_back(buffer[i]);
+    for (size_t i = 0; i < size; i += step) {
+        sampledData.push_back(data[i]);
     }
 
     return XXH32(sampledData.data(), sampledData.size(), 0);
@@ -182,4 +226,25 @@ UINT ColorToUINT(float r, float g, float b, float a)
 
     //RGBAの順番で32ビット値にエンコード
     return (alpha << 24) | (blue << 16) | (green << 8) | red;
+}
+
+DirectX::XMVECTOR ExtractEulerAngles(const DirectX::XMMATRIX& matrix)
+{
+    float pitch, yaw, roll;
+
+    //Y軸方向の回転（yaw）
+    yaw = asinf(-matrix.r[2].m128_f32[0]);
+
+    if (cosf(yaw) > 0.0001f) {
+        //X軸とZ軸方向の回転（pitch と roll）
+        pitch = atan2f(matrix.r[2].m128_f32[1], matrix.r[2].m128_f32[2]);
+        roll = atan2f(matrix.r[1].m128_f32[0], matrix.r[0].m128_f32[0]);
+    }
+    else {
+        //Y軸が 90度または -90度の時は、Gimbal Lockに対応
+        pitch = atan2f(-matrix.r[0].m128_f32[2], matrix.r[1].m128_f32[1]);
+        roll = 0.0f;
+    }
+
+    return XMVectorSet(pitch, yaw, roll, 0.0f); //ラジアン角で出力
 }

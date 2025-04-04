@@ -16,6 +16,7 @@ Input::Input(HWND win)
 {
     memset(&keys, 0, sizeof(keys));
     memset(&olds, 0, sizeof(olds));
+    memset(&triggered, false, sizeof(triggered));
 
     CreateInput();
     CreateKey();
@@ -134,6 +135,10 @@ bool Input::TriggerKey(UINT index)
         return false;
     }
 
+    if (triggered[index]) {
+        return true;
+    }
+
     //チェックフラグ
     bool flag = false;
 
@@ -142,17 +147,24 @@ bool Input::TriggerKey(UINT index)
     if ((keys[index] & 0x80) && !(olds[index] & 0x80))
     {
         flag = true;
+        triggered[index] = true;
     }
     olds[index] = keys[index];
 
     return flag;
 }
 
-void Input::UpdateMouseState()
+void Input::Update()
 {
+    //現在の状態を保存しておく
+    m_prevMouseState = m_mouseState;
+
     if (FAILED(m_pMouseDevice->GetDeviceState(sizeof(DIMOUSESTATE), &m_mouseState))) {
         m_pMouseDevice->Acquire();
+        memset(&m_mouseState, 0, sizeof(m_mouseState)); //エラー時はクリア
     }
+
+    memset(&triggered, false, sizeof(triggered));
 }
 
 POINT Input::GetMouseMove() const
@@ -163,6 +175,15 @@ POINT Input::GetMouseMove() const
     point.y = m_mouseState.lY;
 
     return point;
+}
+
+POINT Input::GetMousePosition() const
+{
+    POINT cursorPos;
+    GetCursorPos(&cursorPos);
+    ScreenToClient(m_hwnd, &cursorPos);
+
+    return cursorPos;
 }
 
 int Input::GetMouseWheelDelta() const
@@ -177,19 +198,30 @@ BYTE Input::GetMouseState(const BYTE keyCode) const
 
 BYTE Input::GetMouseStateSync(const BYTE keyCode)
 {
+    //押した瞬間
     if (m_mouseState.rgbButtons[keyCode]) {
         if (m_mouseCheck.rgbButtons[keyCode] == 0x00) {
-            m_mouseCheck.rgbButtons[keyCode] = m_mouseState.rgbButtons[keyCode];
-            return m_mouseState.rgbButtons[keyCode];
-        }
-        else {
-            return 0x00;
+            m_mouseCheck.rgbButtons[keyCode] = 0x01;
+            return 0x01;
         }
     }
     else {
-        if (m_mouseCheck.rgbButtons[keyCode]) {
-            m_mouseCheck.rgbButtons[keyCode] = m_mouseState.rgbButtons[keyCode];
-        }
-        return 0x00;
+        m_mouseCheck.rgbButtons[keyCode] = 0x00;
     }
+    return 0x00;
+}
+
+BYTE Input::GetMouseStateRelease(const BYTE keyCode)
+{
+    //離した瞬間
+    if (m_prevMouseState.rgbButtons[keyCode] && m_mouseState.rgbButtons[keyCode] == 0x00) {
+        if (m_mouseCheck.rgbButtons[keyCode] == 0x00) {
+            m_mouseCheck.rgbButtons[keyCode] = 0x01;
+            return 0x01;
+        }
+    }
+    else {
+        m_mouseCheck.rgbButtons[keyCode] = 0x00;
+    }
+    return 0x00;
 }

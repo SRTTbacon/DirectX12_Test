@@ -1,6 +1,10 @@
 #include "Main.h"
-#include "..\\Engine\\Engine.h"
-#include "..\\..\\Scene\\Scene\\Scene.h"
+
+#include "..\\..\\Game.h"
+
+#ifdef _DEBUG
+#include <dxgidebug.h>
+#endif
 
 HINSTANCE g_hInst;
 HWND g_hWnd = NULL;
@@ -52,8 +56,14 @@ static void InitWindow(const TCHAR* appName)
 	rect.bottom = static_cast<LONG>(WINDOW_HEIGHT);
 
 	//ウィンドウサイズを調整
-	auto style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU;
+	auto style = WS_OVERLAPPEDWINDOW | WS_CAPTION | WS_SYSMENU;
 	AdjustWindowRect(&rect, style, FALSE);
+
+	//モニターの解像度を取得
+	HMONITOR hMonitor = MonitorFromPoint(POINT{ 0, 0 }, MONITOR_DEFAULTTONEAREST);
+	MONITORINFO monitorInfo = {};
+	monitorInfo.cbSize = sizeof(MONITORINFO);
+	GetMonitorInfo(hMonitor, &monitorInfo);
 
 	//ウィンドウの生成
 	g_hWnd = CreateWindowEx(
@@ -78,7 +88,7 @@ static void InitWindow(const TCHAR* appName)
 	SetFocus(g_hWnd);
 }
 
-static void MainLoop()
+static int MainLoop()
 {
 	MSG msg = {};
 
@@ -89,14 +99,41 @@ static void MainLoop()
 	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&prevTime);
 
+	//ゲームクラス
+	Game clsGame;
+
+	try {
+		//ゲームクラスの初期化
+		try {
+			clsGame.Initialize(g_hWnd);
+		}
+		catch (DxSystemException dxSystemException) {
+			dxSystemException.ShowOriginalMessage();
+			throw DxSystemException(DxSystemException::OM_GAME_INITIALIZE_ERROR);
+		}
+
+	}
+	catch (DxSystemException dxSystemException) {
+
+		dxSystemException.ShowOriginalMessage();
+
+		return 1;
+	}
+	catch (...) {
+
+		DxSystemException(DxSystemException::OM_UNKNOWN_ERROR).ShowOriginalMessage();
+
+		return 1;
+	}
+
 	for (;;)
 	{
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			//終了処理(QUITﾒｯｾｰｼﾞで終了)
 			if (msg.message == WM_QUIT) {
-				delete g_Scene;
-				delete g_Engine;
+				clsGame.Release();
+
 				break;
 			}
 
@@ -123,59 +160,42 @@ static void MainLoop()
 				elapsedTime = 0.0f;
 			}
 
-			g_Engine->Update();
-			g_Scene->Update();
-			g_Engine->LateUpdate();
-			g_Engine->BeginRender();
-			g_Scene->Draw();
-			g_Engine->EndRender();
+			if (!clsGame.Run()) {
+				DestroyWindow(g_hWnd);
+			}
 		}
 	}
 
-	//終了時
-	if (g_Scene) {
-		//delete g_Scene;
-		g_Scene = nullptr;
-	}
-	if (g_Engine) {
-		//delete g_Engine;
-		g_Engine = nullptr;
-	}
+	return 0;
 }
 
-void StartApp(const TCHAR* appName)
+int StartApp(const TCHAR* appName)
 {
 	//dllの参照場所を指定
 	if (!SetDllDirectory(TEXT("Resource\\dll"))) {
 		printf("dllディレクトリの指定に失敗しました。");
-		return;
+		return 1;
 	}
 	//LoadLibrary(L"WinPixGpuCapturer.dll");
 
 	//ウィンドウ生成
 	InitWindow(appName);
 
-	//描画エンジンの初期化を行う
-	g_Engine = new Engine(g_hWnd);
-	if (!g_Engine->Init(WINDOW_WIDTH, WINDOW_HEIGHT))
-	{
-		return;
-	}
-
-	//シーン初期化
-	g_Scene = new Scene();
-	if (!g_Scene->Init())
-	{
-		return;
-	}
-
 	//メイン処理ループ
-	MainLoop();
-}
+	int r = MainLoop();
 
+#ifdef _DEBUG
+	ComPtr<IDXGIDebug1> dxgiDebug;
+	if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
+	{
+		dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+	}
+#endif
+
+	return r;
+}
 
 int main(int argc, wchar_t** argv, wchar_t** envp)
 {
-	StartApp(TEXT("DirectX12テスト"));
-	return 0;
+	return StartApp(WINDOW_NAME);
 }

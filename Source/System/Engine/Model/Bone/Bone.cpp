@@ -2,27 +2,26 @@
 
 using namespace DirectX;
 
-Bone::Bone(std::string boneName, XMMATRIX offset, UINT boneIndex)
-	: m_position(0.0f, 0.0f, 0.0f)
-	, m_initPos(0.0f, 0.0f ,0.0f)
-	, m_rotation(0.0f, 0.0f, 0.0f, 1.0f)
-	, m_scale(1.0f, 1.0f, 1.0f)
-	, m_pParentBone(nullptr)
-	, m_boneName(boneName)
-	, m_boneWorldMatrix(XMMatrixIdentity())
-	, m_boneOffset(offset)
-	, m_bType(BONETYPE_DEFAULT)
-	, m_parentBoneIndex(UINT_MAX)
-	, m_boneIndex(boneIndex)
+Bone::Bone(std::string boneName, const UINT boneIndex, const XMFLOAT3* pModelPosition, const XMFLOAT3* pModelRotation, const XMFLOAT3* pModelScale)
+    : m_position(0.0f, 0.0f, 0.0f)
+    , m_rotation(0.0f, 0.0f, 0.0f, 1.0f)
+    , m_scale(1.0f, 1.0f, 1.0f)
+    , m_pParentBone(nullptr)
+    , m_boneName(boneName)
+    , m_boneWorldMatrix(XMMatrixIdentity())
+    , m_boneOffset(XMMatrixIdentity())
+    , m_boneType(BONETYPE_DEFAULT)
+    , m_parentBoneIndex(UINT_MAX)
+    , m_boneIndex(boneIndex)
+    , m_pModelPosition(pModelPosition)
+    , m_pModelRotation(pModelRotation)
+    , m_pModelScale(pModelScale)
 {
-	//ボーンのワールド座標を取得
-	XMVECTOR boneScale;
-	XMVECTOR boneQuatation;
-	XMVECTOR bonePosition;
-	XMMatrixDecompose(&boneScale, &boneQuatation, &bonePosition, m_boneOffset);
+}
 
-	m_initPosition = XMFLOAT3(XMVectorGetX(bonePosition), XMVectorGetY(bonePosition), XMVectorGetZ(bonePosition));
-	m_initRotation = XMFLOAT4(XMVectorGetX(boneQuatation), XMVectorGetY(boneQuatation), XMVectorGetZ(boneQuatation), XMVectorGetW(boneQuatation));
+void Bone::SetBoneOffset(const XMMATRIX& offset)
+{
+    m_boneOffset = offset;
 }
 
 void Bone::AddChildBone(Bone* pChildBone, const UINT childBoneIndex)
@@ -36,24 +35,36 @@ void Bone::SetParentBone(Bone* pParentBone, const UINT parentBoneIndex)
 	m_parentBoneIndex = parentBoneIndex;
 }
 
-const std::string Bone::GetBoneName() const
+void Bone::UpdateGlobalMatix(DirectX::XMMATRIX& globalTransform)
 {
-	return m_boneName;
+    XMMATRIX modelScaleMat = XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
+    XMMATRIX rotX = XMMatrixRotationX(XMConvertToRadians(m_pModelRotation->x));
+    XMMATRIX rotY = XMMatrixRotationY(XMConvertToRadians(m_pModelRotation->y));
+    XMMATRIX rotZ = XMMatrixRotationZ(XMConvertToRadians(m_pModelRotation->z));
+    XMMATRIX modelRotMat = rotX * rotY * rotZ;
+    XMMATRIX modelPosMat = XMMatrixTranslation(m_pModelPosition->x, m_pModelPosition->y, m_pModelPosition->z);
+    m_boneWorldMatrix = m_boneOffset * globalTransform * modelScaleMat * modelRotMat * modelPosMat;
 }
 
-DirectX::XMMATRIX& Bone::GetGlobalTransform()
+BoneManager::BoneManager(const XMFLOAT3* pModelPosition, const XMFLOAT3* pModelRotation, const XMFLOAT3* pModelScale)
+	: m_armatureBone(Bone("Armature", UINT_MAX, pModelPosition, pModelRotation, pModelScale))
+    , m_pModelPosition(pModelPosition)
+    , m_pModelRotation(pModelRotation)
+    , m_pModelScale(pModelScale)
 {
-	return m_boneWorldMatrix;
 }
 
-void Bone::SetGlobalTransform(DirectX::XMMATRIX& globalTransform)
+Bone* BoneManager::AddBone(const std::string boneName, const UINT boneIndex)
 {
-	m_boneWorldMatrix = globalTransform;
-}
+    Bone bone(boneName, boneIndex, m_pModelPosition, m_pModelRotation, m_pModelScale);
 
-BoneManager::BoneManager()
-	: m_armatureBone(Bone("Armature", DirectX::XMMatrixIdentity(), UINT_MAX))
-{
+    //ボーン名とIndexを紐づけ
+    m_boneMapping[boneName] = boneIndex;
+    //配列に追加
+    m_boneInfos.push_back(XMMatrixIdentity());
+    m_bones.push_back(bone);
+
+    return &m_bones[m_bones.size() - 1];
 }
 
 void BoneManager::UpdateBoneMatrix()
@@ -91,8 +102,8 @@ void BoneManager::UpdateBoneMatrix(UINT boneIndex)
     XMMATRIX scale = XMMatrixScaling(bone.m_scale.x, bone.m_scale.y, bone.m_scale.z);
     XMVECTOR rotVec = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 
-    //Unityとの座標系の違いを修正 (導き出すのにめっっっちゃ時間かかった。なんで手と足と胴体で仕様違うの。)
-    switch (bone.m_bType)
+    //Unityとの座標系の違いを修正
+    switch (bone.m_boneType)
     {
     case BONETYPE_DEFAULT:
         rotVec = XMVectorSet(-bone.m_rotation.x, -bone.m_rotation.z, bone.m_rotation.y, bone.m_rotation.w);
@@ -115,12 +126,10 @@ void BoneManager::UpdateBoneMatrix(UINT boneIndex)
         break;
     }
 
-    //printf("%s -> x=%f, y=%f, z=%f, w=%f\n", bone.GetBoneName().c_str(), XMVectorGetX(rotVec), XMVectorGetY(rotVec), XMVectorGetZ(rotVec), XMVectorGetW(rotVec));
-
     XMMATRIX rot = XMMatrixRotationQuaternion(rotVec);
 
     XMMATRIX pos = XMMatrixTranslation(bone.m_position.x, bone.m_position.z, bone.m_position.y);
-    XMMATRIX offsetBack2 = m_finalBoneTransforms[bone.GetBoneName()];
+    XMMATRIX offsetBack2 = bone.GetBoneOffset();
     XMMATRIX offsetBack = XMMatrixIdentity();
 
     //位置のみ抽出
@@ -132,10 +141,11 @@ void BoneManager::UpdateBoneMatrix(UINT boneIndex)
 
     //親のワールド変換とローカル変換を合成
     XMMATRIX finalTransform = parentTransform * XMMatrixTranspose(boneTransform);
+    XMMATRIX finalTransformNonTranspose = XMMatrixTranspose(finalTransform);
 
     //シェーダーに送るワールド座標に代入
     m_boneInfos[boneIndex] = finalTransform;
-    bone.SetGlobalTransform(offsetBack2);
+    bone.UpdateGlobalMatix(finalTransformNonTranspose);
 
     //子ボーンにも変換を伝播
     for (UINT i = 0; i < bone.GetChildBoneCount(); i++) {

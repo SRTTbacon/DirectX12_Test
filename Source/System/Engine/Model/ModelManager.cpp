@@ -1,5 +1,14 @@
 #include "ModelManager.h"
 
+ModelManager::~ModelManager()
+{
+    for (Model* pModel : m_models) {
+        delete pModel;
+    }
+
+    m_models.clear();
+}
+
 void ModelManager::AddModel(Model* pModel)
 {
 	m_models.push_back(pModel);
@@ -68,20 +77,20 @@ void ModelManager::RenderModel(ID3D12GraphicsCommandList* pCommandList, UINT bac
         std::vector<Mesh*>& pMeshes = keyValue.second;
         keyValue.first->ExecutePipeline();
         for (Mesh* pMesh : pMeshes) {
-            keyValue.first->ExecuteShapeData(pMesh->shapeDataIndex);
-            if (pMesh->shapeDataIndex > 0) {
-                keyValue.first->SetShapeData(pMesh->shapeDataIndex, pMesh->shapeDeltasBuffer.Get());
+            keyValue.first->ExecuteShapeData(pMesh->meshData->shapeDataIndex);
+            if (pMesh->meshData->shapeDataIndex > 0) {
+                keyValue.first->SetShapeData(pMesh->meshData->shapeDataIndex, pMesh->meshData->shapeDeltasBuffer.Get());
             }
-            pMesh->DrawMesh(pCommandList, backBufferIndex);
+            pMesh->DrawMesh(pCommandList, backBufferIndex, pMesh->pModel->m_modelConstantStruct.modelMatrix);
         }
     }
 
     for (Mesh* pMesh : m_sortedTransparentModels) {
         pMesh->pMaterial->ExecutePipeline();
-        if (pMesh->shapeDataIndex > 0) {
-            pMesh->pMaterial->SetShapeData(pMesh->shapeDataIndex, pMesh->shapeDeltasBuffer.Get());
+        if (pMesh->meshData->shapeDataIndex > 0) {
+            pMesh->pMaterial->SetShapeData(pMesh->meshData->shapeDataIndex, pMesh->meshData->shapeDeltasBuffer.Get());
         }
-        pMesh->pMaterial->ExecuteShapeData(pMesh->shapeDataIndex);
-        pMesh->DrawMesh(pCommandList, backBufferIndex);
+        pMesh->pMaterial->ExecuteShapeData(pMesh->meshData->shapeDataIndex);
+        pMesh->DrawMesh(pCommandList, backBufferIndex, pMesh->pModel->m_modelConstantStruct.modelMatrix);
     }
 }

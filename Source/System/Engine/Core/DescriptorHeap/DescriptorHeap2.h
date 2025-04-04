@@ -9,6 +9,9 @@ constexpr const UINT MAX_DESCRIPTORHEAP_SIZE = 10000;       //シーン全体で使用す
 constexpr const UINT MATERIAL_DISCRIPTOR_HEAP_SIZE = 2;     //1つのマテリアルで使用するテクスチャ数
 constexpr const UINT MAX_MATERIAL_COUNT = MAX_DESCRIPTORHEAP_SIZE / (MATERIAL_DISCRIPTOR_HEAP_SIZE + 1) - 1;
 
+constexpr const BYTE SHADOWMAP_HEAP_INDEX = 0;
+constexpr const BYTE SKYBOX_HEAP_INDEX = 1;
+
 constexpr const DXGI_FORMAT SHADOWMAP_FORMAT = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 constexpr const DXGI_FORMAT SHAPE_FORMAT = DXGI_FORMAT_R32G32B32A32_FLOAT;
 
@@ -19,12 +22,13 @@ public:
     ~DescriptorHeap();
 
     void Initialize(ID3D12Device* pDevice, UINT heapSize);
+    void SetResource(UINT offset, ID3D12Resource* pResource);
     void SetResource(UINT offset, ID3D12Resource* pResource, DXGI_FORMAT format);
+    void SetResource(UINT offset, ID3D12Resource* pResource, D3D12_SHADER_RESOURCE_VIEW_DESC& shaderResource);
     void SetMainTexture(UINT index, ID3D12Resource* mainTex, ID3D12Resource* normalMap, ID3D12Resource* pShapeBuffer);
 
     D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(UINT index, UINT offset);
     D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(UINT offset);
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle();
     ID3D12DescriptorHeap* GetHeap() const;
 
 private:

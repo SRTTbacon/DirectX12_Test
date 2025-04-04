@@ -6,25 +6,36 @@
 
 enum ShaderKinds
 {
-    BoneShader,
-    PrimitiveShader,
-    ShadowShader
+    UnknownShader,
+    BoneShader,         //ボーンが存在するモデル
+    PrimitiveShader,    //単純なテクスチャのみのモデル
+    TerrainShader,      //地形用モデル
+    TerrainShaderFront, //地形用モデル
+    GrassShader,        //草
+    ShadowShader,       //影用
+    SkyBoxShader,       //スカイボックス用
+    UITextureShader,    //UI用
+    PostProcessShader,  //ポストプロセス用
 };
 
 class RootSignature {
 public:
 
-    RootSignature(ID3D12Device* device, ShaderKinds shaderKind);
+    RootSignature();
+    RootSignature(ID3D12Device* pDevice, ShaderKinds shaderKind);
     ID3D12RootSignature* GetRootSignature() const;
 
-    ShaderKinds m_shaderKind;
+public:
+    inline ShaderKinds GetShaderKind() const { return m_shaderKind; }
 
 private:
-    ComPtr<ID3D12RootSignature> rootSignature;
+    ComPtr<ID3D12RootSignature> m_rootSignature;
 
     CD3DX12_DESCRIPTOR_RANGE* m_pDiscriptorRange;
 
     UINT m_rootParamSize;
 
     CD3DX12_ROOT_PARAMETER* GetRootParameter();
+
+    ShaderKinds m_shaderKind;
 };

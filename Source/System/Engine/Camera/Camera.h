@@ -9,6 +9,9 @@ struct Camera
 	DirectX::XMVECTOR m_targetPos;
 	DirectX::XMVECTOR m_upFoward;
 
+	DirectX::XMMATRIX m_viewMatrix;
+	DirectX::XMMATRIX m_projMatrix;
+
 	float m_fov;
 	float m_aspect;
 	float m_near;
@@ -17,9 +20,7 @@ struct Camera
 	float m_yaw;
 	float m_pitch;
 
-	float m_test;
-
-	void Update(DirectionalLight* pDirectionalLight);
+	void LateUpdate(DirectionalLight* pDirectionalLight);
 	void SetFov(float fovDegree);
 
 	Camera();

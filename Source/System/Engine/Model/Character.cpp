@@ -1,31 +1,12 @@
 #include "Character.h"
 
-static XMVECTOR ExtractEulerAngles(const XMMATRIX& matrix) {
-    float pitch, yaw, roll;
+std::unordered_map<std::string, Character::HumanoidList> Character::s_sharedHumanoidMeshes;
 
-    //Y軸方向の回転（yaw）
-    yaw = asinf(-matrix.r[2].m128_f32[0]);
-
-    if (cosf(yaw) > 0.0001f) {
-        //X軸とZ軸方向の回転（pitch と roll）
-        pitch = atan2f(matrix.r[2].m128_f32[1], matrix.r[2].m128_f32[2]);
-        roll = atan2f(matrix.r[1].m128_f32[0], matrix.r[0].m128_f32[0]);
-    }
-    else {
-        //Y軸が 90度または -90度の時は、Gimbal Lockに対応
-        pitch = atan2f(-matrix.r[0].m128_f32[2], matrix.r[1].m128_f32[1]);
-        roll = 0.0f;
-    }
-
-    return XMVectorSet(pitch, yaw, roll, 0.0f); //ラジアン角で出力
-}
-
-Character::Character(const std::string modelFile, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, const DirectionalLight* pDirectionalLight, MaterialManager* pMaterialManager)
-    : Model(pDevice, pCommandList, pCamera, pDirectionalLight, pMaterialManager)
-    , m_animationSpeed(1.0f)
-    , m_nowAnimationTime(0.0f)
-    , m_nowAnimationIndex(-1)
-    , bHCSFile(false)
+Character::Character(const std::string modelFile, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const Camera* pCamera, const DirectionalLight* pDirectionalLight, 
+    MaterialManager* pMaterialManager, float* pFrameTime)
+    : Model(pDevice, pCommandList, pCamera, pDirectionalLight, pMaterialManager, pFrameTime)
+    , m_boneManager(BoneManager(&m_position, &m_rotation, &m_scale))
+    , m_bHCSFile(false)
 {
     DWORD startTime = timeGetTime();
     m_modelFile = modelFile;
@@ -57,23 +38,35 @@ Character::Character(const std::string modelFile, ID3D12Device* pDevice, ID3D12G
     DWORD loadTime = timeGetTime() - startTime;
 	printf("モデル:%sをロードしました。 %dms\n", modelFile.c_str(), loadTime);
 
-    g_Engine->EndRender();
-    g_Engine->BeginRender();
+    //g_Engine->EndRender();
+    //g_Engine->BeginRender();
 }
 
 Character::~Character()
 {
+    for (HumanoidMesh& humanoidMesh : m_humanoidMeshes) {
+        if (humanoidMesh.pMesh->shapeWeightsBuffer) {
+            humanoidMesh.pMesh->shapeWeightsBuffer->Unmap(0, nullptr);
+            humanoidMesh.pMesh->pShapeWeightsMapped = nullptr;
+        }
+    }
+    if (m_boneMatricesBuffer) {
+        m_boneMatricesBuffer->Unmap(0, nullptr);
+        m_pBoneMatricesMap = nullptr;
+    }
+
     Model::~Model();
 }
 
-UINT Character::AddAnimation(Animation animation)
+UINT Character::AddAnimation(Animation* pAnimation)
 {
-    m_animations.push_back(animation);
+    CharacterAnimation anim{ pAnimation, 0 };
+    m_characterAnimations.push_back(anim);
 	//アニメーションが1つしかない場合は、現在のアニメーションインデックスを0にする
-    if (m_animations.size() == 1) {
+    if (m_characterAnimations.size() == 1) {
         m_nowAnimationIndex = 0;
     }
-    return (unsigned int)(m_animations.size() - 1);
+    return (unsigned int)(m_characterAnimations.size() - 1);
 }
 
 void Character::Update()
@@ -91,13 +84,7 @@ void Character::Update()
 void Character::LateUpdate(UINT backBufferIndex)
 {
     //ボーンバッファに送信
-    void* pData;
-    HRESULT hr = m_boneMatricesBuffer->Map(0, nullptr, &pData);
-    if (SUCCEEDED(hr))
-    {
-        memcpy(pData, m_boneManager.m_boneInfos.data(), sizeof(XMMATRIX) * m_boneManager.m_boneInfos.size()); //ボーンマトリックスをコピー
-        m_boneMatricesBuffer->Unmap(0, nullptr);
-    }
+    memcpy(m_pBoneMatricesMap, m_boneManager.m_boneInfos.data(), sizeof(XMMATRIX) * m_boneManager.m_boneInfos.size()); //ボーンマトリックスをコピー
 
     Model::LateUpdate(backBufferIndex);
 
@@ -113,12 +100,10 @@ void Character::LateUpdate(UINT backBufferIndex)
         hipPos.x = -hipPos.z;
         hipPos.z = -temp;
     }
-    XMFLOAT3 tempPos = armaturePos + hipPos;
-    //XMFLOAT3 tempPos = armaturePos + m_position + hipPos;
+    //カメラ位置からオブジェクト位置までの距離をm_depthに設定
+    XMFLOAT3 tempPos = armaturePos + hipPos + m_position;
     XMFLOAT3 camPos;
     XMStoreFloat3(&camPos, m_pCamera->m_eyePos);
-
-    // カメラ位置からオブジェクト位置までのユークリッド距離をそのまま m_depth に設定
     m_depth = DistanceSq(tempPos, camPos);
 }
 
@@ -128,7 +113,7 @@ void Character::LoadFBX(const std::string& fbxFile)
 
     //モデル読み込み時のフラグ。メッシュのポリゴンはすべて三角形にし、ボーンが存在する場合は影響を受けるウェイトを4つまでにする
     UINT flag = aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType |
-        aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights;
+        aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights | aiProcess_OptimizeMeshes;
     const aiScene* scene = importer.ReadFile(fbxFile, flag);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
@@ -148,6 +133,9 @@ void Character::LoadFBX(const std::string& fbxFile)
         CreateHumanoidMeshBuffer(humanoidMesh);
     }
 
+    //シェイプキーの位置情報を保持するリソースを作成
+    CreateShapeDeltasTexture(false);
+
     //マテリアルの読み込み
     for (size_t i = 0; i < scene->mNumMeshes; i++)
     {
@@ -165,7 +153,7 @@ void Character::LoadFBX(const std::string& fbxFile)
         }
         else {
             //テクスチャが存在しない場合は白単色テクスチャを使用
-            m_meshes[i]->pMaterial = m_pMaterialManager->AddMaterialWithShapeData("BoneWhite", m_meshes[i]->shapeDataIndex);
+            m_meshes[i]->pMaterial = m_pMaterialManager->AddMaterialWithShapeData("BoneWhite", m_meshes[i]->meshData->shapeDataIndex);
         }
     }
 }
@@ -211,7 +199,7 @@ void Character::LoadHCS(const std::string& hcsFile)
     startTime = endTime;
     UINT meshCount = br.ReadUInt32();
     for (UINT i = 0; i < meshCount; i++) {
-        ProcessMesh(br, m_humanoidMeshes[i]);
+        ProcessMesh(br, m_humanoidMeshes[i], i);
         m_meshes.push_back(m_humanoidMeshes[i].pMesh);
     }
 
@@ -221,10 +209,11 @@ void Character::LoadHCS(const std::string& hcsFile)
 
     for (HumanoidMesh& humanoidMesh : m_humanoidMeshes) {
         CreateHumanoidMeshBuffer(humanoidMesh);
-
-        //HCSファイルの場合はシェイプキーをクリア
-        humanoidMesh.shapeDeltas.clear();
     }
+
+    //シェイプキーの位置情報を保持するリソースを作成
+    CreateShapeDeltasTexture(true);
+
     endTime = timeGetTime();
     printf("CreateHumanoidMeshBuffer - %dms\n", endTime - startTime);
     startTime = endTime;
@@ -245,11 +234,11 @@ void Character::LoadHCS(const std::string& hcsFile)
         }
         else {
             //テクスチャが存在しない場合は白単色テクスチャを使用
-            m_meshes[i]->pMaterial = m_pMaterialManager->AddMaterialWithShapeData("BoneWhite", m_meshes[i]->shapeDataIndex);
+            m_meshes[i]->pMaterial = m_pMaterialManager->AddMaterialWithShapeData("BoneWhite", m_meshes[i]->meshData->shapeDataIndex);
         }
     }
 
-    bHCSFile = true;
+    m_bHCSFile = true;
 
     endTime = timeGetTime();
     printf("SetTexture - %dms\n", endTime - startTime);
@@ -261,7 +250,7 @@ void Character::ProcessNode(const aiScene* pScene, const aiNode* pNode)
     for (UINT j = 0; j < pNode->mNumMeshes; j++) {
         aiMesh* mesh = pScene->mMeshes[pNode->mMeshes[j]];
         HumanoidMesh humanoidMesh{};
-        Mesh* pMesh = ProcessMesh(mesh, humanoidMesh);
+        Mesh* pMesh = ProcessMesh(mesh, humanoidMesh, static_cast<UINT>(m_meshes.size()));
         pMesh->meshName = UTF8ToShiftJIS(pNode->mName.C_Str());
         m_humanoidMeshes.push_back(humanoidMesh);
         m_meshes.push_back(pMesh);
@@ -273,7 +262,7 @@ void Character::ProcessNode(const aiScene* pScene, const aiNode* pNode)
     }
 }
 
-Mesh* Character::ProcessMesh(aiMesh* mesh, HumanoidMesh& humanoidMesh) {
+Mesh* Character::ProcessMesh(aiMesh* mesh, HumanoidMesh& humanoidMesh, UINT meshIndex) {
     std::vector<Vertex> vertices;
     std::vector<UINT> indices;
 
@@ -321,16 +310,34 @@ Mesh* Character::ProcessMesh(aiMesh* mesh, HumanoidMesh& humanoidMesh) {
     LoadShapeKey(mesh, vertices, humanoidMesh);
 
     //シェーダーに必要なバッファを生成
-    CreateBuffer(meshData, vertices, indices, humanoidMesh);
+    Model::CreateBuffer(meshData, vertices, indices, sizeof(Vertex), meshIndex);
+    CreateBuffer(humanoidMesh);
 
     return meshData;
 }
 
-void Character::ProcessMesh(BinaryReader& br, HumanoidMesh& humanoidMesh)
+void Character::ProcessMesh(BinaryReader& br, HumanoidMesh& humanoidMesh, UINT meshIndex)
 {
     UINT meshBufferOriginalSize = br.ReadUInt32();
     UINT meshBufferCompressedSize = br.ReadUInt32();
+
     char* compressedBuffer = br.ReadBytes(meshBufferCompressedSize);
+
+    //既に同じモデルがロードされていれば、それを参照
+    if (s_sharedMeshes.find(m_modelFile) != s_sharedMeshes.end() && s_sharedMeshes[m_modelFile].meshDataList.size() > meshIndex) {
+        std::vector<Vertex> vertex;
+        std::vector<UINT> index;
+        std::shared_ptr<MeshData> meshData = s_sharedMeshes[m_modelFile].meshDataList[meshIndex];
+        Model::CreateBuffer(humanoidMesh.pMesh, vertex, index, sizeof(Vertex), meshIndex);
+
+        //頂点数を保存
+        humanoidMesh.vertexCount = meshData->vertexCount;
+        CreateBuffer(humanoidMesh);
+
+        delete[] compressedBuffer;
+
+        return;
+    }
 
     //圧縮されているボーン情報を解凍
     std::vector<char> meshBuffer;
@@ -338,9 +345,9 @@ void Character::ProcessMesh(BinaryReader& br, HumanoidMesh& humanoidMesh)
 
     delete[] compressedBuffer;
 
-    //解凍したバッファを読み込む
     BinaryReader meshReader(meshBuffer);
 
+    //解凍したバッファを読み込む
     std::vector<Vertex> vertices;
     std::vector<UINT> indices;
 
@@ -349,20 +356,11 @@ void Character::ProcessMesh(BinaryReader& br, HumanoidMesh& humanoidMesh)
     for (UINT i = 0; i < vertexCount; i++) {
         Vertex vertex{};
 
-        vertex.position.x = meshReader.ReadFloat();
-        vertex.position.y = meshReader.ReadFloat();
-        vertex.position.z = meshReader.ReadFloat();
-        vertex.normal.x = meshReader.ReadFloat();
-        vertex.normal.y = meshReader.ReadFloat();
-        vertex.normal.z = meshReader.ReadFloat();
-        vertex.texCoords.x = meshReader.ReadFloat();
-        vertex.texCoords.y = meshReader.ReadFloat();
-		vertex.tangent.x = meshReader.ReadFloat();
-		vertex.tangent.y = meshReader.ReadFloat();
-		vertex.tangent.z = meshReader.ReadFloat();
-		vertex.bitangent.x = meshReader.ReadFloat();
-		vertex.bitangent.y = meshReader.ReadFloat();
-		vertex.bitangent.z = meshReader.ReadFloat();
+        vertex.position = meshReader.ReadFloat3();
+        vertex.normal = meshReader.ReadFloat3();
+        vertex.texCoords = meshReader.ReadFloat2();
+        vertex.tangent = meshReader.ReadFloat3();
+        vertex.bitangent = meshReader.ReadFloat3();
 
         vertex.boneWeights = { 0.0f, 0.0f, 0.0f, 0.0f };
         vertex.boneIDs[0] = vertex.boneIDs[1] = vertex.boneIDs[2] = vertex.boneIDs[3] = 0;
@@ -428,13 +426,12 @@ void Character::ProcessMesh(BinaryReader& br, HumanoidMesh& humanoidMesh)
     humanoidMesh.vertexCount = static_cast<UINT>(vertices.size());
 
     //シェーダーに必要なバッファを生成
-    CreateBuffer(humanoidMesh.pMesh, vertices, indices, humanoidMesh);
+    Model::CreateBuffer(humanoidMesh.pMesh, vertices, indices, sizeof(Vertex), meshIndex);
+    CreateBuffer(humanoidMesh);
 }
 
-void Character::CreateBuffer(Mesh* pMesh, std::vector<Vertex>& vertices, std::vector<UINT>& indices, HumanoidMesh& humanoidMesh)
+void Character::CreateBuffer(HumanoidMesh& humanoidMesh)
 {
-    Model::CreateBuffer(pMesh, vertices, indices, sizeof(Vertex));
-
     //ヒープ設定
     D3D12_HEAP_PROPERTIES heapProps = {};
     heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -446,15 +443,17 @@ void Character::CreateBuffer(Mesh* pMesh, std::vector<Vertex>& vertices, std::ve
         printf("ボーンバッファの生成に失敗しました。\n");
     }
 
+    m_boneMatricesBuffer->Map(0, nullptr, &m_pBoneMatricesMap);
+
     //頂点数とシェイプキー数を保持
     Contents contents{};
     contents.vertexCount = humanoidMesh.vertexCount;
     contents.shapeCount = static_cast<UINT>(humanoidMesh.shapeWeights.size());
     void* pContentsBuffer;
-    pMesh->contentsBuffer->Map(0, nullptr, &pContentsBuffer);
+    humanoidMesh.pMesh->meshData->contentsBuffer->Map(0, nullptr, &pContentsBuffer);
     if (pContentsBuffer)
         memcpy(pContentsBuffer, &contents, sizeof(Contents));
-    pMesh->contentsBuffer->Unmap(0, nullptr);
+    humanoidMesh.pMesh->meshData->contentsBuffer->Unmap(0, nullptr);
 }
 
 void Character::CreateHumanoidMeshBuffer(HumanoidMesh& humanoidMesh)
@@ -476,114 +475,155 @@ void Character::CreateHumanoidMeshBuffer(HumanoidMesh& humanoidMesh)
         }
 
         //ウェイト情報の初期値を入れる (Update関数で常に更新される)
-        void* pShapeWeightsBuffer;
-        humanoidMesh.pMesh->shapeWeightsBuffer->Map(0, nullptr, &pShapeWeightsBuffer);
-        memcpy(pShapeWeightsBuffer, humanoidMesh.shapeWeights.data(), shapeWeightsSize);
-        humanoidMesh.pMesh->shapeWeightsBuffer->Unmap(0, nullptr);
-
-        //シェイプキーの位置情報を保持するリソースを作成
-        CreateShapeDeltasTexture(humanoidMesh);
+        humanoidMesh.pMesh->shapeWeightsBuffer->Map(0, nullptr, &humanoidMesh.pMesh->pShapeWeightsMapped);
+        memcpy(humanoidMesh.pMesh->pShapeWeightsMapped, humanoidMesh.shapeWeights.data(), shapeWeightsSize);
     }
 }
 
-void Character::CreateShapeDeltasTexture(HumanoidMesh& humanoidMesh)
+void Character::CreateShapeDeltasTexture(bool bClearDeltas)
 {
-    //g_Engine->BeginRender();
+    //メインスレッドで必要なアップロードバッファを作成
+    //std::vector<ID3D12Resource*> shapeBuffers(m_humanoidMeshes.size());
+    shapeBuffers.resize(m_humanoidMeshes.size());
 
-    //必要なサイズを計算
-    size_t vertexCount = humanoidMesh.vertexCount;
-    size_t shapeCount = humanoidMesh.shapeWeights.size();
+    for (UINT i = 0; i < static_cast<UINT>(m_humanoidMeshes.size()); i++) {
+        HumanoidMesh& humanoidMesh = m_humanoidMeshes[i];
+        size_t vertexCount = humanoidMesh.vertexCount;
+        size_t shapeCount = humanoidMesh.shapeWeights.size();
 
-    UINT maxWidth = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION; //横幅の最大 = 16384
-    UINT width = (vertexCount > maxWidth) ? maxWidth : static_cast<UINT>(vertexCount);
-    UINT height = static_cast<UINT>(((vertexCount + width - 1) / width) * shapeCount);
+        if (shapeCount <= 0) {
+            shapeBuffers[i] = nullptr;
+            continue;
+        }
 
-    humanoidMesh.pMesh->shapeDeltasBuffer = Texture2D::GetDefaultResource(DXGI_FORMAT_R32G32B32A32_FLOAT, false, width, height);
+        UINT maxWidth = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION; //横幅の最大 = 16384
+        UINT width = (vertexCount > maxWidth) ? maxWidth : static_cast<UINT>(vertexCount);
+        UINT height = static_cast<UINT>(((vertexCount + width - 1) / width) * shapeCount);
 
-    size_t rowPitch = (width * sizeof(XMFLOAT4) + 255) & ~255; //256の倍数になるように
-    size_t tempWidth = rowPitch / sizeof(XMFLOAT4);
-    std::vector<XMFLOAT4> textureData(tempWidth * height, XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f)); //初期化
+        size_t rowPitch = (width * sizeof(XMFLOAT4) + 255) & ~255; //256の倍数になるように
 
-    //シェイプキー情報をテクスチャに変換
-    for (size_t shapeID = 0; shapeID < shapeCount; shapeID++) {
-        for (size_t vertexID = 0; vertexID < vertexCount; vertexID++) {
-            size_t x = vertexID % tempWidth;
-            size_t y = (vertexID / tempWidth) * shapeCount + shapeID; //縦位置
+        shapeBuffers[i] = g_resourceCopy->CreateUploadBuffer(rowPitch * height);
 
-            //範囲チェック
-            if (y >= height) {
-                continue;
+        if (humanoidMesh.pMesh->meshData->shapeDeltasBuffer) {
+            if (shapeBuffers[i]) {
+                shapeBuffers[i]->Release();
+                shapeBuffers[i] = nullptr;
             }
+            continue;
+        }
 
-            XMFLOAT3 delta = humanoidMesh.shapeDeltas[shapeID * vertexCount + vertexID];
-            textureData[y * tempWidth + x] = XMFLOAT4(delta.x, delta.y, delta.z, 0.0f);
+        //シェイプキー用のリソースを作成
+        CD3DX12_RESOURCE_DESC resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32G32B32A32_FLOAT, static_cast<UINT>(width), static_cast<UINT>(height), 1, 1);
+        CD3DX12_HEAP_PROPERTIES texHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+        D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST;
+        HRESULT result = m_pDevice->CreateCommittedResource(&texHeapProp, D3D12_HEAP_FLAG_NONE, &resDesc, state, nullptr, IID_PPV_ARGS(&humanoidMesh.pMesh->meshData->shapeDeltasBuffer));
+        if (FAILED(result)) {
+            printf("シェイプキー用のリソ－スの作成に失敗しました。: エラーコード = %1x\n", result);
         }
     }
 
-    //アップロード用の一時バッファを作成
-    ComPtr<ID3D12Resource> uploadBuffer;
-    CD3DX12_HEAP_PROPERTIES uploadHeapProps(D3D12_HEAP_TYPE_UPLOAD);
-    CD3DX12_RESOURCE_DESC uploadBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(rowPitch * height);
+    //別スレッドでアップロードバッファにデータをコピーし、GPUに送信
+    std::thread([=] {
+        for (UINT i = 0; i < static_cast<UINT>(m_humanoidMeshes.size()); i++) {
+            HumanoidMesh& humanoidMesh = m_humanoidMeshes[i];
 
-    HRESULT hr = m_pDevice->CreateCommittedResource(
-        &uploadHeapProps, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
-        D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadBuffer)
-    );
-    if (FAILED(hr)) {
-        printf("UploadBufferの作成に失敗しました。\n");
-        return;
-    }
+            if (!shapeBuffers[i]) {
+                if (bClearDeltas) {
+                    humanoidMesh.shapeDeltas.clear();
+                }
+                continue;
+            }
 
-    //データを書き込む
-    void* mappedData;
-    uploadBuffer->Map(0, nullptr, &mappedData);
-    memcpy(mappedData, textureData.data(), textureData.size() * sizeof(XMFLOAT4));
-    uploadBuffer->Unmap(0, nullptr);
 
-    //コマンドリストに転送命令を追加
-    D3D12_SUBRESOURCE_DATA textureSubresource = {};
-    textureSubresource.pData = textureData.data();
-    textureSubresource.RowPitch = rowPitch;
-    textureSubresource.SlicePitch = textureSubresource.RowPitch * height;
+            //必要なサイズを計算
+            size_t vertexCount = humanoidMesh.vertexCount;
+            size_t shapeCount = humanoidMesh.shapeWeights.size();
 
-    UINT64 a = UpdateSubresources(m_pCommandList, humanoidMesh.pMesh->shapeDeltasBuffer.Get(), uploadBuffer.Get(), 0, 0, 1, &textureSubresource);
+            if (shapeCount <= 0) {
+                if (bClearDeltas) {
+                    humanoidMesh.shapeDeltas.clear();
+                }
+                continue;
+            }
 
-    //リソースステートをシェーダーリソース用に変更
-    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        humanoidMesh.pMesh->shapeDeltasBuffer.Get(),
-        D3D12_RESOURCE_STATE_COPY_DEST,
-        D3D12_RESOURCE_STATE_GENERIC_READ
-    );
-    m_pCommandList->ResourceBarrier(1, &barrier);
+            g_resourceCopy->BeginCopyResource();
 
-    //コマンドラインを用いたデータの転送は一度レンダーキューを終了させなければならない。
-    g_Engine->EndRender();
-    g_Engine->BeginRender();
+            UINT maxWidth = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION; //横幅の最大 = 16384
+            UINT width = (vertexCount > maxWidth) ? maxWidth : static_cast<UINT>(vertexCount);
+            UINT height = static_cast<UINT>(((vertexCount + width - 1) / width) * shapeCount);
 
-    uploadBuffer.Reset();
+            size_t rowPitch = (width * sizeof(XMFLOAT4) + 255) & ~255; //256の倍数になるように
+            size_t tempWidth = rowPitch / sizeof(XMFLOAT4);
+            std::vector<XMFLOAT4> textureData(tempWidth * height, XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f)); //初期化
 
-    if (humanoidMesh.pMesh->meshName == "Body" && humanoidMesh.pMesh->shapeDeltasBuffer) {
-        //printf("a = %llu, bufferSize = %llu, Real = %u\n", a, uploadBufferDesc.Width, width * height);
-        //printf("width = %u, rowPitch = %u\n", width, static_cast<UINT>(rowPitch));
+            //シェイプキー情報をテクスチャに変換
+            for (size_t shapeID = 0; shapeID < shapeCount; shapeID++) {
+                for (size_t vertexID = 0; vertexID < vertexCount; vertexID++) {
+                    size_t x = vertexID % tempWidth;
+                    size_t y = (vertexID / tempWidth) * shapeCount + shapeID; //縦位置
 
-        //VerifyShapeDeltasBuffer(humanoidMesh, m_pCommandList);
+                    //範囲チェック
+                    if (y >= height) {
+                        continue;
+                    }
 
-        /*XMFLOAT4* floatData = reinterpret_cast<XMFLOAT4*>(mappedData);
-        for (unsigned int i = 0; i < humanoidMesh.vertexCount; i++)
-        {
-            printf("ShapeDelta[%u] = (%f, %f, %f)\n", i,
-                floatData[i].x, floatData[i].y, floatData[i].z);
-        }*/
-    }
+                    XMFLOAT3 delta = humanoidMesh.shapeDeltas[shapeID * vertexCount + vertexID];
+                    textureData[y * tempWidth + x] = XMFLOAT4(delta.x, delta.y, delta.z, 0.0f);
+                }
+            }
+
+            void* mappedData = nullptr;
+            HRESULT hr = shapeBuffers[i]->Map(0, nullptr, &mappedData);
+            if (FAILED(hr)) {
+                printf("UploadBufferのマップに失敗しました。\n");
+                return;
+            }
+            memcpy(mappedData, textureData.data(), rowPitch * height);
+            shapeBuffers[i]->Unmap(0, nullptr);
+
+            //コピー先を設定
+            D3D12_TEXTURE_COPY_LOCATION dstLocation = {};
+            dstLocation.pResource = humanoidMesh.pMesh->meshData->shapeDeltasBuffer.Get();
+            dstLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+            dstLocation.SubresourceIndex = 0;
+
+            //コピー元を設定
+            D3D12_TEXTURE_COPY_LOCATION srcLocation = {};
+            srcLocation.pResource = shapeBuffers[i];
+            srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+            srcLocation.PlacedFootprint.Footprint.Width = width;
+            srcLocation.PlacedFootprint.Footprint.Height = height;
+            srcLocation.PlacedFootprint.Footprint.Depth = 1;
+            srcLocation.PlacedFootprint.Footprint.RowPitch = static_cast<UINT>(rowPitch);
+            srcLocation.PlacedFootprint.Footprint.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            g_resourceCopy->GetCommandList()->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, nullptr);
+
+            //リソースバリアでSTATEを変更
+            CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(humanoidMesh.pMesh->meshData->shapeDeltasBuffer.Get(),
+                D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+            g_resourceCopy->GetCommandList()->ResourceBarrier(1, &barrier);
+            g_resourceCopy->EndCopyResource();
+
+            if (bClearDeltas) {
+                humanoidMesh.shapeDeltas.clear();
+            }
+
+            if (shapeBuffers[i]) {
+                shapeBuffers[i]->Release();
+                shapeBuffers[i] = nullptr;
+            }
+        }
+        shapeBuffers.clear();
+        }).detach();
 }
 
 void Character::CalculateBoneTransforms(const aiNode* node, const XMMATRIX& parentTransform)
 {
     //ボーンがboneMapに存在するかチェック
-    auto it = m_boneManager.m_finalBoneTransforms.find(node->mName.C_Str());
+    Bone* pBone = m_boneManager.GetBone(node->mName.C_Str());
     XMMATRIX nodeTransform = XMMatrixIdentity();
 
-    if (it != m_boneManager.m_finalBoneTransforms.end()) {
+    if (pBone) {
         //ボーンのローカル変換行列を取得
         nodeTransform = XMMatrixTranspose(XMLoadFloat4x4(reinterpret_cast<const XMFLOAT4X4*>(&node->mTransformation)));
         //printf("NodeName = %s, x=%f, y=%f, z=%f\n", node->mName.C_Str(), nodeTransform.r[3].m128_f32[0], nodeTransform.r[3].m128_f32[1], nodeTransform.r[3].m128_f32[2]);
@@ -593,8 +633,8 @@ void Character::CalculateBoneTransforms(const aiNode* node, const XMMATRIX& pare
     XMMATRIX globalTransform = nodeTransform * parentTransform;
 
     //ボーンのワールド空間での変換行列を保存（Sphereを置くための位置として使用）
-    if (it != m_boneManager.m_finalBoneTransforms.end()) {
-        it->second = globalTransform;
+    if (pBone) {
+        pBone->SetBoneOffset(globalTransform);
     }
 
     //子ノードに対して再帰的に処理を実行
@@ -616,33 +656,21 @@ void Character::LoadBones(aiMesh* mesh, std::vector<Vertex>& vertices)
             //追加するボーンのインデックスを取得
             boneIndex = static_cast<UINT>(m_boneManager.m_boneInfos.size());
 
-            //原点から見て、ボーンが存在する位置(オフセット)を取得
-            XMMATRIX boneOffset = XMMatrixTranspose(XMLoadFloat4x4(reinterpret_cast<XMFLOAT4X4*>(&bone->mOffsetMatrix)));
-
-            m_boneManager.m_finalBoneTransforms[boneName] = XMMatrixIdentity();
-
             //ボーンを作成
-            Bone boneChild(boneName, boneOffset, boneIndex);
+            Bone* pBoneChild = m_boneManager.AddBone(boneName, boneIndex);
 
             //手や足は左右を判定 (一旦手の判定をし、足の場合はLoadBoneFamily内で変更)
             if (boneName[0] == 'L' || boneName.at(boneName.size() - 1) == 'L') {
-                boneChild.m_bType = BONETYPE_LEFT_ARM;
+                pBoneChild->m_boneType = BONETYPE_LEFT_ARM;
             }
             if (boneName[0] == 'R' || boneName.at(boneName.size() - 1) == 'R') {
-                boneChild.m_bType = BONETYPE_RIGHT_ARM;
+                pBoneChild->m_boneType = BONETYPE_RIGHT_ARM;
             }
 
             //目のボーンは左右の区別をしない
             if (boneName.find("Eye") != std::string::npos || boneName.find("eye") != std::string::npos) {
-                boneChild.m_bType = BONETYPE_DEFAULT;
+                pBoneChild->m_boneType = BONETYPE_DEFAULT;
             }
-
-            //配列に追加
-            m_boneManager.m_boneInfos.push_back(XMMatrixIdentity());
-            m_boneManager.m_bones.push_back(boneChild);
-
-            //ボーン名とインデックスを紐づけ
-            m_boneManager.m_boneMapping[bone->mName.C_Str()] = boneIndex;
         }
         else {
             //同名のボーンが存在する場合それを使用 (異なるメッシュ間で同名のボーンの場合、ほとんどが共有されているため)
@@ -711,17 +739,11 @@ void Character::LoadBones(BinaryReader& br)
         //ボーンの初期位置
         XMMATRIX matrix = boneReader.ReadMatrix();
 
-        Bone bone(boneName, matrix, boneIndex);
-        //ボーンタイプ
-        bone.m_bType = (BoneType)boneReader.ReadSByte();
+        Bone* pBone = m_boneManager.AddBone(boneName, boneIndex);
+        pBone->m_boneType = (BoneType)boneReader.ReadSByte();
 
-        m_boneManager.m_finalBoneTransforms[boneName] = boneReader.ReadMatrix();
-
-        //ボーン名とIndexを紐づけ
-        m_boneManager.m_boneMapping[boneName] = boneIndex;
-        //配列に追加
-        m_boneManager.m_boneInfos.push_back(XMMatrixIdentity());
-        m_boneManager.m_bones.push_back(bone);
+        //m_boneManager.m_finalBoneTransforms[boneName] = boneReader.ReadMatrix();
+        pBone->SetBoneOffset(boneReader.ReadMatrix());
     }
 
     for (UINT i = 0; i < boneCount; i++) {
@@ -760,11 +782,11 @@ void Character::LoadBoneFamily(const aiNode* node)
                 std::string boneName = m_boneManager.m_bones[childIndex].GetBoneName();
                 //足の場合BONETYPE_LEFT(RIGHT)_LEGに変更 (LoadBones()で足もBONETYPE_LEFT_ARMと指定されるため)
                 if (boneName.find("Leg") != std::string::npos || boneName.find("leg") != std::string::npos) {
-                    if (m_boneManager.m_bones[childIndex].m_bType == BONETYPE_LEFT_ARM) {
-                        m_boneManager.m_bones[childIndex].m_bType = BONETYPE_LEFT_LEG;
+                    if (m_boneManager.m_bones[childIndex].m_boneType == BONETYPE_LEFT_ARM) {
+                        m_boneManager.m_bones[childIndex].m_boneType = BONETYPE_LEFT_LEG;
                     }
-                    else if (m_boneManager.m_bones[childIndex].m_bType == BONETYPE_RIGHT_ARM) {
-                        m_boneManager.m_bones[childIndex].m_bType = BONETYPE_RIGHT_LEG;
+                    else if (m_boneManager.m_bones[childIndex].m_boneType == BONETYPE_RIGHT_ARM) {
+                        m_boneManager.m_bones[childIndex].m_boneType = BONETYPE_RIGHT_LEG;
                     }
                     continue;
                 }
@@ -774,8 +796,8 @@ void Character::LoadBoneFamily(const aiNode* node)
                 }
 
                 //子ボーンは親ボーンの種類を継承
-                if (m_boneManager.m_bones[boneIndex].m_bType != BONETYPE_DEFAULT) {
-                    m_boneManager.m_bones[childIndex].m_bType = m_boneManager.m_bones[boneIndex].m_bType;
+                if (m_boneManager.m_bones[boneIndex].m_boneType != BONETYPE_DEFAULT) {
+                    m_boneManager.m_bones[childIndex].m_boneType = m_boneManager.m_bones[boneIndex].m_boneType;
                 }
             }
         }
@@ -822,18 +844,40 @@ void Character::LoadHumanoidMesh(BinaryReader& br)
     UINT humanoidBufferCompressedSize = br.ReadUInt32();
     char* compressedBuffer = br.ReadBytes(humanoidBufferCompressedSize);
 
-    UINT startTime = timeGetTime();
+    if (s_sharedHumanoidMeshes.find(m_modelFile) != s_sharedHumanoidMeshes.end()) {
+        HumanoidList& humanoidList = s_sharedHumanoidMeshes[m_modelFile];
+        humanoidList.refCount++;
+        for (UINT i = 0; i < humanoidList.humanoidMeshCount; i++) {
+            HumanoidMesh humanoidMesh;
+            humanoidMesh.pMesh = new Mesh();
+            humanoidMesh.pMesh->meshName = humanoidList.meshNames[i];
+            humanoidMesh.shapeMapping = humanoidList.shapeMappings[i];
+            for (UINT j = 0; j < humanoidList.shapeCounts[i]; j++) {
+                humanoidMesh.shapeWeights.push_back(0.0f);
+            }
+
+            m_humanoidMeshes.push_back(humanoidMesh);
+        }
+
+        delete[] compressedBuffer;
+        return;
+    }
+
     //圧縮されているシェイプ情報を解凍
     std::vector<char> humanoidBuffer;
     BinaryDecompress(humanoidBuffer, humanoidBufferOriginalSize, compressedBuffer, humanoidBufferCompressedSize);
-
-    UINT endTime = timeGetTime();
 
     delete[] compressedBuffer;
 
     //解凍したバッファを読み込む
     BinaryReader humanoidReader(humanoidBuffer);
     UINT humanoidMeshCount = humanoidReader.ReadUInt32();
+
+    HumanoidList humanoidList{};
+    humanoidList.humanoidMeshCount = humanoidMeshCount;
+    humanoidList.shapeMappings.resize(humanoidMeshCount);
+    humanoidList.meshNames.resize(humanoidMeshCount);
+    humanoidList.shapeCounts.resize(humanoidMeshCount);
 
     for (UINT i = 0; i < humanoidMeshCount; i++) {
         HumanoidMesh humanoidMesh;
@@ -842,9 +886,11 @@ void Character::LoadHumanoidMesh(BinaryReader& br)
         //メッシュ名
         char* meshNameBuf = humanoidReader.ReadBytes(humanoidReader.ReadByte());
         humanoidMesh.pMesh->meshName = meshNameBuf;
+        humanoidList.meshNames[i] = meshNameBuf;
         delete[] meshNameBuf;
 
         UINT shapeMappingCount = humanoidReader.ReadUInt32();
+        humanoidList.shapeCounts[i] = shapeMappingCount;
         for (UINT j = 0; j < shapeMappingCount; j++) {
             //シェイプキー名
             char* shapeNameBuf = humanoidReader.ReadBytes(humanoidReader.ReadByte());
@@ -863,11 +909,7 @@ void Character::LoadHumanoidMesh(BinaryReader& br)
 
             humanoidMesh.shapeWeights.push_back(0.0f);
             humanoidMesh.shapeMapping[shapeName] = shapeIndex;
-            //printf("ShapeName = %s\n", shapeName.c_str());
-
-            /*if (humanoidMesh.meshName == "Body all") {
-                printf("%u - %s\n", j, shapeName.c_str());
-            }*/
+            humanoidList.shapeMappings[i].emplace(shapeName, shapeIndex);
         }
         //シェイプキーの、100%のときのその頂点の位置
         UINT shapeDeltaCount = humanoidReader.ReadUInt32();
@@ -882,6 +924,7 @@ void Character::LoadHumanoidMesh(BinaryReader& br)
 
         m_humanoidMeshes.push_back(humanoidMesh);
     }
+    s_sharedHumanoidMeshes.emplace(m_modelFile, humanoidList);
 }
 
 void Character::SetTexture(Mesh* pMesh, const std::string nameOnly)
@@ -894,7 +937,7 @@ void Character::SetTexture(Mesh* pMesh, const std::string nameOnly)
 
     //マテリアルを作成
     bool bExist;
-    pMesh->pMaterial = m_pMaterialManager->AddMaterialWithShapeData(texPath, bExist, pMesh->shapeDataIndex);
+    pMesh->pMaterial = m_pMaterialManager->AddMaterialWithShapeData(texPath, bExist, pMesh->meshData->shapeDataIndex);
     if (!bExist) {
         pMesh->pMaterial->SetMainTexture(texPath);
     }
@@ -960,13 +1003,7 @@ void Character::UpdateShapeKeys()
     for (HumanoidMesh& mesh : m_humanoidMeshes) {
         //シェイプバッファに送信
         if (mesh.pMesh->shapeWeightsBuffer && mesh.bChangeShapeValue) {
-            void* pData = nullptr;
-            HRESULT hr = mesh.pMesh->shapeWeightsBuffer->Map(0, nullptr, &pData);
-            if (SUCCEEDED(hr))
-            {
-                memcpy(pData, mesh.shapeWeights.data(), sizeof(float) * mesh.shapeWeights.size()); //各シェイプキーのウェイトをコピー
-                mesh.pMesh->shapeWeightsBuffer->Unmap(0, nullptr);
-            }
+            memcpy(mesh.pMesh->pShapeWeightsMapped, mesh.shapeWeights.data(), sizeof(float) * mesh.shapeWeights.size()); //各シェイプキーのウェイトをコピー
             mesh.bChangeShapeValue = false;
         }
     }
@@ -975,20 +1012,20 @@ void Character::UpdateShapeKeys()
 void Character::UpdateAnimation()
 {
     //アニメーションが存在しない
-    if (m_nowAnimationIndex < 0 || m_animations.size() <= m_nowAnimationIndex) {
+    if (m_nowAnimationIndex < 0 || m_characterAnimations.size() <= m_nowAnimationIndex) {
         return;
     }
 
     //キーフレームが存在しない
-    if (m_animations[m_nowAnimationIndex].m_frames.size() <= 0) {
+    if (m_characterAnimations[m_nowAnimationIndex].pAnimation->m_frames.size() <= 0) {
         return;
     }
 
     //アニメーション時間を更新
-    m_nowAnimationTime += g_Engine->GetFrameTime() * m_animationSpeed;
+    m_nowAnimationTime += *m_pFrameTime * m_animationSpeed;
 
     //現在のアニメーション時間のフレームを取得
-    AnimationFrame* pFrame = m_animations[m_nowAnimationIndex].GetFrame(m_nowAnimationTime);
+    CharacterAnimationFrame* pFrame = m_characterAnimations[m_nowAnimationIndex].pAnimation->GetCharacterFrame(m_nowAnimationTime, &m_characterAnimations[m_nowAnimationIndex].beforeFrameIndex);
 
     //フレームが存在しなければ処理を終了 (主にアニメーションが読み込まれていない場合)
     if (!pFrame) {
@@ -1000,19 +1037,21 @@ void Character::UpdateAnimation()
 
     //ボーンアニメーション
     for (UINT i = 0; i < pFrame->boneAnimations.size(); i++) {
-        std::string boneName = m_animations[m_nowAnimationIndex].m_boneMapping[i];
+        std::string boneName = m_characterAnimations[m_nowAnimationIndex].pAnimation->m_boneMapping[i];
         UpdateBonePosition(boneName, pFrame->boneAnimations[i].position);
         UpdateBoneRotation(boneName, pFrame->boneAnimations[i].rotation);
     }
 
     //シェイプキーのアニメーション
-    for (UINT i = 0; i < m_animations[m_nowAnimationIndex].m_shapeNames.size(); i++) {
-        std::string& shapeName = m_animations[m_nowAnimationIndex].m_shapeNames[i];
-        SetShapeWeight(shapeName, pFrame->shapeAnimations[i]);
+    for (UINT i = 0; i < m_characterAnimations[m_nowAnimationIndex].pAnimation->m_shapeNames.size(); i++) {
+        std::string& shapeName = m_characterAnimations[m_nowAnimationIndex].pAnimation->m_shapeNames[i];
+        if (pFrame->shapeAnimations.size() > i) {
+            SetShapeWeight(shapeName, pFrame->shapeAnimations[i]);
+        }
     }
 
     //再生中のフレームが最後のフレームだった場合最初に戻す
-    if (m_animations[m_nowAnimationIndex].IsLastFrame(pFrame)) {
+    if (m_characterAnimations[m_nowAnimationIndex].pAnimation->IsLastFrame(pFrame)) {
         m_nowAnimationTime = 0.0f;
     }
 }

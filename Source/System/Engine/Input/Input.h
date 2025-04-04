@@ -23,15 +23,17 @@ public:
 	bool TriggerKey(UINT index);
 
 	//=============================================================================
-	// マウスの状態を更新する
+	// マウスやキーを更新する
 	//=============================================================================
-	void UpdateMouseState();
+	void Update();
 
 	//=============================================================================
 	// マウスの移動量を取得する
 	// 戻り値：POINT Ｘ,Ｙの移動量
 	//=============================================================================
 	POINT GetMouseMove() const;
+
+	POINT GetMousePosition() const;
 
 	//=============================================================================
 	// マウスホイールの回転量を取得
@@ -51,12 +53,20 @@ public:
 	BYTE GetMouseState(const BYTE keyCode) const;
 
 	//=============================================================================
-	// マウスのボタンの状態を取得する（一度キーを離さないと押せない）
+	// マウスのボタンの状態を取得する（押した瞬間）
 	// 戻り値：BYTE ボタンの状態
 	// 引　数：const BYTE キーコード
 	// 　　　　列挙体として(DIK_LBUTTON, DIK_RBUTTON, DIK_MBUTTON)を用意してある
 	//=============================================================================
 	BYTE GetMouseStateSync(const BYTE keyCode);
+
+	//=============================================================================
+	// マウスのボタンの状態を取得する（離した瞬間）
+	// 戻り値：BYTE ボタンの状態
+	// 引　数：const BYTE キーコード
+	// 　　　　列挙体として(DIK_LBUTTON, DIK_RBUTTON, DIK_MBUTTON)を用意してある
+	//=============================================================================
+	BYTE GetMouseStateRelease(const BYTE keyCode);
 
 private:
 	//インプットの生成
@@ -85,10 +95,14 @@ private:
 	DIMOUSESTATE m_mouseState;
 	DIMOUSESTATE m_mouseCheck;
 
+	DIMOUSESTATE m_prevMouseState{}; //前フレームの状態を保持
+
 	//キー情報
 	BYTE keys[KEY_MAX];
 	//前のキー情報
 	BYTE olds[KEY_MAX];
+	//トリガー状態
+	bool triggered[KEY_MAX];
 
 	HWND m_hwnd;
 };
@@ -237,3 +251,7 @@ private:
 #define DIK_MYCOMPUTER      0xEB    /* My Computer */
 #define DIK_MAIL            0xEC    /* Mail */
 #define DIK_MEDIASELECT     0xED    /* Media Select */
+
+#define DIK_LBUTTON			0x00	/* 左クリック */
+#define DIK_RBUTTON			0x01	/* 右クリック */
+#define DIK_CBUTTON			0x02	/* 中クリック */

@@ -7,16 +7,22 @@ cbuffer TransformBuffer : register(b0)
     matrix viewMatrix; //ビューマトリックス
     matrix projectionMatrix; //プロジェクションマトリックス
     matrix lightViewProjMatrix; //ディレクショナルライトの情報
-    matrix normalMatrix; //モデルのスケール、回転などをinput.normalにも適応する用
     float4 eyePos;              //カメラの位置
 };
 
-cbuffer BoneMatrices : register(b1)
+cbuffer MeshBuffer : register(b1)
+{
+    matrix meshMatrix; //メッシュ単位のマトリックス
+    matrix normalMatrix; //モデルのスケール、回転などをinput.normalにも適応する用
+    float time;             //時間情報（シェーダーで動的に更新）
+}
+
+cbuffer BoneMatrices : register(b2)
 {
     matrix boneMatrices[512]; //ボーンマトリックス（最大512個)
 }
 
-cbuffer Constants : register(b2) //初期化時に1度だけしか実行しないもの
+cbuffer Constants : register(b3) //初期化時に1度だけしか実行しないもの
 {
     uint vertexCount; //頂点数
     uint shapeCount; //シェイプキーの数
@@ -83,7 +89,8 @@ VSOutput main(VSInput input)
 
         localPos = mul(float4(shapePos, 1.0f), skinMatrix); //頂点座標
     }
-    float4 worldPos = mul(modelMatrix, localPos);       //ワールド座標に変換
+    float4 meshPos = mul(meshMatrix, localPos);     //ローカル座標に変換
+    float4 worldPos = mul(modelMatrix, meshPos);    //ワールド座標に変換
     output.position = mul(lightViewProjMatrix, worldPos);
     return output;
 }

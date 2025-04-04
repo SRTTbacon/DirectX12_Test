@@ -8,12 +8,14 @@ Texture2D<float4> _NormalMap : register(t1);            //ノーマルマップ
 Texture2D<float> shadowMap : register(t2);              //シャドウマップ
 
 //定数バッファ
-cbuffer LightBuffer : register(b0)
+cbuffer PixelBuffer : register(b0)
 {
     float4 lightDir;        //ライトの方向
     float4 ambientColor;    //影の色
     float4 diffuseColor;    //標準の色
     float4 cameraEyePos;    //カメラの位置
+    float4 fogColor;        //フォグの色
+    float2 fogStartEnd;     //フォグの開始距離、終了距離
 };
 
 struct VSOutput

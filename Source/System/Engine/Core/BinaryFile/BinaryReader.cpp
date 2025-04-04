@@ -1,7 +1,10 @@
 #include "BinaryReader.h"
 
-BinaryReader::BinaryReader(const std::string& filePath)
+using namespace DirectX;
+
+BinaryReader::BinaryReader(const std::string& filePath, UINT maxReadKB)
 	: bMemory(false)
+	, readBufferSize(1024 * maxReadKB)
 {
 	hFile = CreateFileA(filePath.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 
@@ -9,13 +12,14 @@ BinaryReader::BinaryReader(const std::string& filePath)
 		return;
 	}
 
-	buffer.resize(DEFAULT_BUFFER_SIZE);
+	buffer.resize(readBufferSize);
 	FillBuffer();
 }
 
-BinaryReader::BinaryReader(std::vector<char>& buffer)
+BinaryReader::BinaryReader(std::vector<char>& buffer, UINT maxReadKB)
 	: bMemory(true)
 	, hFile(nullptr)
+	, readBufferSize(1024 * maxReadKB)
 {
 	this->buffer = buffer;
 	bufferSize = buffer.size();
@@ -40,6 +44,16 @@ DirectX::XMMATRIX BinaryReader::ReadMatrix()
 	}
 
 	return matrix;
+}
+
+DirectX::XMFLOAT2 BinaryReader::ReadFloat2()
+{
+	return Read<XMFLOAT2>();
+}
+
+DirectX::XMFLOAT3 BinaryReader::ReadFloat3()
+{
+	return Read<XMFLOAT3>();
 }
 
 //ファイルから8バイトだけ読み取り、double型に入れる
@@ -174,30 +188,19 @@ BYTE* BinaryReader::ReadUBytes(int readsize)
 	return result;
 }
 //現在の位置からseekLengthバイトだけ進める
-void BinaryReader::Seek(UINT seekLength)
+void BinaryReader::Seek(UINT seekLength, SeekType seekType)
 {
 	if (hFile == INVALID_HANDLE_VALUE && !bMemory) {
 		return;
 	}
 
-	size_t bytesRemaining = bufferSize - bufferIndex;
-
-	if (bytesRemaining < seekLength) {
-		if (bMemory) {
-			return;
-		}
-
-		//バッファを補充
-		if (!FillBuffer()) {
-			return;
-		}
-
-		//インデックスを更新
-		bufferIndex = seekLength - bytesRemaining;
+	if (!SetFilePointer(hFile, seekLength, nullptr, seekType)) {
+		printf("シーク先がファイルの範囲を超えています。\n");
+		CloseHandle(hFile);
+		return;
 	}
-	else {
-		bufferIndex += seekLength;
-	}
+
+	FillBuffer();
 }
 //バイナリファイルを閉じる
 void BinaryReader::Close()
@@ -216,7 +219,7 @@ bool BinaryReader::FillBuffer()
 	}
 
 	DWORD bytesRead = 0;
-	BOOL success = ReadFile(hFile, buffer.data(), DEFAULT_BUFFER_SIZE, &bytesRead, NULL);
+	BOOL success = ReadFile(hFile, buffer.data(), readBufferSize, &bytesRead, NULL);
 	if (!success || bytesRead == 0) {
 		printf("ErrorReadFile\n");
 		return false; //ファイルの終端

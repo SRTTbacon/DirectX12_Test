@@ -7,16 +7,34 @@
   </ProjectOutputs>
   <ContentFiles>
     <ContentFile>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\GrassPS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\GrassVS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\PostProcessNoisePS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\PostProcessVS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
       <FullPath>F:\Projects\DirectX12_Test\x64\Debug\PrimitivePS.cso</FullPath>
     </ContentFile>
     <ContentFile>
       <FullPath>F:\Projects\DirectX12_Test\x64\Debug\PrimitiveVS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\ShadowPS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\ShadowVS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\ShadowVS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\SkyBoxPS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\SkyBoxVS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\TerrainPS.cso</FullPath>
     </ContentFile>
     <ContentFile>
       <FullPath>F:\Projects\DirectX12_Test\x64\Debug\TexturePS.cso</FullPath>
@@ -26,6 +44,12 @@
     </ContentFile>
     <ContentFile>
       <FullPath>F:\Projects\DirectX12_Test\x64\Debug\ToonPS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\UITexturePS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>F:\Projects\DirectX12_Test\x64\Debug\UITextureVS.cso</FullPath>
     </ContentFile>
   </ContentFiles>
   <SatelliteDlls />

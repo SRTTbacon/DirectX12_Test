@@ -1,0 +1,69 @@
+cbuffer ModelConstantBuffer : register(b0)
+{
+    matrix modelMatrix; //モデルマトリックス
+    matrix viewMatrix; //ビューマトリックス
+    matrix projectionMatrix; //プロジェクションマトリックス
+    matrix lightViewProjMatrix; //ディレクショナルライトの情報
+    float4 eyePos; //カメラの位置
+    float4 lightPos; //ライトの位置
+}
+
+cbuffer MeshBuffer : register(b1)
+{
+    matrix meshMatrix;      //メッシュ単位のマトリックス
+    matrix normalMatrix;    //モデルのスケール、回転などをinput.normalにも適応する用
+    float time;             //時間情報（シェーダーで動的に更新）
+}
+
+// 頂点構造体
+struct VS_INPUT
+{
+    float3 pos : POSITION;              //頂点座標
+    float4 boneWeights : BONEWEIGHTS;   //各頂点のボーンの影響度
+    uint4 boneIDs : BONEIDS;            //各頂点に影響を与えるボーンのインデックス (ボーンがないモデルはすべて0)
+    uint vertexID : VERTEXID;           //頂点のID
+    float3 normal : NORMAL;             //法線
+    float2 uv : TEXCOORD;               //UV
+    float3 tangent : TANGENT;           //接線
+    float3 binormal : BINORMAL;         //従法線
+};
+
+struct VS_OUTPUT
+{
+    float4 svpos : SV_POSITION;     //スクリーン座標
+    float3 normal : NORMAL;         //法線
+    float2 uv : TEXCOORD;           //UV
+    float4 shadowPos : TEXCOORD1;   //影の位置
+    float3 worldPos : TEXCOORD2;    //ワールド座標
+};
+
+//頂点シェーダー
+VS_OUTPUT main(VS_INPUT input)
+{
+    VS_OUTPUT output;
+
+    //根元の動きを抑えるために高さ (y) を考慮
+    float heightFactor = smoothstep(-1.0f, 0.0f, input.pos.y); //高いほど揺れる
+
+    //揺れ (X軸とZ軸方向)
+    float swayX = sin(input.pos.x * 2.0f + time * 2.0f) * 1.5f * heightFactor; // X軸方向の揺れ
+    float swayZ = cos(input.pos.z * 2.0f + time * 1.8f) * 1.5f * heightFactor; // Z軸方向の揺れ
+
+    input.pos.x += swayX;
+    input.pos.z += swayZ;
+
+    matrix temp = meshMatrix;
+    float4 localPos = float4(input.pos, 1.0f); //頂点座標
+    float4 meshPos = mul(temp, localPos); //ローカル座標に変換
+    float4 worldPos = mul(modelMatrix, meshPos); //ワールド座標に変換
+    float4 viewPos = mul(viewMatrix, worldPos); //ビュー座標に変換
+    float4 projPos = mul(projectionMatrix, viewPos); //投影変換
+
+    output.svpos = projPos; //投影変換された座標
+    output.worldPos = worldPos.xyz; //ワールド座標
+    output.normal = normalize(mul(normalMatrix, float4(input.normal, 0.0f)).xyz);
+    output.uv = input.uv; //UV
+    output.shadowPos = mul(lightViewProjMatrix, worldPos);
+
+    return output;
+}
