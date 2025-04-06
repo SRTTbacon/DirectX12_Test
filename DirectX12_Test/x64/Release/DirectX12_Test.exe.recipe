@@ -7,49 +7,49 @@
   </ProjectOutputs>
   <ContentFiles>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\GrassPS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\GrassPS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\GrassVS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\GrassVS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\PostProcessNoisePS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\PostProcessNoisePS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\PostProcessVS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\PostProcessVS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\PrimitivePS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\PrimitivePS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\PrimitiveVS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\PrimitiveVS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\ShadowVS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\ShadowVS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\SkyBoxPS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\SkyBoxPS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\SkyBoxVS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\SkyBoxVS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\TerrainPS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\TerrainPS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\TexturePS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\TexturePS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\BoneVS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\BoneVS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\ToonPS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\ToonPS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\UITexturePS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\UITexturePS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>F:\Projects\DirectX12_Test\x64\Release\UITextureVS.cso</FullPath>
+      <FullPath>F:\Projects\DirectX12_Test\Resource\ReleaseShaders\UITextureVS.cso</FullPath>
     </ContentFile>
   </ContentFiles>
   <SatelliteDlls />

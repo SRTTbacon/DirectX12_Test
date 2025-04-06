@@ -86,6 +86,7 @@ void Terrain::Initialize()
 	g_Engine->GetWwiseSoundSystem()->Set_Emitter(emitter);
 	g_Engine->GetWwiseSoundSystem()->Play(KeyString::SOUND_SE_GAME_WIND, emitter);
 
+	DWORD grassTime = timeGetTime();
 	//草のモデル
 	int maxGrassCount = 80;
 	for (int i = 0; i < maxGrassCount; i++) {
@@ -106,6 +107,8 @@ void Terrain::Initialize()
 			m_pGrasses.push_back(pGrass);
 		}
 	}
+
+	printf("草 (%d個) のロード - %dms\n", maxGrassCount * maxGrassCount, timeGetTime() - grassTime);
 
 	//ブラックアウト画像
 	m_pBlackout = g_Engine->AddPrimitiveQuad();

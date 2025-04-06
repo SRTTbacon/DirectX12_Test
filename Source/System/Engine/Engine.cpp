@@ -6,6 +6,7 @@ Engine::Engine(HWND hwnd)
 	: m_Scissor(D3D12_RECT())
 	, m_Viewport(D3D12_VIEWPORT())
 	, m_clearColor(DXGI_RGBA(0.0f, 0.0f, 0.0f, 1.0f))
+	, m_windowMode(WindowMode::WindowNormal)
 	, m_fenceValue{0}
 	, m_frameTime(0.0f)
 	, m_hWnd(hwnd)
@@ -802,6 +803,8 @@ void Engine::SetWindowMode(WindowMode windowMode, _In_opt_ SIZE* windowSize)
 		SetWindowPos(m_hWnd, HWND_TOP, 0, 0, m_windowSize.cx, m_windowSize.cy, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 		ShowWindow(m_hWnd, SW_MAXIMIZE);
 	}
+
+	m_windowMode = windowMode;
 
 	m_bResizeBuffer = true;
 }

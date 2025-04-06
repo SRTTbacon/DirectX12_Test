@@ -141,6 +141,9 @@ public: //ゲッター関数
 	//背景色を取得
 	inline DXGI_RGBA GetClearColor() const { return m_clearColor; }
 
+	//現在のウィンドウモードを取得
+	inline WindowMode GetWindowMode() const { return m_windowMode; }
+
 	//現在のウィンドウサイズを取得
 	inline SIZE GetWindowSize() const { return m_windowSize; }
 
@@ -225,6 +228,7 @@ private: //プライベート変数
 
 	SIZE m_windowSize;
 	DXGI_RGBA m_clearColor;
+	WindowMode m_windowMode;
 
 	DirectionalLight m_directionalLight;
 

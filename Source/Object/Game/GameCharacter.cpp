@@ -21,7 +21,7 @@ void GameCharacter::Initialize()
 {
 	//棒立ちキャラクター
 	m_pPoseChar = g_Engine->AddCharacter(CHARACTER_FILE);
-	m_pPoseChar->AddAnimation(g_Engine->GetAnimation("Resource\\Pose.hcs"));
+	m_pPoseChar->AddAnimation(g_Engine->GetAnimation("Resource\\Animation\\Pose.hcs"));
 	m_pPoseChar->SetRotation(-90.0f, 180.0f, 0.0f);
 	m_pPoseChar->m_position.y = -1.08f;
 	m_pPoseChar->SetShapeWeight("瞳孔_無", 1.0f);
@@ -41,7 +41,7 @@ void GameCharacter::Initialize()
 
 	//同じキャラクターを配置し、アニメーションを変更
 	m_pDanceChar1 = g_Engine->AddCharacter(CHARACTER_FILE);
-	m_pDanceChar1->AddAnimation(g_Engine->GetAnimation("Resource\\Roki1.hcs"));
+	m_pDanceChar1->AddAnimation(g_Engine->GetAnimation("Resource\\Animation\\Roki1.hcs"));
 	m_pDanceChar1->m_animationSpeed = m_animSpeed;
 	m_pDanceChar1->SetRotation(-90.0f, 180.0f, 0.0f);
 	m_pDanceChar1->m_position.x = 5.0f;
@@ -50,7 +50,7 @@ void GameCharacter::Initialize()
 
 	//同じキャラクターを配置し、アニメーションを変更
 	m_pDanceChar2 = g_Engine->AddCharacter(CHARACTER_FILE);
-	m_pDanceChar2->AddAnimation(g_Engine->GetAnimation("Resource\\Roki2.hcs"));
+	m_pDanceChar2->AddAnimation(g_Engine->GetAnimation("Resource\\Animation\\Roki2.hcs"));
 	m_pDanceChar2->m_animationSpeed = m_animSpeed;
 	m_pDanceChar2->SetRotation(-90.0f, 180.0f, 0.0f);
 	m_pDanceChar2->m_position.x = 5.0f;

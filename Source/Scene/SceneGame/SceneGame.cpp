@@ -18,8 +18,10 @@ void SceneGame::Start()
 	//視野角を設定
 	g_Engine->GetCamera()->SetFov(85.0f);
 
-	//ウィンドウモードを最大化
-	g_Engine->SetWindowMode(WindowMode::WindowMaximum, nullptr);
+	if (g_Engine->GetWindowMode() != WindowMode::WindowMaximum) {
+		//ウィンドウモードを最大化
+		g_Engine->SetWindowMode(WindowMode::WindowMaximum, nullptr);
+	}
 
 	//環境音の再生
 	if (!g_Engine->GetWwiseSoundSystem()->IsInited()) {

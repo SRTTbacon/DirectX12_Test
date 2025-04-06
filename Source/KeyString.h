@@ -3,9 +3,9 @@
 constexpr int FRAME_BUFFER_COUNT = 3;
 
 #ifdef _DEBUG
-#define BUILD_MODE L"x64\\Debug\\"
+#define BUILD_MODE L"Resource\\DebugShaders\\"
 #else
-#define BUILD_MODE L"x64\\Release\\"
+#define BUILD_MODE L"Resource\\ReleaseShaders\\"
 #endif
 
 namespace KeyString
