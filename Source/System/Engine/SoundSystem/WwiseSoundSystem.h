@@ -17,28 +17,33 @@
 
 struct Emitter
 {
-	const AkGameObjectID objectID;
+	const AkGameObjectID objectID;	//オブジェクトID
 
-	DirectX::XMFLOAT3 position;	//再生位置
+	DirectX::XMFLOAT3 position;		//再生位置
 	DirectX::XMFLOAT3 front;		//前方向ベクトル
-	DirectX::XMFLOAT3 top;		//上方向ベクトル
+	DirectX::XMFLOAT3 top;			//上方向ベクトル
 
 	Emitter(AkGameObjectID id);
 };
 
 using EmitterRef = std::shared_ptr<Emitter>;
 
+//Wwiseサウンドのハンドル
 class WwiseSoundHandle
 {
 public:
 	WwiseSoundHandle(const EmitterRef pEmitter, AkPlayingID playingID);
 
 public:
+	//イベントに関連付けされているエミッターを取得
 	inline EmitterRef GetEmitter() const { return m_pEmitter; }
+	//再生IDを取得
 	inline AkPlayingID GetPlayingID() const { return m_playingID; }
 
 private:
+	//エミッター
 	const EmitterRef m_pEmitter;
+	//再生ID (停止時に必要)
 	const AkPlayingID m_playingID;
 };
 
@@ -136,14 +141,21 @@ public:
 private:
 	CAkDefaultIOHookDeferred m_lowLevelIO;
 
+	//最後に実行されたWwiseへの命令のエラーログ
 	AKRESULT m_lastResult;
+
+	//Init.bnkのロードID
 	UINT m_initBankID;
 
+	//リスナーのGameObjectID
 	AkGameObjectID m_listenerID = 0;
 
+	//ランダムのGameObjectIDを取得
 	AkGameObjectID GetRandomGameObjectID();
 
+	//.bnkのパスに日本語が含まれている場合読み取れないため、ifstreamでデータを格納
 	std::unordered_map<std::string, char*> m_pBankData;
 
+	//イベント終了のコールバック
 	static void AkCallbackFunction(AkCallbackType in_eType, AkCallbackInfo* in_pCallbackInfo);
 };

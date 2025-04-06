@@ -376,6 +376,9 @@
     <ClCompile Include="Source\Object\GUI\GUIAnimation.cpp">
       <Filter>Object\GUI</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Object\Game\GameCharacter.cpp">
+      <Filter>Object\Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\System\Main\Main.h">
@@ -569,6 +572,9 @@
     </ClInclude>
     <ClInclude Include="Source\Object\GUI\GUIAnimation.h">
       <Filter>Object\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Object\Game\GameCharacter.h">
+      <Filter>Object\Game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -14,6 +14,17 @@ void ModelManager::AddModel(Model* pModel)
 	m_models.push_back(pModel);
 }
 
+void ModelManager::ReleaseModel(Model* pModel)
+{
+    for (auto it = m_models.begin(); it != m_models.end(); it++) {
+        if (*it == pModel) {
+            m_models.erase(it);
+            delete pModel;
+            break;
+        }
+    }
+}
+
 void ModelManager::LateUpdate(UINT backBufferIndex)
 {
     m_opaqueMaterials.clear();

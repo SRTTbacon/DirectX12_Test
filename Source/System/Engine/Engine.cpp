@@ -15,6 +15,7 @@ Engine::Engine(HWND hwnd)
 	, m_sceneTimeMS(0)
 	, m_windowSize(0, 0)
 	, m_bEnablePostProcess(false)
+	, m_bResizeBuffer(false)
 {
 }
 
@@ -134,6 +135,19 @@ Model* Engine::AddModel(std::string modelFile)
 	pModel->LoadModel(modelFile);
 	m_modelManager.AddModel(pModel);
 	return pModel;
+}
+
+Model* Engine::AddPrimitiveQuad()
+{
+	Model* pModel = new Model(m_pDevice.Get(), m_pCommandList.Get(), &m_camera, &m_directionalLight, &m_materialManager, &m_frameTime);
+	pModel->LoadPrimitiveQuad();
+	m_modelManager.AddModel(pModel);
+	return pModel;
+}
+
+void Engine::ReleaseModel(Model* pModel)
+{
+	m_modelManager.ReleaseModel(pModel);
 }
 
 bool Engine::CreateDevice()
@@ -296,30 +310,28 @@ void Engine::CreateScissorRect()
 
 bool Engine::CreateRenderTarget()
 {
-	// RTV用のディスクリプタヒープを作成
+	//RTV用のディスクリプタヒープを作成
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-	desc.NumDescriptors = FRAME_BUFFER_COUNT * 2; // フレームバッファ + 中間テクスチャ
+	desc.NumDescriptors = FRAME_BUFFER_COUNT * 2; //フレームバッファ+中間テクスチャ
 	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	auto hr = m_pDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(m_pRtvHeap.ReleaseAndGetAddressOf()));
-	if (FAILED(hr))
-	{
+	if (FAILED(hr)) {
 		return false;
 	}
 
-	// ディスクリプタのサイズを取得
+	//ディスクリプタのサイズを取得
 	m_RtvDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRtvHeap->GetCPUDescriptorHandleForHeapStart();
 
-	// スワップチェーンのバックバッファを取得
-	for (UINT i = 0; i < FRAME_BUFFER_COUNT; i++)
-	{
+	//スワップチェーンのバックバッファを取得
+	for (UINT i = 0; i < FRAME_BUFFER_COUNT; i++) {
 		m_pSwapChain->GetBuffer(i, IID_PPV_ARGS(m_pRenderTargets[i].ReleaseAndGetAddressOf()));
 		m_pDevice->CreateRenderTargetView(m_pRenderTargets[i].Get(), nullptr, rtvHandle);
 		rtvHandle.ptr += m_RtvDescriptorSize;
 	}
 
-	// 中間テクスチャをフレーム数分作成
+	//中間テクスチャをフレーム数分作成
 	D3D12_RESOURCE_DESC desc2 = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, static_cast<UINT64>(m_Viewport.Width), static_cast<UINT>(m_Viewport.Height));
 	desc2.SampleDesc.Count = 1;
 	desc2.MipLevels = 1;
@@ -330,7 +342,7 @@ bool Engine::CreateRenderTarget()
 	clearValue.Color[0] = m_clearColor.r;
 	clearValue.Color[1] = m_clearColor.g;
 	clearValue.Color[2] = m_clearColor.b;
-	clearValue.Color[3] = 1.0f; // アルファを1.0に設定
+	clearValue.Color[3] = 1.0f; //アルファを1.0に設定
 
 	CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_DEFAULT);
 	for (UINT i = 0; i < FRAME_BUFFER_COUNT; i++)
@@ -347,7 +359,7 @@ bool Engine::CreateRenderTarget()
 			return false;
 		}
 
-		// 中間テクスチャ用のRTVを作成
+		//中間テクスチャ用のRTVを作成
 		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
 		rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
@@ -558,10 +570,10 @@ void Engine::WaitRender()
 	m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
 	// GPUが描画を終えていれば即座に次のフレームへ
-	if (m_pFence->GetCompletedValue() >= currentFanceValue) {
+	/*if (m_pFence->GetCompletedValue() >= currentFanceValue) {
 		m_fenceValue[m_CurrentBackBufferIndex] = currentFanceValue + 1;
 		return;
-	}
+	}*/
 
 	// GPUが未完了の場合は待機
 	HRESULT hr = m_pFence->SetEventOnCompletion(currentFanceValue, m_fenceEvent);
@@ -597,6 +609,27 @@ void Engine::EndRender()
 	//コマンドを初期化してためる準備をする
 	m_pAllocator->Reset();
 	m_pCommandList->Reset(m_pAllocator.Get(), nullptr);
+
+	if (m_bResizeBuffer) {
+		for (UINT i = 0; i < FRAME_BUFFER_COUNT; ++i)
+		{
+			m_pRenderTargets[i].Reset();
+			m_intermediateRenderTargets[i].Reset();
+		}
+
+		//スワップチェインのバッファサイズをリサイズ
+		HRESULT hr = m_pSwapChain->ResizeBuffers(FRAME_BUFFER_COUNT, m_windowSize.cx, m_windowSize.cy, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
+		if (FAILED(hr)) {
+			printf("スワップチェインのリサイズに失敗しました。\n");
+		}
+
+		CreateViewPort();
+		CreateRenderTarget();
+
+		WaitRender();
+
+		m_bResizeBuffer = false;
+	}
 }
 
 BYTE Engine::GetMouseState(BYTE keyCode) const
@@ -770,11 +803,7 @@ void Engine::SetWindowMode(WindowMode windowMode, _In_opt_ SIZE* windowSize)
 		ShowWindow(m_hWnd, SW_MAXIMIZE);
 	}
 
-	//スワップチェインのバッファサイズをリサイズ
-	HRESULT hr = m_pSwapChain->ResizeBuffers(0, m_windowSize.cx, m_windowSize.cy, DXGI_FORMAT_UNKNOWN, 0);
-	if (FAILED(hr)) {
-		printf("スワップチェインのリサイズに失敗しました。\n");
-	}
+	m_bResizeBuffer = true;
 }
 
 Animation* Engine::GetAnimation(std::string animFilePath)

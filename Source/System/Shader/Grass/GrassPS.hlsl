@@ -4,17 +4,18 @@
 SamplerState texSampler : register(s0); //テクスチャ用サンプラー
 SamplerComparisonState shadowSampler : register(s1); //テクスチャ用サンプラー
 Texture2D<float4> _MainTex : register(t0); //テクスチャ
-Texture2D<float> shadowMap : register(t1); //シャドウマップ
+Texture2D<float> _NoiseTex : register(t1); //テクスチャ
+Texture2D<float> shadowMap : register(t2); //シャドウマップ
 
 //定数バッファ
 cbuffer PixelBuffer : register(b0)
 {
-    float4 lightDir; //ライトの方向
-    float4 ambientColor; //影色
-    float4 diffuseColor; //標準の色
-    float4 cameraEyePos; //カメラの位置
-    float4 fogColor; //フォグの色
-    float2 fogStartEnd; //フォグの開始距離、終了距離
+    float4 lightDir;        //ライトの方向
+    float4 ambientColor;    //影色
+    float4 diffuseColor;    //標準の色
+    float4 cameraEyePos;    //カメラの位置
+    float4 fogColor;        //フォグの色
+    float2 fogStartEnd;     //フォグの開始距離、終了距離
 };
 
 struct VS_OUTPUT
@@ -62,10 +63,8 @@ float ShadowCalculation(float4 shadowPos, float bias)
     float3 posFromLightVP = shadowPos.xyz / shadowPos.w;
     float2 shadowUV = (posFromLightVP.xy + float2(1, -1)) * float2(0.5, -0.5);
     
-    if (shadowUV.x <= 0.0f || shadowUV.x >= 1.0f || shadowUV.y <= 0.0f || shadowUV.y >= 1.0f)
-    {
-        return 1.0f;
-    }
+    float isInside = step(0.0f, shadowUV.x) * step(shadowUV.x, 1.0f) *
+                     step(0.0f, shadowUV.y) * step(shadowUV.y, 1.0f);
 
     float total = 0.0f;
     float2 texelSize = float2(1.0f / SHADOWSIZE, 1.0f / SHADOWSIZE);
@@ -79,6 +78,8 @@ float ShadowCalculation(float4 shadowPos, float bias)
 
     //平均を取る
     float shadowFactor = total / 8.0f;
+    
+    shadowFactor = lerp(1.0f, shadowFactor, isInside);
 
     //シャドウの有無を決定(0.0fなら完全な影、1.0fなら影なし)
     return shadowFactor;
@@ -88,10 +89,10 @@ float ShadowCalculation(float4 shadowPos, float bias)
 float4 main(VS_OUTPUT input) : SV_TARGET
 {
     // 草のテクスチャから色とアルファをサンプリング
-    float4 grassColor = _MainTex.Sample(texSampler, input.uv);
+    float4 grassTex = _MainTex.Sample(texSampler, input.uv);
     
     // アルファテスト：アルファが小さい部分は描画しない
-    if (grassColor.a < 0.1f) // 透明部分を無視
+    if (grassTex.a <= 0.29f) //透明部分を無視
     {
         discard;
     }
@@ -109,15 +110,16 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     shadowPower = max(0.1f, shadowPower);
 
     //シャドウがかかっていれば光を減少させる (0.0f なら完全な影、1.0f なら影なし)
-    float4 diffuse = diffuseColor * shadowPower;
+    float4 diffuse = lerp(ambientColor, diffuseColor, shadowPower);
 
-    diffuse += ambientColor;
+    float2 noiseUV = float2(input.worldPos.x, input.worldPos.z) * -0.02f;
+    float noiseTex = _NoiseTex.Sample(texSampler, noiseUV);
+    float4 grassColor1 = float4(0.32f, 0.67f, 0.24f, 1.0f);
+    float4 grassColor2 = float4(0.7f, 1.0f, 0.19f, 1.0f);
+    float4 finalColor = lerp(grassColor1, grassColor2, (1.0f * noiseTex));
 
     // ライティングの影響を草の色に加算
-    float4 finalColor = float4(0.62f, 0.87f, 0.24f, 1.0f) * diffuse;
-
-    // アルファブレンド（透明度を加味した最終色）
-    finalColor.a = grassColor.a; // 透明度を保持
+    finalColor *= diffuse;
 
     return finalColor;
 }

@@ -124,19 +124,18 @@ void Model::LoadModel(const std::string modelFile)
     m_modelFile = modelFile;
 
     DWORD startTime = timeGetTime();
+    //各モデルに必ず必要なリソースを作成
     CreateConstantBuffer();
 
+    //既に読み込み済みのモデルならスキップ
     if (SetSharedMeshes()) {
-        DWORD endTime = timeGetTime();
-        //printf("LoadModel - %s MeshCount - %u : %dms\n", modelFile.c_str(), static_cast<UINT>(m_meshes.size()), endTime - startTime);
         return;
     }
 
-    std::string extension = GetFileExtension(modelFile);
-
     DWORD tempTime = timeGetTime();
-    printf("CreateConstantBuffer - %dms\n", tempTime - startTime);
+    //printf("CreateConstantBuffer - %dms\n", tempTime - startTime);
 
+    //ヘッダーのみ読み取る
     BinaryReader br(modelFile, 1);
     char* headerBuf = br.ReadBytes(br.ReadByte());
     std::string header = headerBuf;
@@ -144,7 +143,9 @@ void Model::LoadModel(const std::string modelFile)
     br.Close();
 
     DWORD tempTime2 = timeGetTime();
-    printf("Open - %dms\n", tempTime2 - tempTime);
+    //printf("Open - %dms\n", tempTime2 - tempTime);
+
+    //ヘッダーが独自フォーマットのもの
     if (header == std::string(MODEL_HEADER)) {
         //バイナリファイルとして開く
         BinaryReader br(modelFile);
@@ -168,14 +169,15 @@ void Model::LoadModel(const std::string modelFile)
             m_meshes.push_back(pMesh);
         }
         tempTime = timeGetTime();
-        printf("ProcessMesh - %dms\n", tempTime - tempTime2);
+        //printf("ProcessMesh - %dms\n", tempTime - tempTime2);
 
         ProcessAnimation(br);
 
         tempTime2 = timeGetTime();
-        printf("ProcessMesh - %dms\n", tempTime2 - tempTime);
+        //printf("ProcessMesh - %dms\n", tempTime2 - tempTime);
     }
-    else {
+    else {  //独自フォーマット以外
+
         //ReadFileだと日本語のパスが入っていると読み込めないため、ifstreamで読み込んで渡す
         std::ifstream file(modelFile, std::ios::binary);
         if (!file) {
@@ -187,7 +189,10 @@ void Model::LoadModel(const std::string modelFile)
 
         Assimp::Importer importer;
 
-        //モデル読み込み時のフラグ。メッシュのポリゴンはすべて三角形にし、左手座標系に変換
+        //ファイル拡張子を取得
+        std::string extension = GetFileExtension(modelFile);
+
+        //モデル読み込み時のフラグ。メッシュのポリゴンはすべて三角形に
         unsigned int flag = aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | aiProcess_GenSmoothNormals |
             aiProcess_CalcTangentSpace | aiProcess_RemoveRedundantMaterials | aiProcess_GenUVCoords | aiProcess_OptimizeMeshes;
         const aiScene* scene = importer.ReadFileFromMemory(buffer.data(), buffer.size(), flag, extension.c_str());
@@ -197,13 +202,81 @@ void Model::LoadModel(const std::string modelFile)
             return;
         }
 
+        //メッシュを読み取る
         ProcessNode(scene, scene->mRootNode);
 
+        //アニメーション情報を読み取る
         ProcessAnimation(scene);
     }
 
     DWORD endTime = timeGetTime();
     printf("LoadModel - %s MeshCount - %u : %dms\n", modelFile.c_str(), static_cast<UINT>(m_meshes.size()), endTime - startTime);
+}
+
+void Model::LoadPrimitiveQuad()
+{
+    m_modelFile = "PrimitiveBox";
+
+    DWORD startTime = timeGetTime();
+    //必要になるリソースを作成
+    CreateConstantBuffer();
+
+    //既に作成済みの場合はスキップ
+    if (SetSharedMeshes()) {
+        return;
+    }
+
+    //クアッドモデル
+    XMFLOAT3 vertices[] =
+    {
+        { -1.0f,  1.0f, 0.0f}, //左上
+        {  1.0f,  1.0f, 0.0f}, //右上
+        { -1.0f, -1.0f, 0.0f}, //左下
+        {  1.0f, -1.0f, 0.0f}  //右下
+    };
+    XMFLOAT2 uvs[] =
+    {
+        { 0.0f, 0.0f }, //左上
+        { 1.0f, 0.0f }, //右上
+        { 0.0f, 1.0f }, //左下
+        { 1.0f, 1.0f }  //右下
+    };
+
+    std::vector<VertexPrimitive> vertexList;
+    std::vector<UINT> indices
+    {
+        0, 1, 2, 2, 1, 3
+    };
+
+    //頂点の処理
+    UINT vertexCount = 4;
+    for (UINT i = 0; i < vertexCount; i++) {
+        VertexPrimitive vertex{};
+
+        vertex.position = vertices[i];
+        vertex.normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
+        vertex.texCoords = uvs[i];
+        vertex.tangent = XMFLOAT3(0.0f, 1.0f, 0.0f);
+        vertex.bitangent = XMFLOAT3(0.0f, 1.0f, 0.0f);
+
+        vertex.boneWeights = { 0.0f, 0.0f, 0.0f, 0.0f };
+        vertex.boneIDs[0] = vertex.boneIDs[1] = vertex.boneIDs[2] = vertex.boneIDs[3] = 0;
+
+        vertex.vertexID = i;
+
+        vertexList.push_back(vertex);
+    }
+
+    Mesh* meshData = new Mesh();
+
+    //メッシュのリソースを作成
+    CreateBuffer(meshData, vertexList, indices, sizeof(VertexPrimitive), 0);
+
+    //テクスチャはデフォルト
+    meshData->pMaterial = m_pMaterialManager->AddMaterial("PrimitiveWhite");
+    meshData->pModel = this;
+
+    m_meshes.push_back(meshData);
 }
 
 void Model::Update()
@@ -241,28 +314,6 @@ void Model::ProcessNode(const aiScene* pScene, aiNode* pNode) {
 }
 
 Mesh* Model::ProcessMesh(const aiScene* scene, aiMesh* mesh, UINT meshIndex) {
-    //既に同じモデルがロードされていれば、それを参照
-    if (s_sharedMeshes.find(m_modelFile) != s_sharedMeshes.end() && s_sharedMeshes[m_modelFile].meshDataList.size() > meshIndex) {
-        MeshDataList& meshDataList = s_sharedMeshes[m_modelFile];
-
-        std::vector<VertexPrimitive> vertex;
-        std::vector<UINT> index;
-        std::shared_ptr<MeshData> meshData = meshDataList.meshDataList[meshIndex];
-
-        Mesh* pMesh = new Mesh();
-
-        //テクスチャはデフォルト
-        pMesh->pMaterial = m_pMaterialManager->AddMaterial("PrimitiveWhite");
-        pMesh->pModel = this;
-        pMesh->meshName = meshDataList.meshMain[meshIndex].meshName;
-        pMesh->m_position = meshDataList.meshMain[meshIndex].position;
-        pMesh->m_rotation = meshDataList.meshMain[meshIndex].rotation;
-
-        CreateBuffer(pMesh, vertex, index, sizeof(VertexPrimitive), meshIndex);
-
-        return pMesh;
-    }
-
     std::vector<VertexPrimitive> vertices;
     std::vector<UINT> indices;
 

@@ -9,6 +9,8 @@
 
 #include "..\\..\\Object\\Terrain\\Terrain.h"
 
+#include "..\\..\\Object\\Game\\GameCharacter.h"
+
 class SceneGame : public Scene
 {
 public:
@@ -27,21 +29,23 @@ private:
 		Model* pModel;
 	};
 
-	Character* m_pChar1;
-	Character* m_pChar2;
-	BassSoundHandle* m_pBGMHandle;
-	UITextureRef uiTexture;
-	UITextRef uiText;
+	static const std::string FONT_MESSAGE;
+
+	UITextureRef m_uiBlack;
+	UITextRef m_uiText;
+	UITextRef m_uiHelpText;
 
 	std::vector<BoneSphere> m_spheres;
 
 	//PhysXManager m_physX;
 	//HairPhysicsBone m_hairPhysics;
 	Terrain m_terrain;
+	GameCharacter m_character;
 
-	//ボーンの位置に球体を設置
-	void CreateSphere(Bone* pBone);
+	float m_sceneTime;
 
 	//カメラ移動
 	void UpdateCamera();
+
+	void UpdateKeys();
 };

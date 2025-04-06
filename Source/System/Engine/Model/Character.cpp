@@ -15,7 +15,7 @@ Character::Character(const std::string modelFile, ID3D12Device* pDevice, ID3D12G
     CreateConstantBuffer();
 
     DWORD tempTime = timeGetTime() - startTime;
-    printf("CreateConstantBuffer - %dms\n", tempTime);
+    //printf("CreateConstantBuffer - %dms\n", tempTime);
 
     BinaryReader br(modelFile);
     char* headerBuf = br.ReadBytes(br.ReadByte());
@@ -191,11 +191,11 @@ void Character::LoadHCS(const std::string& hcsFile)
 	//ボーン、シェイプキー、メッシュの読み込み
     LoadBones(br);
     DWORD endTime = timeGetTime();
-    printf("LoadBone - %dms\n", endTime - startTime);
+    //printf("LoadBone - %dms\n", endTime - startTime);
     startTime = endTime;
     LoadHumanoidMesh(br);
     endTime = timeGetTime();
-    printf("LoadHumanoidMesh - %dms\n", endTime - startTime);
+    //printf("LoadHumanoidMesh - %dms\n", endTime - startTime);
     startTime = endTime;
     UINT meshCount = br.ReadUInt32();
     for (UINT i = 0; i < meshCount; i++) {
@@ -204,7 +204,7 @@ void Character::LoadHCS(const std::string& hcsFile)
     }
 
     endTime = timeGetTime();
-    printf("ProcessMesh - %dms\n", endTime - startTime);
+    //printf("ProcessMesh - %dms\n", endTime - startTime);
     startTime = endTime;
 
     for (HumanoidMesh& humanoidMesh : m_humanoidMeshes) {
@@ -215,7 +215,7 @@ void Character::LoadHCS(const std::string& hcsFile)
     CreateShapeDeltasTexture(true);
 
     endTime = timeGetTime();
-    printf("CreateHumanoidMeshBuffer - %dms\n", endTime - startTime);
+    //printf("CreateHumanoidMeshBuffer - %dms\n", endTime - startTime);
     startTime = endTime;
 
     //マテリアルの読み込み
@@ -241,7 +241,7 @@ void Character::LoadHCS(const std::string& hcsFile)
     m_bHCSFile = true;
 
     endTime = timeGetTime();
-    printf("SetTexture - %dms\n", endTime - startTime);
+    //printf("SetTexture - %dms\n", endTime - startTime);
 }
 
 void Character::ProcessNode(const aiScene* pScene, const aiNode* pNode)
@@ -663,12 +663,19 @@ void Character::LoadBones(aiMesh* mesh, std::vector<Vertex>& vertices)
             if (boneName[0] == 'L' || boneName.at(boneName.size() - 1) == 'L') {
                 pBoneChild->m_boneType = BONETYPE_LEFT_ARM;
             }
-            if (boneName[0] == 'R' || boneName.at(boneName.size() - 1) == 'R') {
+            else if (boneName[0] == 'R' || boneName.at(boneName.size() - 1) == 'R') {
                 pBoneChild->m_boneType = BONETYPE_RIGHT_ARM;
+            }
+            //髪はボーンの回転軸が異なる (Unityと同じように変更)
+            else if (boneName.find("_L") != std::string::npos || boneName.find("L.") != std::string::npos) {
+                pBoneChild->m_boneType = BONETYPE_LEFT_HAIR;
+            }
+            else if (boneName.find("_R") != std::string::npos || boneName.find("R.") != std::string::npos) {
+                pBoneChild->m_boneType = BONETYPE_RIGHT_HAIR;
             }
 
             //目のボーンは左右の区別をしない
-            if (boneName.find("Eye") != std::string::npos || boneName.find("eye") != std::string::npos) {
+            else if (boneName.find("Eye") != std::string::npos || boneName.find("eye") != std::string::npos) {
                 pBoneChild->m_boneType = BONETYPE_DEFAULT;
             }
         }

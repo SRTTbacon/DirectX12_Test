@@ -16,7 +16,9 @@ void Camera::LateUpdate(DirectionalLight* pDirectionalLight)
     direction.m128_f32[1] = sinf(m_pitch);
     direction.m128_f32[2] = cosf(m_pitch) * cosf(m_yaw);
 
-    m_targetPos = XMVectorAdd(m_eyePos, XMVector3Normalize(direction));
+    m_direction = XMVector3Normalize(direction);
+
+    m_targetPos = XMVectorAdd(m_eyePos, m_direction);
 
     XMFLOAT4 eyePos;
     XMStoreFloat4(&eyePos, m_eyePos);

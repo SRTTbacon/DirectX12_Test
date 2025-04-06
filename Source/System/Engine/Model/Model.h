@@ -74,6 +74,8 @@ public:
 
     //FBXファイルからモデルを作成
     void LoadModel(const std::string modelFile);
+    //クアッドモデルを作成
+    void LoadPrimitiveQuad();
 
     virtual void Update();
 

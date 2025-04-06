@@ -25,7 +25,7 @@ void DirectionalLight::Init(ID3D12Device* pDevice)
 {
 	m_pDevice = pDevice;
 
-	m_lightBuffer.ambientColor = XMFLOAT4(0.05f, 0.1f, 0.5f, 1.0f);
+	m_lightBuffer.ambientColor = XMFLOAT4(0.25f, 0.3f, 0.6f, 1.0f);
 	m_lightBuffer.diffuseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 

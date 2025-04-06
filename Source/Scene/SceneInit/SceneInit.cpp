@@ -28,9 +28,8 @@ void SceneInit::Update()
 	// 最初のシーン設定 //
 	//------------------//
 
-	//↓SCENE_GAMEの部分を変更
-
-	m_nowSceneData.Set(SCENE_GAME);
+	//すぐにタイトルに移行
+	m_nowSceneData.Set(SCENE_TITLE);
 }
 
 //****************************************************************************

@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="Source\Game.cpp" />
     <ClCompile Include="Source\Object\FileSystem\HCSFileSystem.cpp" />
+    <ClCompile Include="Source\Object\Game\GameCharacter.cpp" />
     <ClCompile Include="Source\Object\Game\Opening\TextSystem\SpecialTextAnimation.cpp" />
     <ClCompile Include="Source\Object\GUI\GUIAnimation.cpp" />
     <ClCompile Include="Source\Object\GUI\GUILayout.cpp" />
@@ -92,6 +93,7 @@
     <ClInclude Include="Source\GameBase.h" />
     <ClInclude Include="Source\KeyString.h" />
     <ClInclude Include="Source\Object\FileSystem\HCSFileSystem.h" />
+    <ClInclude Include="Source\Object\Game\GameCharacter.h" />
     <ClInclude Include="Source\Object\Game\Opening\TextSystem\SpecialTextAnimation.h" />
     <ClInclude Include="Source\Object\GUI\GUIAnimation.h" />
     <ClInclude Include="Source\Object\GUI\GUILayout.h" />
@@ -383,8 +385,8 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>Library\Wwise\lib\$(Configuration);Library\FreeType\lib\$(Configuration);Library\Effekseer\lib\$(Configuration);Library\WinPixEventRuntime\lib;Library\Zstandard\lib\$(Configuration);Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\PhysX\$(Configuration);Library\assimp\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>assimp-vc143-mtd.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll;PhysX_64.dll;PhysXCommon_64.dll;PhysXFoundation_64.dll</DelayLoadDLLs>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;winmm.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;libzstd_static.lib;PhysX_64.lib;PhysXCommon_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;Effekseerd.lib;EffekseerRendererDX12d.lib;EffekseerSoundXAudio2d.lib;LLGId.lib;freetype.lib;AkSoundEngine.lib;AkMemoryMgr.lib;AkStreamMgr.lib;AkMusicEngine.lib;AkVorbisDecoder.lib;CommunicationCentral.lib</AdditionalDependencies>
+      <DelayLoadDLLs>assimp-vc143-mtd.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll;PhysX_64.dll;PhysXFoundation_64.dll</DelayLoadDLLs>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;winmm.lib;%(AdditionalDependencies);bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;libzstd_static.lib;PhysX_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;Effekseerd.lib;EffekseerRendererDX12d.lib;EffekseerSoundXAudio2d.lib;LLGId.lib;freetype.lib;AkSoundEngine.lib;AkMemoryMgr.lib;AkStreamMgr.lib;AkMusicEngine.lib;AkVorbisDecoder.lib;CommunicationCentral.lib</AdditionalDependencies>
       <AdditionalOptions>/PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <FxCompile>
@@ -408,8 +410,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>Library\Wwise\lib\$(Configuration);Library\FreeType\lib\$(Configuration);Library\Effekseer\lib\$(Configuration);Library\PhysX\$(Configuration);Library\Zstandard\lib\$(Configuration);Library\Bass\lib;Library\DirectXTex\$(Configuration);Library\assimp\$(Configuration)</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>assimp-vc143-mt.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll;PhysX_64.dll;PhysXCommon_64.dll;PhysXFoundation_64.dll</DelayLoadDLLs>
-      <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies);winmm.lib;bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;libzstd_static.lib;PhysX_64.lib;PhysXCommon_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;Effekseer.lib;EffekseerRendererDX12.lib;EffekseerSoundXAudio2.lib;LLGI.lib;freetype.lib;AkMemoryMgr.lib;AkSoundEngine.lib;AkStreamMgr.lib;AkMusicEngine.lib;AkVorbisDecoder.lib</AdditionalDependencies>
+      <DelayLoadDLLs>assimp-vc143-mt.dll;%(DelayLoadDLLs);bass.dll;bass_fx.dll;bassflac.dll;PhysX_64.dll;PhysXFoundation_64.dll</DelayLoadDLLs>
+      <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies);winmm.lib;bass.lib;bass_fx.lib;bassenc.lib;bassflac.lib;bassmix.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;libzstd_static.lib;PhysX_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;Effekseer.lib;EffekseerRendererDX12.lib;EffekseerSoundXAudio2.lib;LLGI.lib;freetype.lib;AkMemoryMgr.lib;AkSoundEngine.lib;AkStreamMgr.lib;AkMusicEngine.lib;AkVorbisDecoder.lib</AdditionalDependencies>
     </Link>
     <FxCompile>
       <ShaderModel>5.1</ShaderModel>

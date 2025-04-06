@@ -140,7 +140,7 @@ CD3DX12_ROOT_PARAMETER* RootSignature::GetRootParameter()
 		return rootParam;
 	}
 	//単色のシェーダー
-	else if (m_shaderKind == ShaderKinds::PrimitiveShader || m_shaderKind == ShaderKinds::TerrainShader) {
+	else if (m_shaderKind == ShaderKinds::PrimitiveShader || m_shaderKind == ShaderKinds::TerrainShader || m_shaderKind == ShaderKinds::GrassShader) {
 		m_rootParamSize = 5;
 		CD3DX12_ROOT_PARAMETER* rootParam = new CD3DX12_ROOT_PARAMETER[m_rootParamSize];
 		rootParam[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb0の定数バッファを設定
@@ -154,24 +154,6 @@ CD3DX12_ROOT_PARAMETER* RootSignature::GetRootParameter()
 
 		m_pDiscriptorRange[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0);	//シェーダーリソースビュー(2個)
 		rootParam[4].InitAsDescriptorTable(1, &m_pDiscriptorRange[1], D3D12_SHADER_VISIBILITY_PIXEL);	//t0、t1
-
-		return rootParam;
-	}
-	//草用のシェーダー
-	else if (m_shaderKind == ShaderKinds::GrassShader) {
-		m_rootParamSize = 5;
-		CD3DX12_ROOT_PARAMETER* rootParam = new CD3DX12_ROOT_PARAMETER[m_rootParamSize];
-		rootParam[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb0の定数バッファを設定
-		rootParam[1].InitAsConstants(MESH_BUFFER_SIZE, 1, 0, D3D12_SHADER_VISIBILITY_VERTEX);	//頂点シェーダーのb1の定数バッファを設定
-		rootParam[2].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);		//ピクセルシェーダーのb0の定数バッファを設定
-
-		//テクスチャ用をスロットt0に設定
-		m_pDiscriptorRange = new CD3DX12_DESCRIPTOR_RANGE[2];
-		m_pDiscriptorRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);	//シェーダーリソースビュー(1個)
-		rootParam[3].InitAsDescriptorTable(1, &m_pDiscriptorRange[0], D3D12_SHADER_VISIBILITY_PIXEL);	//t1
-
-		m_pDiscriptorRange[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);	//シェーダーリソースビュー(1個)
-		rootParam[4].InitAsDescriptorTable(1, &m_pDiscriptorRange[1], D3D12_SHADER_VISIBILITY_PIXEL);	//t0
 
 		return rootParam;
 	}

@@ -58,30 +58,39 @@ float ComputeShadowBias(float3 normal, float3 lightDir)
     return max(0.0015 * (1.0 - cosTheta), 0.0005f); //法線が光と平行なほどバイアスを減らす
 }
 
+float2 Rotate(float2 v, float angle)
+{
+    float s = sin(angle);
+    float c = cos(angle);
+    return float2(c * v.x - s * v.y, s * v.x + c * v.y);
+}
+
+float rand(float2 co)
+{
+    return frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453);
+}
+
 float ShadowCalculation(float4 shadowPos, float bias)
 {
     float3 posFromLightVP = shadowPos.xyz / shadowPos.w;
     float2 shadowUV = (posFromLightVP.xy + float2(1, -1)) * float2(0.5, -0.5);
-    
-    if (shadowUV.x <= 0.0f || shadowUV.x >= 1.0f || shadowUV.y <= 0.0f || shadowUV.y >= 1.0f)
-    {
-        return 1.0f;
-    }
 
-    float total = 0.0f;
+    float isInside = step(0.0f, shadowUV.x) * step(shadowUV.x, 1.0f) *
+                     step(0.0f, shadowUV.y) * step(shadowUV.y, 1.0f);
+
+    float angle = rand(shadowUV * SHADOWSIZE) * 6.2831853f;
     float2 texelSize = float2(1.0f / SHADOWSIZE, 1.0f / SHADOWSIZE);
+    float total = 0.0f;
     for (int i = 0; i < 8; ++i)
     {
-        float2 sampleOffset = poissonDisk[i] * texelSize * 1.3f;
-        float2 shadowSampleUV = shadowUV + sampleOffset;
+        float2 rotated = Rotate(poissonDisk[i], angle);
+        float2 shadowSampleUV = shadowUV + rotated * texelSize * 1.5f;
         float sampleDepth = shadowMap.SampleCmpLevelZero(shadowSampler, shadowSampleUV, posFromLightVP.z - bias);
         total += sampleDepth;
     }
 
-    //平均を取る
     float shadowFactor = total / 8.0f;
-
-    //シャドウの有無を決定(0.0fなら完全な影、1.0fなら影なし)
+    shadowFactor = lerp(1.0f, shadowFactor, isInside);
     return shadowFactor;
 }
 
@@ -105,7 +114,7 @@ float4 pixel(VSOutput input) : SV_TARGET
     //シャドウがかかっていれば光を減少させる (0.0f なら完全な影、1.0f なら影なし)
     float4 diffuse = diffuseColor * shadowPower;
 
-    float4 lighting = ambientColor + diffuse;
+    float4 lighting = lerp(ambientColor, diffuseColor, shadowPower);
     
     lighting *= tex;
     

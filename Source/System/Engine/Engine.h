@@ -33,8 +33,15 @@ public:
 	//エンジン初期化
 	bool Init(int windowWidth, int windowHeight);
 
+	//ファイルから3Dモデル(ボーン付き)を読み込む
 	Character* AddCharacter(std::string modelFile);
+	//ファイルから3Dモデルを読み込む
 	Model* AddModel(std::string modelFile);
+	//クアッドモデルを読み込む
+	Model* AddPrimitiveQuad();
+
+	//モデルを解放
+	void ReleaseModel(Model* pModel);
 
 	//描画の開始処理
 	void Begin3DRender();
@@ -82,8 +89,9 @@ public: //ゲッター関数
 	//マウス座標を取得
 	POINT GetMousePosition() const;
 
-	//キーの状態を取得
+	//キーの状態を取得 (押しっぱなし)
 	bool GetKeyState(UINT key);
+	//キーの状態を取得 (押した瞬間のみ)
 	bool GetKeyStateSync(UINT key);
 
 	inline HWND GetHWND() const { return m_hWnd; }
@@ -124,13 +132,16 @@ public: //ゲッター関数
 	//トリプルバッファリングの現在のインデックス
 	inline UINT CurrentBackBufferIndex() const { return m_CurrentBackBufferIndex; }
 
+	//ポストプロセスが有効かどうか
 	inline bool GetIsPostProcessEnabled() const { return m_bEnablePostProcess; }
 
 	//前回のフレームから何秒経過したかを取得
 	inline float GetFrameTime() const { return m_frameTime; }
 
+	//背景色を取得
 	inline DXGI_RGBA GetClearColor() const { return m_clearColor; }
 
+	//現在のウィンドウサイズを取得
 	inline SIZE GetWindowSize() const { return m_windowSize; }
 
 private: //DirectX12の初期化
@@ -210,6 +221,7 @@ private: //プライベート変数
 	unsigned long m_sceneTimeMS;
 	float m_frameTime;
 	bool m_bEnablePostProcess;
+	bool m_bResizeBuffer;
 
 	SIZE m_windowSize;
 	DXGI_RGBA m_clearColor;

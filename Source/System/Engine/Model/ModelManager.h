@@ -14,6 +14,9 @@ public:
 	//描画させるモデルを追加
 	void AddModel(Model* pModel);
 
+	//モデルを削除
+	void ReleaseModel(Model* pModel);
+
 	//更新
 	//深度から描画順番を決定するため、各フレームのUpdate関数の最後に実行
 	void LateUpdate(UINT backBufferIndex);

@@ -1,6 +1,7 @@
 #include "Material.h"
 
 using namespace std;
+using namespace DirectX;
 
 Material::Material(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, DirectionalLight* pDirectionalLight, DescriptorHeap* pDescriptorHeap, UINT materialID)
 	: m_pDevice(pDevice)
@@ -10,6 +11,8 @@ Material::Material(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandLis
 	, m_materialID(materialID)
 	, m_shaderKind(ShaderKinds::PrimitiveShader)
 	, m_transparentValue(1.0f)
+	, m_ambientColor(pDirectionalLight->m_lightBuffer.ambientColor)
+	, m_diffuseColor(pDirectionalLight->m_lightBuffer.diffuseColor)
 	, m_bTransparent(false)
 	, m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
@@ -64,6 +67,15 @@ void Material::SetMainTexture(string texPath)
 	m_pDescriptorHeap->SetMainTexture(m_materialID, m_pMainTexture->Resource(), nullptr, nullptr);
 }
 
+void Material::SetMainTexture(ID3D12Resource* pResource)
+{
+	if (m_pMainTexture) {
+		delete m_pMainTexture;
+	}
+
+	m_pDescriptorHeap->SetMainTexture(m_materialID, pResource, nullptr, nullptr);
+}
+
 void Material::SetNormalMap(std::string texPath)
 {
 	if (m_pNormalTexture) {
@@ -105,12 +117,16 @@ void Material::ExecutePipeline()
 	m_pCommandList->SetGraphicsRootSignature(m_pRootSignature->GetRootSignature());   //ルートシグネチャを設定
 	m_pCommandList->SetPipelineState(m_pPipelineState->GetPipelineState());           //パイプラインステートを設定
 
+	//ライト情報を更新
 	if (m_bTransparent) {
 		m_pDirectionalLight->m_lightBuffer.cameraEyePos.w = m_transparentValue;
 	}
 	else {
 		m_pDirectionalLight->m_lightBuffer.cameraEyePos.w = 1.0f;
 	}
+	m_pDirectionalLight->m_lightBuffer.ambientColor = m_ambientColor;
+	m_pDirectionalLight->m_lightBuffer.diffuseColor = m_diffuseColor;
+
 	m_pDirectionalLight->MemCopyBuffer(m_pPSBufferMap);
 
 	m_pCommandList->SetGraphicsRootConstantBufferView(2, m_psBufferResource->GetGPUVirtualAddress());	//ディレクショナルライトの情報を送信

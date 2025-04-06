@@ -44,12 +44,16 @@ float ToonShading(float intensity)
         return 0.2f;
 }
 
-static const float2 poissonDisk[4] =
+static const float2 poissonDisk[8] =
 {
-    float2(-0.94201624, -0.39906216),
-    float2(0.94558609, -0.76890725),
-    float2(-0.09418410, -0.92938870),
-    float2(0.34495938, 0.29387760)
+    float2(-0.326212, -0.405810),
+    float2(-0.840144, -0.073580),
+    float2(-0.695914, 0.457137),
+    float2(-0.203345, 0.620716),
+    float2(0.962340, -0.194983),
+    float2(0.473434, -0.480026),
+    float2(0.519456, 0.767022),
+    float2(0.185461, -0.893124)
 };
 
 float ShadowCalculation(float4 shadowPos, float bias)
@@ -60,7 +64,7 @@ float ShadowCalculation(float4 shadowPos, float bias)
     float total = 0.0f;
     float2 texelSize = float2(1.0f / SHADOWSIZE, 1.0f / SHADOWSIZE);
     
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 8; ++i)
     {
         float2 sampleOffset = poissonDisk[i] * texelSize;
         float2 shadowSampleUV = shadowUV + sampleOffset;
@@ -68,7 +72,7 @@ float ShadowCalculation(float4 shadowPos, float bias)
         total += sampleDepth;
     }
 
-    return total / 4.0f; // 平均化
+    return total / 8.0f; // 平均化
 }
 
 float4 main(VSOutput input) : SV_TARGET
@@ -95,9 +99,7 @@ float4 main(VSOutput input) : SV_TARGET
     shadowPower = max(0.5f, shadowPower);
 
     //シャドウがかかっていれば光を減少させる (0.0f なら完全な影、1.0f なら影なし)
-    float4 diffuse = diffuseColor * shadowPower;
-
-    float4 lighting = ambientColor + diffuse;
+    float4 lighting = lerp(ambientColor, diffuseColor, shadowPower);
 
     //ライティング結果とテクスチャカラーを掛け合わせる
     float4 finalColor = lighting * tex;

@@ -82,10 +82,10 @@ float4 pixel(VSOutput input) : SV_TARGET
     float shadowFactor = ShadowCalculation(input.shadowPos);
     //float shadowFactor = 1.0f;
     
-    float4 diffuse = diffuseColor * lightIntensity;
+    float4 shadowPower = shadowFactor * lightIntensity;
 
     //シャドウがかかっていれば光を減少させる (0.0f なら完全な影、1.0f なら影なし)
-    float4 lighting = ambientColor + shadowFactor * diffuse;
+    float4 lighting = lerp(ambientColor, diffuseColor, shadowPower);
 
     //ライティング結果とテクスチャカラーを掛け合わせる
     float4 finalColor = lighting * tex;

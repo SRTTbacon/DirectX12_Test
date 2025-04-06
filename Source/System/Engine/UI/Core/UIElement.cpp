@@ -17,7 +17,7 @@ UIElement::UIElement(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandL
 	, m_pIndexBufferView(nullptr)
 	, m_color(DXGI_RGBA(1.0f, 1.0f, 1.0f, 1.0f))
 	, m_bReleased(false)
-	, m_bCenterPosition(false)
+	, m_bCenterPosition(true)
 	, m_bCenterRotation(true)
 	, m_vertexConstantBuffer(UIVertexBuffer())
 	, m_pixelConstantBuffer(UIPixelBuffer())

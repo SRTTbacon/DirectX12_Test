@@ -42,7 +42,9 @@ namespace KeyString
 	constexpr const char* SOUND_SE_BNK = "Resource\\Sounds\\SE.bnk";
 
 	constexpr const char* SOUND_BGM_TITLE = "BGM_Title";
+	constexpr const char* SOUND_BGM_GAME = "BGM_Game";
 
 	constexpr const char* SOUND_SE_TITLE_NOISE = "Title_Noise";
 	constexpr const char* SOUND_SE_TITLE_BLACKOUT = "Title_BlackOut";
+	constexpr const char* SOUND_SE_GAME_WIND = "Game_Wind";
 }

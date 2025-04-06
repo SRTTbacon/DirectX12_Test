@@ -101,6 +101,7 @@ void BoneManager::UpdateBoneMatrix(UINT boneIndex)
 
     XMMATRIX scale = XMMatrixScaling(bone.m_scale.x, bone.m_scale.y, bone.m_scale.z);
     XMVECTOR rotVec = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+    //XMVECTOR rotVec = XMVectorSet(-bone.m_rotation.x, -bone.m_rotation.z, bone.m_rotation.y, bone.m_rotation.w);
 
     //UnityÇ∆ÇÃç¿ïWånÇÃà·Ç¢ÇèCê≥
     switch (bone.m_boneType)
@@ -117,12 +118,20 @@ void BoneManager::UpdateBoneMatrix(UINT boneIndex)
         rotVec = XMVectorSet(-bone.m_rotation.x, bone.m_rotation.z, -bone.m_rotation.y, bone.m_rotation.w);
         break;
 
+    case BONETYPE_LEFT_HAIR:
+        rotVec = XMVectorSet(-bone.m_rotation.z, bone.m_rotation.x, -bone.m_rotation.y, bone.m_rotation.w);
+        break;
+
     case BONETYPE_RIGHT_ARM:
         rotVec = XMVectorSet(-bone.m_rotation.y, -bone.m_rotation.x, bone.m_rotation.z, bone.m_rotation.w);
         break;
 
     case BONETYPE_RIGHT_LEG:
         rotVec = XMVectorSet(bone.m_rotation.x, -bone.m_rotation.z, bone.m_rotation.y, -bone.m_rotation.w);
+        break;
+
+    case BONETYPE_RIGHT_HAIR:
+        rotVec = XMVectorSet(bone.m_rotation.z, bone.m_rotation.x, bone.m_rotation.y, bone.m_rotation.w);
         break;
     }
 

@@ -7,6 +7,7 @@ struct Camera
 {
 	DirectX::XMVECTOR m_eyePos;
 	DirectX::XMVECTOR m_targetPos;
+	DirectX::XMVECTOR m_direction;
 	DirectX::XMVECTOR m_upFoward;
 
 	DirectX::XMMATRIX m_viewMatrix;

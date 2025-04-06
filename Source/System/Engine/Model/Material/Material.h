@@ -21,6 +21,7 @@ public:
     void SetPipeline(RootSignature* pRootSignature, PipelineState* pPipelineState, ShaderKinds shaderKind);
     //テクスチャ張り替え
     void SetMainTexture(std::string texPath);
+    void SetMainTexture(ID3D12Resource* pResource);
     //ノーマルマップ張り替え
     void SetNormalMap(std::string texPath);
     //シェイプキーのリソースを設定
@@ -39,6 +40,10 @@ public: //ゲッター
     bool GetIsTransparent() const;
 
     float GetOpacity() const { return m_transparentValue; }
+
+public:
+    DirectX::XMFLOAT4 m_ambientColor;
+    DirectX::XMFLOAT4 m_diffuseColor;
 
 private:
     ID3D12Device* m_pDevice;                    //エンジンのデバイス

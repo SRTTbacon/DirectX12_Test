@@ -2,30 +2,39 @@
 
 #include "..\\..\\System\\Engine\\Model\\Convert\\ConvertFromFBX.h"
 
+const std::string TitleBack::MODEL_CASTLE = "Resource\\Model\\Castle.hcs";
+const std::string TitleBack::TEXTURE_CASTLE = "Resource\\Model\\Castle.png";
+const std::string TitleBack::TEXTURE_SKYBOX = "Resource\\Texture\\SkyBox.dds";
+
 TitleBack::TitleBack()
 	: m_bCameraMove(true)
 	, m_pCastle(nullptr)
 {
 }
 
+TitleBack::~TitleBack()
+{
+	if (m_pCastle) {
+		g_Engine->ReleaseModel(m_pCastle);
+		m_pCastle = nullptr;
+	}
+}
+
 void TitleBack::Initialize()
 {
-	g_Engine->GetSkyBox()->SetSkyTexture("Resource\\Texture\\SkyBox.dds");
+	g_Engine->GetSkyBox()->SetSkyTexture(TEXTURE_SKYBOX);
 
 	g_Engine->GetWwiseSoundSystem()->Initialize(KeyString::SOUND_INIT_BNK);
 	g_Engine->GetWwiseSoundSystem()->Load_Bank(KeyString::SOUND_BGM_BNK);
 	g_Engine->GetWwiseSoundSystem()->Load_Bank(KeyString::SOUND_SE_BNK);
 	g_Engine->GetWwiseSoundSystem()->Play(KeyString::SOUND_BGM_TITLE);
 
-	//ConvertFromFBX convert;
-	//convert.ConvertFromModel("Resource\\Model\\Castle.fbx", "Resource\\Model\\Castle.hcs");
-
-	m_pCastle = g_Engine->AddModel("Resource\\Model\\Castle.hcs");
+	m_pCastle = g_Engine->AddModel(MODEL_CASTLE);
 	m_pCastle->m_position = XMFLOAT3(0.0f, 2.0f, 2.0f);
 	m_pCastle->m_scale = XMFLOAT3(0.01f, 0.01f, 0.01f);
 	m_pCastle->SetRotation(180.0f, 0.0f, 0.0f);
 	m_pCastle->GetMesh(0)->pMaterial = g_Engine->GetMaterialManager()->AddMaterial("Castle");
-	m_pCastle->GetMesh(0)->pMaterial->SetMainTexture("Resource\\Model\\A_large_fantasy_style_0402140926_texture.png");
+	m_pCastle->GetMesh(0)->pMaterial->SetMainTexture(TEXTURE_CASTLE);
 }
 
 void TitleBack::Update()
@@ -59,15 +68,6 @@ void TitleBack::Update()
 	XMVECTOR newForward = XMVector3TransformNormal(defaultForward, rotationMatrix);
 
 	pCamera->m_targetPos = pCamera->m_eyePos + newForward;
-
-	if (g_Engine->GetKeyState(DIK_LEFT)) {
-		m_pCastle->m_rotation.x -= 0.05f;
-		printf("%f\n", m_pCastle->m_rotation.x);
-	}
-	if (g_Engine->GetKeyState(DIK_RIGHT)) {
-		m_pCastle->m_rotation.x += 0.05f;
-		printf("%f\n", m_pCastle->m_rotation.x);
-	}
 }
 
 void TitleBack::SetMoveCamera(bool bMove)

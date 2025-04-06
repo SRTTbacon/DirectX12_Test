@@ -43,6 +43,7 @@ void TitleUI::Initilaize()
 	//ブラックアウト用のテクスチャ
 	m_uiBlackOutTexture = g_Engine->GetUIManager()->AddUITexture(Color::BLACK);
 	m_uiBlackOutTexture->m_size = windowSize;
+	m_uiBlackOutTexture->m_bCenterPosition = false;
 
 	HCSReadFile titleUITexture;
 	titleUITexture.Open(TITLE_TEXTURE_PATH);
@@ -53,6 +54,7 @@ void TitleUI::Initilaize()
 
 	//黒背景
 	m_uiBlackBack = g_Engine->GetUIManager()->AddUITexture(Color::BLACK);
+	m_uiBlackBack->m_bCenterPosition = false;
 	m_uiBlackBack->m_size = windowSize;
 	m_uiBlackBack->m_color.a = 1.0f;
 
@@ -93,33 +95,12 @@ void TitleUI::Initilaize()
 	m_openingTextAnimation.GetNextAnimation()->m_bEnableSecondColor = true;
 	m_openingTextAnimation.GetNextAnimation()->m_text->m_size = XMFLOAT2(0.75f, 0.75f);
 	m_openingTextAnimation.GetNextAnimation()->SetNextAnimation(FONT_NOTOSERIF, 150, "");
-	m_openingTextAnimation.GetNextAnimation()->GetNextAnimation()->m_endTime = 3.0f;
+	m_openingTextAnimation.GetNextAnimation()->GetNextAnimation()->m_endTime = 1.0f;
 	m_openingTextAnimation.GetNextAnimation()->GetNextAnimation()->m_bEnableSecondColor = true;
 }
 
 void TitleUI::Update()
 {
-	if (g_Engine->GetKeyStateSync(DIK_C)) {
-		m_nowBlackOutFrame = 0;
-		g_Engine->GetWwiseSoundSystem()->Play(SOUND_SE_TITLE_BLACKOUT);
-		m_bStartedOpening = false;
-		m_friezeTime = -1.0f;
-		m_frameTimeBlackOut = 0.0f;
-		m_frameTimeBlackOutExit = 0.0f;
-		m_openingTextAnimation.StopAnimation();
-		m_openingTextAnimation.Initialize(FONT_NOTOSERIF, 150, "まさか、");
-		m_openingTextAnimation.m_bEnableSecondColor = false;
-		m_openingTextAnimation.m_text->SetTextDistance(XMFLOAT2(10.0f, 10.0f));
-		m_openingTextAnimation.m_endTime = 3.0f;
-		m_openingTextAnimation.SetNextAnimation(FONT_NOTOSERIF, 150, "暴走！？");
-		m_openingTextAnimation.GetNextAnimation()->m_text->SetTextDistance(XMFLOAT2(10.0f, 10.0f));
-		m_openingTextAnimation.GetNextAnimation()->m_endTime = 3.0f;
-		m_openingTextAnimation.GetNextAnimation()->m_bEnableSecondColor = true;
-		m_openingTextAnimation.GetNextAnimation()->SetNextAnimation(FONT_NOTOSERIF, 150, "");
-		m_openingTextAnimation.GetNextAnimation()->GetNextAnimation()->m_endTime = 3.0f;
-		m_openingTextAnimation.GetNextAnimation()->GetNextAnimation()->m_bEnableSecondColor = true;
-	}
-
 	m_sceneTime += g_Engine->GetFrameTime();
 
 	UpdateBlackBack();
@@ -135,6 +116,11 @@ void TitleUI::Update()
 		m_bCanOperation = false;
 		m_friezeTime = 0.0f;
 		m_gameStarting = true;
+	}
+
+	//ブラックアウトを終えたらSCENE_GAMEへ
+	if (!m_openingTextAnimation.GetIsPlaying() && !m_openingTextAnimation.GetNextAnimation()) {
+		m_pSceneData->Set(Common::SCENE_GAME);
 	}
 }
 

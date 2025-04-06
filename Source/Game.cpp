@@ -136,6 +136,8 @@ bool Game::Run()
 			}
 
 			Scene::m_prevSceneData = Scene::m_nowSceneData;
+
+			SetCursor(LoadCursor(NULL, IDC_ARROW));
 		}
 
 		//Runの戻り値がtrue（終了）　→　シーンが変わった

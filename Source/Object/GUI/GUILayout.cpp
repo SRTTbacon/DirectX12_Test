@@ -78,9 +78,6 @@ GUIButton GUILayout::CreateButton(std::string strNormalTexture, std::string strM
 	button.m_mouseOverTexture = g_Engine->GetUIManager()->AddUITexture(strMouseOverTexture);
 	button.m_text = nullptr;
 
-	button.m_normalTexture->m_bCenterPosition = true;
-	button.m_mouseOverTexture->m_bCenterPosition = true;
-
 	button.m_normalTexture->m_size = size;
 	button.m_mouseOverTexture->m_size = size;
 
@@ -103,9 +100,6 @@ GUIButton GUILayout::CreateButton(HCSReadFile& hcsFile, std::string strNormalTex
 	button.m_mouseOverTexture = g_Engine->GetUIManager()->AddUITexture(pMouseOverTexData, mouseOverTexSize);
 	button.m_text = nullptr;
 
-	button.m_normalTexture->m_bCenterPosition = true;
-	button.m_mouseOverTexture->m_bCenterPosition = true;
-
 	button.m_normalTexture->m_size = size;
 	button.m_mouseOverTexture->m_size = size;
 
@@ -122,7 +116,6 @@ GUIAnimationText GUILayout::CreateAnimationText(std::string strFontPath, UINT fo
 	GUIAnimationText animText{};
 	UITextRef uiText= g_Engine->GetUIManager()->AddUIText(strFontPath, fontSize);
 	uiText->m_text = text;
-	uiText->m_bCenterPosition = true;
 	uiText->m_color.a = 0.0f;
 
 	animText.Initialize(uiText);
@@ -134,7 +127,6 @@ GUIAnimationTexture GUILayout::CreateAnimationTexture(std::string strTexturePath
 {
 	GUIAnimationTexture animText{};
 	UITextureRef uiText = g_Engine->GetUIManager()->AddUITexture(strTexturePath);
-	uiText->m_bCenterPosition = true;
 	uiText->m_color.a = 0.0f;
 
 	animText.Initialize(uiText);
@@ -149,7 +141,6 @@ GUIAnimationTexture GUILayout::CreateAnimationTexture(HCSReadFile& hcsFile, std:
 
 	GUIAnimationTexture animText{};
 	UITextureRef uiText = g_Engine->GetUIManager()->AddUITexture(pTexBuffer, size);
-	uiText->m_bCenterPosition = true;
 	uiText->m_color.a = 0.0f;
 
 	animText.Initialize(uiText);

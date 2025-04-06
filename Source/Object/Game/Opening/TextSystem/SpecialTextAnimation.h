@@ -23,6 +23,7 @@ public:
 	void Draw();
 
 	inline std::shared_ptr<SpecialTextAnimation> GetNextAnimation() const { return m_pNextTextAnimation; }
+	inline bool GetIsPlaying() const { return m_bAnimation || m_animationTime >= 0.0f; }
 
 public:
 	UITextRef m_text;

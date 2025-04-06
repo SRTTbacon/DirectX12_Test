@@ -23,11 +23,12 @@ void SpecialTextAnimation::Initialize(std::string strFontPath, UINT fontSize, st
 	m_whiteTexture = g_Engine->GetUIManager()->AddUITexture(Color::WHITE);
 	m_text = g_Engine->GetUIManager()->AddUIText(strFontPath, fontSize);
 
+	m_whiteTexture->m_bCenterPosition = false;
+
 	SIZE windowSize = g_Engine->GetWindowSize();
 	m_whiteTexture->m_size = XMFLOAT2(static_cast<float>(windowSize.cx), static_cast<float>(windowSize.cy));
 
 	m_text->m_position = XMFLOAT2(windowSize.cx / 2.0f, windowSize.cy / 2.0f);
-	m_text->m_bCenterPosition = true;
 
 	m_text->m_text = text;
 }
