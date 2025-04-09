@@ -67,8 +67,8 @@ void SpecialTextAnimation::Update()
 
 	if (m_bAnimation) {
 
-		// シェイクの周波数 (ランダムな振動)
-		float frequency = 10.0f;
+		//シェイクの周波数 (ランダムな振動)
+		float frequency = 1250.0f * g_Engine->GetFrameTime();;
 		float timeFactor = m_animationTime * frequency;
 
 		//自然な揺れ (サイン波ベース)
